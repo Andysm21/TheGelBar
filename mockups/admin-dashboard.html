@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Dashboard</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="demo-strip">
+  <b>MOCKUP NAV</b>
+  <a href="index.html">Landing</a><a href="login.html">Login</a><a href="dashboard.html">User dashboard</a>
+  <a href="book-service.html">Book: service</a><a href="book-schedule.html">Book: schedule</a>
+  <a href="book-confirm.html">Book: confirmation</a><a href="my-bookings.html">My bookings</a>
+  <a class="on" href="admin-dashboard.html">Admin: dashboard</a><a href="admin-bookings.html">Admin: requests</a>
+  <a href="admin-booking-detail.html">Admin: booking detail</a><a href="admin-calendar.html">Admin: calendar</a>
+  <a href="admin-services.html">Admin: services</a><a href="admin-clients.html">Admin: clients</a>
+  <a href="admin-analytics.html">Admin: analytics</a>
+</div>
+
+<div class="admin-shell">
+  <div class="admin-sidebar">
+    <div class="brand">TheGelBar <span style="color:var(--gold)">Admin</span></div>
+    <div class="admin-nav">
+      <a class="active" href="admin-dashboard.html">🏠 <span class="label-text">Dashboard</span></a>
+      <a href="admin-bookings.html">📥 <span class="label-text">Requests</span></a>
+      <a href="admin-calendar.html">📅 <span class="label-text">Calendar</span></a>
+      <a href="admin-clients.html">👥 <span class="label-text">Clients</span></a>
+      <a href="admin-services.html">💅 <span class="label-text">Services</span></a>
+      <a href="admin-analytics.html">📊 <span class="label-text">Analytics</span></a>
+      <a href="login.html">🚪 <span class="label-text">Log out</span></a>
+    </div>
+  </div>
+
+  <div class="admin-main">
+    <div class="admin-topbar">
+      <h1>Good morning, Jasmine</h1>
+      <a href="admin-bookings.html" class="btn btn-primary btn-sm">3 pending requests</a>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="label">Today's bookings</div><div class="value">5</div><div class="delta">2 pending approval</div></div>
+      <div class="stat-card"><div class="label">This week's revenue</div><div class="value">$620</div><div class="delta">↑ 12% vs last week</div></div>
+      <div class="stat-card"><div class="label">New clients</div><div class="value">4</div><div class="delta">this month</div></div>
+      <div class="stat-card"><div class="label">No-show rate</div><div class="value">3%</div><div class="delta" style="color:var(--sub);">last 30 days</div></div>
+    </div>
+
+    <div class="section-title">Today's schedule — Sep 2</div>
+    <div class="card">
+      <table>
+        <tr><th>Time</th><th>Client</th><th>Service</th><th>Status</th></tr>
+        <tr><td>10:00 AM</td><td>Alina R.</td><td>Full acrylic set</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+        <tr><td>12:00 PM</td><td>Maya P.</td><td>Gel manicure</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+        <tr><td>2:30 PM</td><td>Jasmine M.</td><td>Gel manicure</td><td><span class="badge badge-pending">Pending</span></td></tr>
+        <tr><td>4:00 PM</td><td>Sofia L.</td><td>Pedicure deluxe</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+        <tr><td>5:30 PM</td><td>Reem K.</td><td>Nail art / 3D</td><td><span class="badge badge-pending">Pending</span></td></tr>
+      </table>
+    </div>
+
+    <div class="section-title">Recent activity</div>
+    <div class="card">
+      <p class="sans" style="font-size:.8rem; line-height:2.1;">
+        <b>Alina R.</b> booked Full acrylic set for Sep 5<br>
+        <b>Maya P.</b> requested reschedule for Sep 3 booking<br>
+        <b>Sofia L.</b> left a note: sensitive skin around cuticles
+      </p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,126 @@
+:root {
+  /* Powder Pink Editorial — The Gel Bar official palette */
+  --bg: #fff1f6;
+  --bg2: #f1b7cd;
+  --pink: #d96696;
+  --deep: #982552;
+  --gold: #e79bb8;
+  --deeppink: #f1b7cd;
+  --text: #3e1427;
+  --sub: #8c5470;
+  --graybg: #efe3e8;
+  --border: #f3d3e0;
+  --success: #3fa66b;
+  --warn: #e79bb8;
+  --danger: #c0304f;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: Georgia, 'Times New Roman', serif;
+  overflow-x: hidden;
+}
+
+.sans {
+  font-family: Arial, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+[dir='rtl'] .flip-x {
+  transform: scaleX(-1);
+}
+
+.btn {
+  font-family: Arial, sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.85rem 1.6rem;
+  border-radius: 40px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.btn-primary {
+  background: linear-gradient(120deg, var(--pink), var(--deep));
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(217, 102, 150, 0.3);
+}
+
+.btn-ghost {
+  background: #fff;
+  color: var(--deep);
+  border: 1px solid var(--border);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1.25rem;
+  box-shadow: 0 8px 20px rgba(217, 102, 150, 0.08);
+}
+
+.badge {
+  font-family: Arial, sans-serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.65rem;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+.badge-pending {
+  background: #fbe6d4;
+  color: #a5720c;
+}
+
+.badge-confirmed {
+  background: #e2f5ea;
+  color: #1f7a48;
+}
+
+.badge-declined {
+  background: #fbdfe6;
+  color: #a5192f;
+}
+
+.badge-done {
+  background: #eee;
+  color: #666;
+}

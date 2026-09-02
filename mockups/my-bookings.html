@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My bookings</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="demo-strip">
+  <b>MOCKUP NAV</b>
+  <a href="index.html">Landing</a><a href="login.html">Login</a><a href="dashboard.html">User dashboard</a>
+  <a href="book-service.html">Book: service</a><a href="book-schedule.html">Book: schedule</a>
+  <a href="book-confirm.html">Book: confirmation</a><a class="on" href="my-bookings.html">My bookings</a>
+  <a href="admin-dashboard.html">Admin: dashboard</a><a href="admin-bookings.html">Admin: requests</a>
+  <a href="admin-booking-detail.html">Admin: booking detail</a><a href="admin-calendar.html">Admin: calendar</a>
+  <a href="admin-services.html">Admin: services</a><a href="admin-clients.html">Admin: clients</a>
+  <a href="admin-analytics.html">Admin: analytics</a>
+</div>
+
+<div class="topbar">
+  <div class="brand">TheGelBar</div>
+  <nav><a href="dashboard.html">Home</a><a class="active" href="my-bookings.html">Bookings</a></nav>
+  <div class="avatar">JM</div>
+</div>
+
+<div class="page">
+  <h1 class="h">My bookings</h1>
+  <div class="pill-toggle" style="margin-bottom:1.4rem;">
+    <a class="active" href="#">Upcoming</a><a href="#">Past</a>
+  </div>
+
+  <div class="card">
+    <div class="flex-between" style="margin-bottom:.6rem;">
+      <span class="badge badge-pending">Pending confirmation</span>
+      <span class="sans" style="font-size:.68rem; color:var(--sub);">#BK-2941</span>
+    </div>
+    <h3 style="font-size:1.05rem;">Gel manicure</h3>
+    <p class="sans" style="font-size:.78rem; color:var(--sub); margin-top:.3rem;">Thu, Sep 4 · 2:30 PM · 45 min</p>
+    <div style="display:flex; gap:.6rem; margin-top:.9rem;">
+      <button class="btn btn-ghost btn-sm">Request reschedule</button>
+      <button class="btn btn-ghost btn-sm" style="color:var(--danger);">Cancel</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="flex-between" style="margin-bottom:.6rem;">
+      <span class="badge badge-confirmed">Confirmed</span>
+      <span class="sans" style="font-size:.68rem; color:var(--sub);">#BK-2938</span>
+    </div>
+    <h3 style="font-size:1.05rem;">Full acrylic set</h3>
+    <p class="sans" style="font-size:.78rem; color:var(--sub); margin-top:.3rem;">Sep 12 · 11:00 AM · 90 min</p>
+    <p class="sans" style="font-size:.7rem; color:var(--success); margin-top:.5rem;">✓ Synced to your calendar</p>
+  </div>
+
+  <div class="card" style="background:#fff8ec; border-color:#f4d9a3;">
+    <div class="flex-between" style="margin-bottom:.6rem;">
+      <span class="badge" style="background:#ffe3b0; color:#8a5a06;">Reschedule proposed</span>
+      <span class="sans" style="font-size:.68rem; color:var(--sub);">#BK-2920</span>
+    </div>
+    <h3 style="font-size:1.05rem;">Nail art / 3D design</h3>
+    <p class="sans" style="font-size:.78rem; color:var(--sub); margin-top:.3rem;">Original: Aug 30, 4:00 PM<br>Jasmine proposed: <b style="color:var(--text);">Sep 1, 1:00 PM</b></p>
+    <div style="display:flex; gap:.6rem; margin-top:.9rem;">
+      <button class="btn btn-primary btn-sm">Accept new time</button>
+      <button class="btn btn-ghost btn-sm">Pick another slot</button>
+    </div>
+  </div>
+
+  <div class="section-title">Past visits</div>
+  <div class="card">
+    <div class="flex-between">
+      <div>
+        <h3 style="font-size:.95rem; font-weight:600;">Gel manicure</h3>
+        <p class="sans" style="font-size:.72rem; color:var(--sub); margin-top:.2rem;">Jul 20 · $35 · +35 pts</p>
+      </div>
+      <span class="badge badge-done">Completed</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="flex-between">
+      <div>
+        <h3 style="font-size:.95rem; font-weight:600;">Pedicure deluxe</h3>
+        <p class="sans" style="font-size:.72rem; color:var(--sub); margin-top:.2rem;">Jun 30 · $40 · +40 pts</p>
+      </div>
+      <span class="badge badge-done">Completed</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

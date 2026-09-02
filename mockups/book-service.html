@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book — Choose service</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="demo-strip">
+  <b>MOCKUP NAV</b>
+  <a href="index.html">Landing</a><a href="login.html">Login</a><a href="dashboard.html">User dashboard</a>
+  <a class="on" href="book-service.html">Book: service</a><a href="book-schedule.html">Book: schedule</a>
+  <a href="book-confirm.html">Book: confirmation</a><a href="my-bookings.html">My bookings</a>
+  <a href="admin-dashboard.html">Admin: dashboard</a><a href="admin-bookings.html">Admin: requests</a>
+  <a href="admin-booking-detail.html">Admin: booking detail</a><a href="admin-calendar.html">Admin: calendar</a>
+  <a href="admin-services.html">Admin: services</a><a href="admin-clients.html">Admin: clients</a>
+  <a href="admin-analytics.html">Admin: analytics</a>
+</div>
+
+<div class="topbar">
+  <div class="brand">TheGelBar</div>
+  <nav><a href="dashboard.html">← Back</a></nav>
+  <div class="avatar">JM</div>
+</div>
+
+<div class="page">
+  <p class="sans" style="font-size:.7rem; color:var(--sub); letter-spacing:.05em; text-transform:uppercase;">Step 1 of 3</p>
+  <h1 class="h">Choose a service</h1>
+  <p class="lead">Each shows how long it takes and the price</p>
+
+  <div style="display:flex; flex-direction:column; gap:.8rem;">
+    <label class="svc-card selected" style="cursor:pointer;">
+      <input type="radio" name="svc" checked style="display:none;">
+      <div><h3>Gel manicure</h3><p>45 min</p></div>
+      <div class="svc-price">$35</div>
+    </label>
+    <label class="svc-card" style="cursor:pointer;">
+      <input type="radio" name="svc" style="display:none;">
+      <div><h3>Full acrylic set</h3><p>90 min</p></div>
+      <div class="svc-price">$65</div>
+    </label>
+    <label class="svc-card" style="cursor:pointer;">
+      <input type="radio" name="svc" style="display:none;">
+      <div><h3>Nail art / 3D design</h3><p>60 min</p></div>
+      <div class="svc-price">$45</div>
+    </label>
+    <label class="svc-card" style="cursor:pointer;">
+      <input type="radio" name="svc" style="display:none;">
+      <div><h3>Pedicure deluxe</h3><p>50 min</p></div>
+      <div class="svc-price">$40</div>
+    </label>
+    <label class="svc-card" style="cursor:pointer;">
+      <input type="radio" name="svc" style="display:none;">
+      <div><h3>Soak-off + reshape</h3><p>25 min</p></div>
+      <div class="svc-price">$18</div>
+    </label>
+  </div>
+
+  <a href="book-schedule.html" class="btn btn-primary btn-block" style="margin-top:2rem;">Continue →</a>
+</div>
+
+<script>
+document.querySelectorAll('.svc-card').forEach(c=>{
+  c.addEventListener('click', ()=>{
+    document.querySelectorAll('.svc-card').forEach(x=>x.classList.remove('selected'));
+    c.classList.add('selected');
+    c.querySelector('input').checked = true;
+  });
+});
+</script>
+</body>
+</html>

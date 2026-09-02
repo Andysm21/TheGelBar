@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Clients</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="demo-strip">
+  <b>MOCKUP NAV</b>
+  <a href="index.html">Landing</a><a href="login.html">Login</a><a href="dashboard.html">User dashboard</a>
+  <a href="book-service.html">Book: service</a><a href="book-schedule.html">Book: schedule</a>
+  <a href="book-confirm.html">Book: confirmation</a><a href="my-bookings.html">My bookings</a>
+  <a href="admin-dashboard.html">Admin: dashboard</a><a href="admin-bookings.html">Admin: requests</a>
+  <a href="admin-booking-detail.html">Admin: booking detail</a><a href="admin-calendar.html">Admin: calendar</a>
+  <a href="admin-services.html">Admin: services</a><a class="on" href="admin-clients.html">Admin: clients</a>
+  <a href="admin-analytics.html">Admin: analytics</a>
+</div>
+
+<div class="admin-shell">
+  <div class="admin-sidebar">
+    <div class="brand">TheGelBar <span style="color:var(--gold)">Admin</span></div>
+    <div class="admin-nav">
+      <a href="admin-dashboard.html">🏠 <span class="label-text">Dashboard</span></a>
+      <a href="admin-bookings.html">📥 <span class="label-text">Requests</span></a>
+      <a href="admin-calendar.html">📅 <span class="label-text">Calendar</span></a>
+      <a class="active" href="admin-clients.html">👥 <span class="label-text">Clients</span></a>
+      <a href="admin-services.html">💅 <span class="label-text">Services</span></a>
+      <a href="admin-analytics.html">📊 <span class="label-text">Analytics</span></a>
+      <a href="login.html">🚪 <span class="label-text">Log out</span></a>
+    </div>
+  </div>
+
+  <div class="admin-main">
+    <div class="admin-topbar">
+      <h1>Clients</h1>
+      <input type="text" placeholder="Search clients..." style="width:220px;">
+    </div>
+
+    <div class="card">
+      <table>
+        <tr><th>Client</th><th>Visits</th><th>Loyalty pts</th><th>Last visit</th><th></th></tr>
+        <tr><td>Jasmine M.</td><td>7</td><td>240</td><td>Sep 4 (pending)</td><td><a href="#" class="sans" style="font-size:.75rem; color:var(--deep);">View</a></td></tr>
+        <tr><td>Alina R.</td><td>12</td><td>410</td><td>Sep 5</td><td><a href="#" class="sans" style="font-size:.75rem; color:var(--deep);">View</a></td></tr>
+        <tr><td>Maya P.</td><td>3</td><td>90</td><td>Aug 28</td><td><a href="#" class="sans" style="font-size:.75rem; color:var(--deep);">View</a></td></tr>
+        <tr><td>Sofia L.</td><td>9</td><td>310</td><td>Aug 20</td><td><a href="#" class="sans" style="font-size:.75rem; color:var(--deep);">View</a></td></tr>
+        <tr><td>Reem K.</td><td>1</td><td>10</td><td>—</td><td><a href="#" class="sans" style="font-size:.75rem; color:var(--deep);">View</a></td></tr>
+      </table>
+    </div>
+
+    <div class="section-title">Client profile — Jasmine M.</div>
+    <div class="grid-2">
+      <div class="card">
+        <p class="sans" style="font-size:.68rem; text-transform:uppercase; letter-spacing:.05em; color:var(--sub); margin-bottom:.6rem;">Health / allergy notes</p>
+        <p class="sans" style="font-size:.85rem; line-height:1.6;">Sensitive to acetone-based removers. Small cut healing on left thumb cuticle (as of Sep 2026).</p>
+      </div>
+      <div class="card">
+        <p class="sans" style="font-size:.68rem; text-transform:uppercase; letter-spacing:.05em; color:var(--sub); margin-bottom:.6rem;">Private admin notes</p>
+        <p class="sans" style="font-size:.85rem; line-height:1.6;">Always books gel, tips well, prefers afternoon slots. Not visible to client.</p>
+      </div>
+    </div>
+
+    <div class="section-title">Visit history</div>
+    <div class="card">
+      <table>
+        <tr><th>Date</th><th>Service</th><th>Price</th><th>Points</th></tr>
+        <tr><td>Jul 20</td><td>Gel manicure</td><td>$35</td><td>+35</td></tr>
+        <tr><td>Jun 12</td><td>Full acrylic set</td><td>$65</td><td>+65</td></tr>
+        <tr><td>May 2</td><td>Nail art / 3D</td><td>$45</td><td>+45</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+</body>
+</html>

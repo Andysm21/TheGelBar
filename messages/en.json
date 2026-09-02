@@ -1,0 +1,72 @@
+{
+  "brand": {
+    "name": "The Gel Bar",
+    "tagline": "Nails by Mariam Sherif El Gergawy",
+    "location": "Mohandeseen, Cairo"
+  },
+  "nav": {
+    "home": "Home",
+    "bookings": "Bookings",
+    "login": "Log in",
+    "logout": "Log out",
+    "book": "Book your slot"
+  },
+  "hero": {
+    "subtitle": "Solo studio · by appointment",
+    "cta": "Book your slot",
+    "scrollHint": "tilt me · scroll"
+  },
+  "process": {
+    "title": "Watch the process",
+    "subtitle": "Layer by layer, one appointment — scroll to see it happen.",
+    "step1Title": "Natural nail",
+    "step1Desc": "Shaped and buffed, ready for polish.",
+    "step2Title": "Base coat",
+    "step2Desc": "A clear protective base seals the nail bed.",
+    "step3Title": "Color applied",
+    "step3Desc": "An even, glassy coat of pigment.",
+    "step4Title": "Hand-painted design",
+    "step4Desc": "Fine detail work, freehand — every set is unique.",
+    "step5Title": "Top coat & shine",
+    "step5Desc": "A glossy sealant locks it all in for weeks of wear."
+  },
+  "services": {
+    "title": "Signature services",
+    "gelManicure": "Gel manicure",
+    "hardGelOverlay": "Hard gel overlay",
+    "hardGelNewSet": "Hard gel new set",
+    "falseNails": "False nails",
+    "gelRemoval": "Gel removal",
+    "nailFix": "Nail fix / repair (per finger)",
+    "chromeCatEyeOmbre": "Chrome / cat-eye / ombré",
+    "french": "French",
+    "simpleDesign": "Simple design",
+    "complexDesign": "Complex design"
+  },
+  "booking": {
+    "step1": "Step 1 of 3 — Choose services",
+    "step1Desc": "Pick one or more — we'll total the time and price",
+    "step2": "Step 2 of 3 — Pick a slot",
+    "step3": "Step 3 of 3 — Details",
+    "total": "Total",
+    "duration": "Duration",
+    "continue": "Continue",
+    "requestBooking": "Request booking",
+    "uploadInspo": "Upload inspo images",
+    "notes": "Health / allergy notes",
+    "notesPlaceholder": "Write anything we should know before your appointment...",
+    "pending": "Pending confirmation",
+    "confirmed": "Confirmed",
+    "needsReschedule": "Reschedule proposed",
+    "declined": "Declined",
+    "done": "Completed",
+    "reschedule": "Request reschedule",
+    "cancel": "Cancel booking",
+    "rescheduleWindowNotice": "You can reschedule or cancel up to 24 hours before your appointment.",
+    "freeSession": "Free session — loyalty reward!"
+  },
+  "loyalty": {
+    "points": "Loyalty points",
+    "toNextFree": "{count} pts to your next free session"
+  }
+}

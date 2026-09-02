@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TheGelBar</title>
+<link rel="stylesheet" href="style.css">
+<style>
+body{padding-top:30px;}
+.hero{min-height:100vh; position:relative; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:2rem 1.5rem; background:radial-gradient(ellipse at 50% 15%, var(--deeppink), var(--bg) 75%); overflow:hidden; perspective:1000px;}
+.wrap{max-width:480px; margin:0 auto; position:relative;}
+.glow-orb{position:absolute; width:340px; height:340px; border-radius:50%; background:radial-gradient(circle, rgba(217,102,150,.2), transparent 70%); filter:blur(8px); top:-2%; left:50%; transform:translateX(-50%); animation:pulse 5s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:.5; transform:translateX(-50%) scale(1);} 50%{opacity:.9; transform:translateX(-50%) scale(1.15);}}
+.particles{position:absolute; inset:0; pointer-events:none;}
+.spark{position:absolute; width:5px; height:5px; border-radius:50%; background:#fff; box-shadow:0 0 6px 2px rgba(255,255,255,.9); animation:rise linear infinite;}
+@keyframes rise{0%{transform:translateY(0) scale(.6); opacity:0;} 15%{opacity:1;} 100%{transform:translateY(-260px) scale(1.1); opacity:0;}}
+.nail-stage{position:relative; width:100%; height:300px; margin-bottom:1.2rem; transform-style:preserve-3d; transition:transform .1s ease-out;}
+.nail{position:absolute; width:72px; height:170px; transform-style:preserve-3d; filter:drop-shadow(0 20px 20px rgba(217,102,150,.3));}
+svg.shape{width:100%; height:100%; overflow:visible;}
+.n1{left:50%; top:20px; margin-left:-36px; z-index:5; animation:spinY 10s linear infinite, bobY 4s ease-in-out infinite;}
+.n2{left:4%; top:60px; z-index:2; transform:rotateZ(-20deg); animation:spinY 12s linear infinite reverse, bobY 3.6s ease-in-out infinite .3s;}
+.n3{right:2%; top:40px; z-index:2; transform:rotateZ(18deg); animation:spinY 11s linear infinite, bobY 4.2s ease-in-out infinite .6s;}
+.n4{left:20%; top:160px; z-index:6; transform:scale(.72); animation:spinY 9s linear infinite reverse, bobY 3.8s ease-in-out infinite .9s;}
+.n5{right:16%; top:170px; z-index:6; transform:scale(.68); animation:spinY 8.5s linear infinite, bobY 4.4s ease-in-out infinite 1.2s;}
+@keyframes spinY{from{transform:rotateY(0deg);} to{transform:rotateY(360deg);}}
+@keyframes bobY{0%,100%{translate:0 0;} 50%{translate:0 -16px;}}
+.brand-name{font-size:2.5rem; letter-spacing:.05em; font-weight:600; color:#982552;}
+.tag{font-family:Arial,sans-serif; font-size:.78rem; letter-spacing:.3em; text-transform:uppercase; color:var(--sub); margin-top:.6rem;}
+.cta-hero{margin-top:2.2rem; font-family:Arial,sans-serif; font-size:.85rem; letter-spacing:.1em; text-transform:uppercase; background:linear-gradient(120deg,var(--pink),#982552); color:#fff; padding:.95rem 2.3rem; border-radius:40px; border:none; font-weight:700; box-shadow:0 12px 28px rgba(217,102,150,.35); position:relative; z-index:2;}
+.scroll-hint{position:absolute; bottom:1.2rem; font-family:Arial; font-size:.65rem; letter-spacing:.2em; color:var(--sub); opacity:.7;}
+.process-intro{padding:3.5rem 1.5rem 1.5rem; text-align:center;}
+.process-intro h2{font-size:1.6rem; color:#982552; font-weight:600; margin-bottom:.6rem;}
+.process-intro p{font-family:Arial; font-size:.8rem; color:var(--sub);}
+.pin-outer{position:relative; height:500vh; background:linear-gradient(180deg, var(--bg) 0%, var(--graybg) 12%, var(--graybg) 88%, var(--bg) 100%);}
+.pin-inner{position:sticky; top:0; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:clamp(16px,3vh,32px); overflow:hidden; background:linear-gradient(180deg, var(--bg) 0%, var(--graybg) 12%, var(--graybg) 88%, var(--bg) 100%); padding:24px; box-sizing:border-box;}
+.stage3d{width:min(58vw,40vh,340px); aspect-ratio:1/1; position:relative; perspective:1200px; flex-shrink:0;}
+.finger-rig{width:100%; height:100%; position:relative; transform-style:preserve-3d; will-change:transform;}
+.finger-rig img{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; pointer-events:none; user-select:none;}
+.finger-rig .overlay{opacity:0; transform:translateY(-130px) scale(.92); will-change:opacity, transform;}
+.progress-track{position:absolute; right:14px; top:50%; transform:translateY(-50%); width:3px; height:180px; background:rgba(0,0,0,.1); border-radius:3px; z-index:5;}
+.progress-fill{position:absolute; bottom:0; left:0; width:100%; background:linear-gradient(var(--gold),var(--pink)); border-radius:3px; height:0%;}
+.detail-panel{flex-shrink:0; text-align:center; max-width:280px;}
+.detail-step{font-family:Arial; font-size:.65rem; letter-spacing:.2em; text-transform:uppercase; color:var(--pink); margin-bottom:.3rem; opacity:0; transition:opacity .4s;}
+.detail-title{font-family:'Playfair Display',Georgia,serif; font-size:1.25rem; color:var(--text); opacity:0; transition:opacity .4s; margin-bottom:.3rem;}
+.detail-desc{font-family:Arial; font-size:.72rem; color:var(--sub); line-height:1.5; opacity:0; transition:opacity .4s;}
+.detail-panel.show .detail-step, .detail-panel.show .detail-title, .detail-panel.show .detail-desc{opacity:1;}
+.scroll-cue{position:absolute; bottom:16px; font-family:Arial; font-size:.6rem; letter-spacing:.2em; color:var(--sub); text-transform:uppercase; opacity:.6; z-index:6; transition:opacity .3s;}
+.section{padding:4.5rem 1.5rem; position:relative;}
+.section h2{font-size:1.7rem; text-align:center; margin-bottom:2.5rem; color:#982552; font-weight:600;}
+.services{display:flex; flex-direction:column; gap:1rem;}
+.service-card{background:#fff; border:1px solid #f3d3e0; border-radius:18px; padding:1.4rem; display:flex; justify-content:space-between; align-items:center; box-shadow:0 8px 22px rgba(217,102,150,.1); opacity:0; transform:translateY(30px); transition:all .7s cubic-bezier(.2,.8,.2,1);}
+.service-card.show{opacity:1; transform:translateY(0);}
+.service-card h3{font-size:1.05rem; font-weight:600;}
+.service-card p{font-family:Arial; font-size:.75rem; color:var(--sub); margin-top:.3rem;}
+.price{font-family:Arial,sans-serif; color:#982552; font-weight:700; font-size:1rem;}
+.gallery{display:grid; grid-template-columns:1fr 1fr; gap:.8rem;}
+.gal-item{aspect-ratio:1; border-radius:16px; overflow:hidden; position:relative; box-shadow:0 8px 18px rgba(217,102,150,.15); opacity:0; transform:scale(.85); transition:all .6s cubic-bezier(.2,.8,.2,1), box-shadow .3s;}
+.gal-item.show{opacity:1; transform:scale(1);}
+.gal-item img{width:100%; height:100%; display:block; object-fit:cover;}
+.gal-label{position:absolute; bottom:8px; left:10px; font-family:Arial; font-size:.6rem; letter-spacing:.08em; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.5); text-transform:uppercase;}
+.book-btn{display:block; width:100%; margin-top:3rem; padding:1.1rem; text-align:center; font-family:Arial; font-weight:700; letter-spacing:.12em; font-size:.85rem; text-transform:uppercase; background:linear-gradient(120deg,var(--pink),#982552); color:#fff; border-radius:50px; border:none; box-shadow:0 15px 32px rgba(217,102,150,.32);}
+footer{text-align:center; padding:3rem 1.5rem; font-family:Arial; font-size:.65rem; color:var(--sub); letter-spacing:.1em;}
+</style>
+</head>
+<body>
+<div class="demo-strip">
+  <b>MOCKUP NAV</b>
+  <a class="on" href="index.html">Landing</a><a href="login.html">Login</a><a href="dashboard.html">User dashboard</a>
+  <a href="book-service.html">Book: service</a><a href="book-schedule.html">Book: schedule</a>
+  <a href="book-confirm.html">Book: confirmation</a><a href="my-bookings.html">My bookings</a>
+  <a href="admin-dashboard.html">Admin: dashboard</a><a href="admin-bookings.html">Admin: requests</a>
+  <a href="admin-booking-detail.html">Admin: booking detail</a><a href="admin-calendar.html">Admin: calendar</a>
+  <a href="admin-services.html">Admin: services</a><a href="admin-clients.html">Admin: clients</a>
+  <a href="admin-analytics.html">Admin: analytics</a>
+</div>
+
+<div class="wrap">
+  <section class="hero" id="hero">
+    <div class="glow-orb"></div>
+    <div class="particles" id="particles"></div>
+    <div class="nail-stage" id="stage">
+      <div class="nail n2"><svg class="shape" viewBox="0 0 72 170"><defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fff1f6"/><stop offset="60%" stop-color="#f9dce7"/><stop offset="100%" stop-color="#f1b7cd"/></linearGradient></defs><path d="M36 4 C10 4 4 46 4 90 C4 130 12 166 36 166 C60 166 68 130 68 90 C68 46 62 4 36 4 Z" fill="url(#g2)"/><path d="M8 120 C10 148 20 166 36 166 C52 166 62 148 64 120 C64 118 8 118 8 120 Z" fill="#e79bb8"/><ellipse cx="20" cy="34" rx="7" ry="24" fill="#fff" opacity=".5"/></svg></div>
+      <div class="nail n3"><svg class="shape" viewBox="0 0 72 170"><defs><linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f9dce7"/><stop offset="50%" stop-color="#e79bb8"/><stop offset="100%" stop-color="#982552"/></linearGradient></defs><path d="M36 4 C10 4 4 46 4 90 C4 130 12 166 36 166 C60 166 68 130 68 90 C68 46 62 4 36 4 Z" fill="url(#g3)"/><circle cx="28" cy="46" r="6" fill="#fff" opacity=".95"/><circle cx="44" cy="70" r="5" fill="#fff" opacity=".8"/><circle cx="26" cy="96" r="5.5" fill="#fff" opacity=".9"/><circle cx="42" cy="118" r="4" fill="#fff" opacity=".7"/><ellipse cx="20" cy="34" rx="7" ry="24" fill="#fff" opacity=".35"/></svg></div>
+      <div class="nail n1"><svg class="shape" viewBox="0 0 72 170"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#e79bb8"/><stop offset="45%" stop-color="#d96696"/><stop offset="100%" stop-color="#982552"/></linearGradient><radialGradient id="shine1" cx="30%" cy="20%" r="60%"><stop offset="0%" stop-color="#fff" stop-opacity=".9"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><path d="M36 4 C10 4 4 46 4 90 C4 130 12 166 36 166 C60 166 68 130 68 90 C68 46 62 4 36 4 Z" fill="url(#g1)"/><path d="M36 4 C10 4 4 46 4 90 C4 130 12 166 36 166 C60 166 68 130 68 90 C68 46 62 4 36 4 Z" fill="url(#shine1)"/><path d="M20 30 C28 60 44 60 52 30" stroke="#fff" stroke-width="2.5" fill="none" opacity=".6"/><path d="M18 60 C28 90 44 90 54 60" stroke="#fff" stroke-width="2" fill="none" opacity=".4"/></svg></div>
+      <div class="nail n4"><svg class="shape" viewBox="0 0 72 170"><defs><linearGradient id="g4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fff8fb"/><stop offset="100%" stop-color="#f9dce7"/></linearGradient></defs><path d="M36 4 C10 4 4 46 4 90 C4 130 12 166 36 166 C60 166 68 130 68 90 C68 46 62 4 36 4 Z" fill="url(#g4)"/><g transform="translate(24,50)"><circle cx="8" cy="0" r="6" fill="#d96696"/><circle cx="0" cy="8" r="6" fill="#d96696"/><circle cx="16" cy="8" r="6" fill="#d96696"/><circle cx="8" cy="16" r="6" fill="#d96696"/><circle cx="8" cy="8" r="5" fill="#e79bb8"/></g><g transform="translate(24,96)"><circle cx="8" cy="0" r="5" fill="#d96696" opacity=".8"/><circle cx="0" cy="7" r="5" fill="#d96696" opacity=".8"/><circle cx="16" cy="7" r="5" fill="#d96696" opacity=".8"/><circle cx="8" cy="13" r="4" fill="#e79bb8" opacity=".9"/></g></svg></div>
+      <div class="nail n5"><svg class="shape" viewBox="0 0 72 170"><defs><linearGradient id="g5" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#d96696"/><stop offset="100%" stop-color="#e79bb8"/></linearGradient><pattern id="glit" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="#fff" opacity=".8"/><circle cx="6" cy="6" r="1" fill="#fff" opacity=".6"/></pattern></defs><path d="M36 4 C10 4 4 46 4 90 C4 130 12 166 36 166 C60 166 68 130 68 90 C68 46 62 4 36 4 Z" fill="url(#g5)"/><path d="M36 4 C10 4 4 46 4 90 C4 130 12 166 36 166 C60 166 68 130 68 90 C68 46 62 4 36 4 Z" fill="url(#glit)"/></svg></div>
+    </div>
+    <div class="brand-name">TheGelBar</div>
+    <div class="tag">Solo Studio &middot; By Appointment</div>
+    <a href="book-service.html" class="cta-hero" style="display:inline-block;">Book your slot</a>
+    <div class="scroll-hint">tilt me &middot; scroll ↓</div>
+  </section>
+
+  <div class="process-intro">
+    <h2>Watch the process</h2>
+    <p>Five layers, one appointment — scroll to see it happen.</p>
+  </div>
+
+  <div class="pin-outer" id="pinOuter">
+    <div class="pin-inner">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="stage3d">
+        <div class="finger-rig" id="fingerRig">
+          <img src="nails/nail-base.png" alt="Natural nail">
+          <img class="overlay" id="layerBase" src="nails/base-coat.png" alt="" aria-hidden="true">
+          <img class="overlay" id="layerColor" src="nails/nail-color.png" alt="" aria-hidden="true">
+          <img class="overlay" id="layerDesign" src="nails/nail-design.png" alt="" aria-hidden="true">
+          <img class="overlay" id="layerTop" src="nails/top-coat.png" alt="" aria-hidden="true">
+        </div>
+      </div>
+      <div class="detail-panel" id="detailPanel">
+        <div class="detail-step" id="dStep">Step 1 / 5</div>
+        <div class="detail-title" id="dTitle">Natural nail</div>
+        <div class="detail-desc" id="dDesc">Shaped and buffed, ready for polish.</div>
+      </div>
+      <div class="scroll-cue" id="scrollCue">keep scrolling ↓</div>
+    </div>
+  </div>
+
+  <section class="section">
+    <h2>Signature services</h2>
+    <div class="services">
+      <div class="service-card"><div><h3>Gel manicure</h3><p>45 min</p></div><div class="price">$35</div></div>
+      <div class="service-card"><div><h3>Full acrylic set</h3><p>90 min</p></div><div class="price">$65</div></div>
+      <div class="service-card"><div><h3>Nail art / 3D</h3><p>60 min</p></div><div class="price">$45</div></div>
+      <div class="service-card"><div><h3>Pedicure deluxe</h3><p>50 min</p></div><div class="price">$40</div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Recent work</h2>
+    <div class="gallery" id="gallery">
+      <div class="gal-item"><img src="https://picsum.photos/seed/nail1/400/400" alt="chrome nail design"><div class="gal-label">chrome</div></div>
+      <div class="gal-item"><img src="https://picsum.photos/seed/nail2/400/400" alt="french nail design"><div class="gal-label">french</div></div>
+      <div class="gal-item"><img src="https://picsum.photos/seed/nail3/400/400" alt="gems nail design"><div class="gal-label">gems</div></div>
+      <div class="gal-item"><img src="https://picsum.photos/seed/nail4/400/400" alt="floral nail design"><div class="gal-label">floral</div></div>
+    </div>
+    <a href="book-service.html" class="book-btn">Reserve now</a>
+  </section>
+
+  <footer>@thegelbar &middot; walk-ins not accepted &middot; <a href="login.html" style="color:var(--deep);">Client login</a> &middot; <a href="admin-dashboard.html" style="color:var(--deep);">Admin</a></footer>
+</div>
+
+<script>
+const cards = document.querySelectorAll('.service-card');
+const obs = new IntersectionObserver((entries)=>{
+  entries.forEach((e,i)=>{ if(e.isIntersecting){ setTimeout(()=>e.target.classList.add('show'), i*90); obs.unobserve(e.target);} });
+},{threshold:.2});
+cards.forEach(c=>obs.observe(c));
+
+const gal = document.querySelectorAll('.gal-item');
+const obs2 = new IntersectionObserver((entries)=>{
+  entries.forEach((e,i)=>{ if(e.isIntersecting){ setTimeout(()=>e.target.classList.add('show'), i*100); obs2.unobserve(e.target);} });
+},{threshold:.15});
+gal.forEach(g=>obs2.observe(g));
+
+const particleWrap = document.getElementById('particles');
+for(let i=0;i<14;i++){
+  const s = document.createElement('div');
+  s.className='spark';
+  s.style.left = Math.random()*100+'%';
+  s.style.bottom = (10+Math.random()*20)+'%';
+  s.style.animationDuration = (3+Math.random()*3)+'s';
+  s.style.animationDelay = (Math.random()*4)+'s';
+  particleWrap.appendChild(s);
+}
+
+const hero = document.getElementById('hero');
+const stage = document.getElementById('stage');
+hero.addEventListener('mousemove', (e)=>{
+  const r = hero.getBoundingClientRect();
+  const x = (e.clientX - r.left)/r.width - .5;
+  const y = (e.clientY - r.top)/r.height - .5;
+  stage.style.transform = `rotateX(${y*-12}deg) rotateY(${x*12}deg)`;
+});
+hero.addEventListener('mouseleave', ()=>{ stage.style.transform='rotateX(0) rotateY(0)'; });
+
+const pinOuter = document.getElementById('pinOuter');
+const fingerRig = document.getElementById('fingerRig');
+const progressFill = document.getElementById('progressFill');
+const detailPanel = document.getElementById('detailPanel');
+const dStep = document.getElementById('dStep');
+const dTitle = document.getElementById('dTitle');
+const dDesc = document.getElementById('dDesc');
+const scrollCue = document.getElementById('scrollCue');
+const layers = { base: document.getElementById('layerBase'), color: document.getElementById('layerColor'), design: document.getElementById('layerDesign'), top: document.getElementById('layerTop') };
+const steps = [
+  {from:0, to:.12, step:'Step 1 / 5', title:'Natural nail', desc:'Shaped and buffed, ready for polish.'},
+  {from:.12, to:.34, step:'Step 2 / 5', title:'Base coat', desc:'A clear protective base seals the nail bed.'},
+  {from:.34, to:.56, step:'Step 3 / 5', title:'Color applied', desc:'An even, glassy coat of pigment.'},
+  {from:.56, to:.78, step:'Step 4 / 5', title:'Hand-painted design', desc:'Fine detail work, freehand — every set is unique.'},
+  {from:.78, to:1, step:'Step 5 / 5', title:'Top coat & shine', desc:'A glossy sealant locks it all in for weeks of wear.'}
+];
+let targetProgress = 0, shownProgress = 0;
+function computeTarget(){
+  const rect = pinOuter.getBoundingClientRect();
+  const total = pinOuter.offsetHeight - window.innerHeight;
+  let progress = -rect.top / total;
+  targetProgress = Math.max(0, Math.min(1, progress));
+}
+window.addEventListener('scroll', computeTarget, {passive:true});
+computeTarget();
+function clamp(v){ return Math.max(0, Math.min(1, v)); }
+function setLayer(el, t){
+  el.style.opacity = t;
+  const eased = 1 - Math.pow(1 - t, 3);
+  const y = (1 - eased) * -130;
+  const scale = 0.92 + eased * 0.08;
+  el.style.transform = `translateY(${y}px) scale(${scale})`;
+}
+function tick(){
+  shownProgress += (targetProgress - shownProgress) * 0.09;
+  if(Math.abs(targetProgress - shownProgress) < 0.0005) shownProgress = targetProgress;
+  const p = shownProgress;
+  progressFill.style.height = (p*100)+'%';
+  const rotY = -14 + p*28, rotX = 5 - p*3;
+  fingerRig.style.transform = `rotateY(${rotY}deg) rotateX(${rotX}deg) scale(${1+p*0.05})`;
+  setLayer(layers.base, clamp((p-.08)/.16));
+  setLayer(layers.color, clamp((p-.28)/.18));
+  setLayer(layers.design, clamp((p-.5)/.18));
+  setLayer(layers.top, clamp((p-.72)/.2));
+  let active = steps[0];
+  for(const s of steps){ if(p>=s.from && p<=s.to){ active=s; break; } if(p>s.to) active=s; }
+  if(dTitle.textContent !== active.title){ dStep.textContent = active.step; dTitle.textContent = active.title; dDesc.textContent = active.desc; }
+  detailPanel.classList.toggle('show', p>0.01);
+  scrollCue.style.opacity = p>0.03 ? 0 : 0.6;
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Analytics</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="demo-strip">
+  <b>MOCKUP NAV</b>
+  <a href="index.html">Landing</a><a href="login.html">Login</a><a href="dashboard.html">User dashboard</a>
+  <a href="book-service.html">Book: service</a><a href="book-schedule.html">Book: schedule</a>
+  <a href="book-confirm.html">Book: confirmation</a><a href="my-bookings.html">My bookings</a>
+  <a href="admin-dashboard.html">Admin: dashboard</a><a href="admin-bookings.html">Admin: requests</a>
+  <a href="admin-booking-detail.html">Admin: booking detail</a><a href="admin-calendar.html">Admin: calendar</a>
+  <a href="admin-services.html">Admin: services</a><a href="admin-clients.html">Admin: clients</a>
+  <a class="on" href="admin-analytics.html">Admin: analytics</a>
+</div>
+
+<div class="admin-shell">
+  <div class="admin-sidebar">
+    <div class="brand">TheGelBar <span style="color:var(--gold)">Admin</span></div>
+    <div class="admin-nav">
+      <a href="admin-dashboard.html">🏠 <span class="label-text">Dashboard</span></a>
+      <a href="admin-bookings.html">📥 <span class="label-text">Requests</span></a>
+      <a href="admin-calendar.html">📅 <span class="label-text">Calendar</span></a>
+      <a href="admin-clients.html">👥 <span class="label-text">Clients</span></a>
+      <a href="admin-services.html">💅 <span class="label-text">Services</span></a>
+      <a class="active" href="admin-analytics.html">📊 <span class="label-text">Analytics</span></a>
+      <a href="login.html">🚪 <span class="label-text">Log out</span></a>
+    </div>
+  </div>
+
+  <div class="admin-main">
+    <div class="admin-topbar">
+      <h1>Analytics</h1>
+      <div class="pill-toggle"><a class="active" href="#">30 days</a><a href="#">90 days</a><a href="#">Year</a></div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="label">Revenue</div><div class="value">$2,410</div><div class="delta">↑ 18% vs prior period</div></div>
+      <div class="stat-card"><div class="label">Bookings</div><div class="value">58</div><div class="delta">↑ 9%</div></div>
+      <div class="stat-card"><div class="label">Avg. ticket</div><div class="value">$41.5</div><div class="delta" style="color:var(--sub);">steady</div></div>
+      <div class="stat-card"><div class="label">Repeat clients</div><div class="value">72%</div><div class="delta">↑ 4%</div></div>
+    </div>
+
+    <div class="section-title">Revenue by week</div>
+    <div class="card">
+      <div class="bar-chart">
+        <div class="bar" style="height:45%;"><span>$410</span></div>
+        <div class="bar" style="height:65%;"><span>$590</span></div>
+        <div class="bar" style="height:52%;"><span>$470</span></div>
+        <div class="bar" style="height:80%;"><span>$720</span></div>
+        <div class="bar" style="height:70%;"><span>$620</span></div>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-family:Arial; font-size:.68rem; color:var(--sub); margin-top:.4rem;">
+        <span>Wk 1</span><span>Wk 2</span><span>Wk 3</span><span>Wk 4</span><span>Wk 5</span>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:1.75rem;">
+      <div class="card">
+        <p class="sans" style="font-size:.68rem; text-transform:uppercase; letter-spacing:.05em; color:var(--sub); margin-bottom:.8rem;">Most booked services</p>
+        <p class="sans" style="font-size:.85rem; line-height:2.2;">
+          Gel manicure <span style="float:right; color:var(--deep); font-weight:700;">42%</span><br>
+          Full acrylic set <span style="float:right; color:var(--deep); font-weight:700;">27%</span><br>
+          Nail art / 3D <span style="float:right; color:var(--deep); font-weight:700;">18%</span><br>
+          Pedicure deluxe <span style="float:right; color:var(--deep); font-weight:700;">13%</span>
+        </p>
+      </div>
+      <div class="card">
+        <p class="sans" style="font-size:.68rem; text-transform:uppercase; letter-spacing:.05em; color:var(--sub); margin-bottom:.8rem;">Loyalty program</p>
+        <p class="sans" style="font-size:.85rem; line-height:2.2;">
+          Points issued this month <span style="float:right; font-weight:700;">1,240</span><br>
+          Free services redeemed <span style="float:right; font-weight:700;">3</span><br>
+          Active point holders <span style="float:right; font-weight:700;">34</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

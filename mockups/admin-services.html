@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Services</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="demo-strip">
+  <b>MOCKUP NAV</b>
+  <a href="index.html">Landing</a><a href="login.html">Login</a><a href="dashboard.html">User dashboard</a>
+  <a href="book-service.html">Book: service</a><a href="book-schedule.html">Book: schedule</a>
+  <a href="book-confirm.html">Book: confirmation</a><a href="my-bookings.html">My bookings</a>
+  <a href="admin-dashboard.html">Admin: dashboard</a><a href="admin-bookings.html">Admin: requests</a>
+  <a href="admin-booking-detail.html">Admin: booking detail</a><a href="admin-calendar.html">Admin: calendar</a>
+  <a class="on" href="admin-services.html">Admin: services</a><a href="admin-clients.html">Admin: clients</a>
+  <a href="admin-analytics.html">Admin: analytics</a>
+</div>
+
+<div class="admin-shell">
+  <div class="admin-sidebar">
+    <div class="brand">TheGelBar <span style="color:var(--gold)">Admin</span></div>
+    <div class="admin-nav">
+      <a href="admin-dashboard.html">🏠 <span class="label-text">Dashboard</span></a>
+      <a href="admin-bookings.html">📥 <span class="label-text">Requests</span></a>
+      <a href="admin-calendar.html">📅 <span class="label-text">Calendar</span></a>
+      <a href="admin-clients.html">👥 <span class="label-text">Clients</span></a>
+      <a class="active" href="admin-services.html">💅 <span class="label-text">Services</span></a>
+      <a href="admin-analytics.html">📊 <span class="label-text">Analytics</span></a>
+      <a href="login.html">🚪 <span class="label-text">Log out</span></a>
+    </div>
+  </div>
+
+  <div class="admin-main">
+    <div class="admin-topbar">
+      <h1>Services</h1>
+      <button class="btn btn-primary btn-sm">+ Add service</button>
+    </div>
+
+    <div class="card">
+      <table>
+        <tr><th>Service</th><th>Duration</th><th>Price</th><th></th></tr>
+        <tr><td>Gel manicure</td><td>45 min</td><td>$35</td><td><a href="#" class="sans" style="font-size:.75rem; color:var(--deep);">Edit</a></td></tr>
+        <tr><td>Full acrylic set</td><td>90 min</td><td>$65</td><td><a href="#" class="sans" style="font-size:.75rem; color:var(--deep);">Edit</a></td></tr>
+        <tr><td>Nail art / 3D design</td><td>60 min</td><td>$45</td><td><a href="#" class="sans" style="font-size:.75rem; color:var(--deep);">Edit</a></td></tr>
+        <tr><td>Pedicure deluxe</td><td>50 min</td><td>$40</td><td><a href="#" class="sans" style="font-size:.75rem; color:var(--deep);">Edit</a></td></tr>
+        <tr><td>Soak-off + reshape</td><td>25 min</td><td>$18</td><td><a href="#" class="sans" style="font-size:.75rem; color:var(--deep);">Edit</a></td></tr>
+      </table>
+    </div>
+
+    <div class="section-title">Edit service</div>
+    <div class="card" style="max-width:420px;">
+      <div class="field"><label>Service name</label><input type="text" value="Gel manicure"></div>
+      <div class="grid-2">
+        <div class="field"><label>Minimum duration (min)</label><input type="text" value="45"></div>
+        <div class="field"><label>Price ($)</label><input type="text" value="35"></div>
+      </div>
+      <button class="btn btn-primary btn-block">Save changes</button>
+    </div>
+
+    <div class="section-title">Loyalty program</div>
+    <div class="card" style="max-width:420px;">
+      <div class="field"><label>Points per visit</label><input type="text" value="1"></div>
+      <div class="field"><label>Free service after (points)</label><input type="text" value="10"></div>
+      <button class="btn btn-ghost btn-block">Update policy</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book — Schedule</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="demo-strip">
+  <b>MOCKUP NAV</b>
+  <a href="index.html">Landing</a><a href="login.html">Login</a><a href="dashboard.html">User dashboard</a>
+  <a href="book-service.html">Book: service</a><a class="on" href="book-schedule.html">Book: schedule</a>
+  <a href="book-confirm.html">Book: confirmation</a><a href="my-bookings.html">My bookings</a>
+  <a href="admin-dashboard.html">Admin: dashboard</a><a href="admin-bookings.html">Admin: requests</a>
+  <a href="admin-booking-detail.html">Admin: booking detail</a><a href="admin-calendar.html">Admin: calendar</a>
+  <a href="admin-services.html">Admin: services</a><a href="admin-clients.html">Admin: clients</a>
+  <a href="admin-analytics.html">Admin: analytics</a>
+</div>
+
+<div class="topbar">
+  <div class="brand">TheGelBar</div>
+  <nav><a href="book-service.html">← Back</a></nav>
+  <div class="avatar">JM</div>
+</div>
+
+<div class="page">
+  <p class="sans" style="font-size:.7rem; color:var(--sub); letter-spacing:.05em; text-transform:uppercase;">Step 2 of 3</p>
+  <h1 class="h">Pick date &amp; time</h1>
+  <p class="lead">Gel manicure · 45 min · $35</p>
+
+  <div class="cal">
+    <div class="cal-head">
+      <button>‹</button>
+      <div style="font-weight:700;">September 2026</div>
+      <button>›</button>
+    </div>
+    <div class="cal-grid">
+      <div class="dow">S</div><div class="dow">M</div><div class="dow">T</div><div class="dow">W</div><div class="dow">T</div><div class="dow">F</div><div class="dow">S</div>
+      <div class="cal-day muted">30</div><div class="cal-day muted">31</div>
+      <div class="cal-day avail">1</div><div class="cal-day avail">2</div><div class="cal-day full">3</div>
+      <div class="cal-day selected">4</div><div class="cal-day avail">5</div>
+      <div class="cal-day avail">6</div><div class="cal-day avail">7</div><div class="cal-day avail">8</div><div class="cal-day full">9</div><div class="cal-day avail">10</div><div class="cal-day avail">11</div><div class="cal-day avail">12</div>
+      <div class="cal-day avail">13</div><div class="cal-day avail">14</div><div class="cal-day avail">15</div><div class="cal-day avail">16</div><div class="cal-day avail">17</div><div class="cal-day avail">18</div><div class="cal-day avail">19</div>
+    </div>
+  </div>
+
+  <p class="sans" style="font-size:.72rem; color:var(--sub); margin:1.1rem 0 .3rem; text-transform:uppercase; letter-spacing:.05em;">Available times · Thu Sep 4</p>
+  <div class="slot-row">
+    <div class="slot">10:00 AM</div><div class="slot">11:15 AM</div><div class="slot taken">12:30 PM</div>
+    <div class="slot selected">2:30 PM</div><div class="slot">3:45 PM</div><div class="slot">5:00 PM</div>
+  </div>
+
+  <div class="section-title">Upload inspo images</div>
+  <div class="upload-box">
+    <div style="font-size:1.6rem; margin-bottom:.4rem;">📎</div>
+    Drag photos here or tap to upload
+  </div>
+  <div class="thumb-row">
+    <div class="thumb"><img src="https://picsum.photos/seed/inspo1/100" alt=""></div>
+    <div class="thumb"><img src="https://picsum.photos/seed/inspo2/100" alt=""></div>
+  </div>
+
+  <div class="section-title">Notes for your nail tech</div>
+  <div class="field">
+    <label>Health / allergy / injury notes (optional)</label>
+    <textarea placeholder="e.g. sensitive to acetone, small cut on left thumb..."></textarea>
+  </div>
+
+  <a href="book-confirm.html" class="btn btn-primary btn-block" style="margin-top:.5rem;">Review &amp; request booking →</a>
+</div>
+
+<script>
+document.querySelectorAll('.slot:not(.taken)').forEach(s=>{
+  s.addEventListener('click', ()=>{
+    document.querySelectorAll('.slot').forEach(x=>x.classList.remove('selected'));
+    s.classList.add('selected');
+  });
+});
+document.querySelectorAll('.cal-day.avail, .cal-day.selected').forEach(d=>{
+  d.addEventListener('click', ()=>{
+    document.querySelectorAll('.cal-day').forEach(x=>x.classList.remove('selected'));
+    d.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

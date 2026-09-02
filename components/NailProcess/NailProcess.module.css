@@ -1,0 +1,127 @@
+.section {
+  position: relative;
+  height: 550vh;
+}
+
+.sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(20px, 4vh, 40px);
+  overflow: hidden;
+  background: #efe3e8;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.composition {
+  position: relative;
+  width: min(60vw, 42vh, 420px);
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.baseLayer {
+  opacity: 1;
+}
+
+.overlayLayer {
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.sparkleLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.sparkle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.sparkle svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.progressTrack {
+  position: absolute;
+  right: clamp(12px, 4vw, 32px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 180px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 3px;
+}
+
+.progressFill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0%;
+  border-radius: 3px;
+  background: linear-gradient(#e79bb8, #982552);
+}
+
+.caption {
+  flex-shrink: 0;
+  text-align: center;
+  max-width: 320px;
+}
+
+.captionEyebrow {
+  font-family: Arial, sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #982552;
+  margin: 0 0 0.4rem;
+}
+
+.captionTitle {
+  font-family: Georgia, 'Playfair Display', serif;
+  font-size: 1.4rem;
+  color: #3e1427;
+  margin: 0 0 0.4rem;
+}
+
+.captionDesc {
+  font-family: Arial, sans-serif;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: #8c5470;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .composition {
+    width: min(72vw, 38vh, 340px);
+  }
+  .captionTitle {
+    font-size: 1.2rem;
+  }
+}
