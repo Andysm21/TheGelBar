@@ -24,7 +24,12 @@ export default function AdminLoginPage() {
     const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) {
       setLoading(false);
-      setError('Invalid email or password.');
+      // Showing the real Supabase message (not a generic "invalid
+      // credentials") while this is being set up — it distinguishes a
+      // genuine wrong password from an unconfirmed email, missing user,
+      // or a project/env misconfiguration, which all otherwise look
+      // identical to the person typing.
+      setError(signInError.message);
       return;
     }
 
