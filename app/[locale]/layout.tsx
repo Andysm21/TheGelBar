@@ -5,9 +5,13 @@ import { notFound } from 'next/navigation';
 import type { Metadata, Viewport } from 'next';
 import LangSwitch from '@/components/LangSwitch';
 
-export function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
-}
+// Not using generateStaticParams here: several routes (admin/*, book,
+// dashboard) need to render dynamically anyway (auth-gated or
+// user-specific), and next-intl's server APIs require either full static
+// rendering everywhere (via setRequestLocale per page) or none — mixing
+// is what caused the prerender failure. Simpler to render every locale
+// route dynamically than to add setRequestLocale to every page.
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'The Gel Bar',

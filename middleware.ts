@@ -1,7 +1,9 @@
 import createMiddleware from 'next-intl/middleware';
-import { createServerClient } from '@supabase/ssr';
+import { createServerClient, type CookieOptionsWithName } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { locales } from './i18n';
+
+type CookieToSet = { name: string; value: string; options?: CookieOptionsWithName };
 
 const intlMiddleware = createMiddleware({
   locales,
@@ -39,7 +41,7 @@ export async function middleware(request: NextRequest) {
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
     cookies: {
       getAll: () => request.cookies.getAll(),
-      setAll: (cookiesToSet) => {
+      setAll: (cookiesToSet: CookieToSet[]) => {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options));
       },
