@@ -2,18 +2,14 @@
 
 import styles from './FloatingNails.module.css';
 
-// TODO(real photos): replace these with cropped nail-design closeups
-// extracted from Mariam's own work photos, once she sends them as file
-// attachments (pasted chat images aren't accessible as files — see
-// DEPLOY.md). Each entry is one floating nail image; keep 5-6 for the
-// hero cluster. Crop tight to a single nail, square-ish aspect, transparent
-// or matching background works best.
+// Real nail-design closeups, cropped from Mariam's own work photos
+// (public/nails-gallery → public/gallery).
 const NAIL_IMAGES = [
-  '/gallery/nail-crop-1.png',
-  '/gallery/nail-crop-2.png',
-  '/gallery/nail-crop-3.png',
-  '/gallery/nail-crop-4.png',
-  '/gallery/nail-crop-5.png',
+  '/gallery/nail-crop-1.jpg',
+  '/gallery/nail-crop-2.jpg',
+  '/gallery/nail-crop-3.jpg',
+  '/gallery/nail-crop-4.jpg',
+  '/gallery/nail-crop-5.jpg',
 ];
 
 const POSITIONS = [

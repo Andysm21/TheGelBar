@@ -6,9 +6,9 @@ import { SERVICES_CATALOG } from '@/lib/services-catalog';
 import { formatDuration } from '@/lib/format';
 import styles from './page.module.css';
 
-// TODO(real photos): swap for her real work photos once sent as file
-// attachments. No captions per her request — grid tiles only.
-const GALLERY_IMAGES = Array.from({ length: 8 }, (_, i) => `https://picsum.photos/seed/gelbar-work-${i}/500/500`);
+// Real work photos (public/nails-gallery → public/gallery). No captions
+// per her request — grid tiles only.
+const GALLERY_IMAGES = Array.from({ length: 10 }, (_, i) => `/gallery/work-${i + 1}.jpg`);
 
 export default function LandingPage({ params: { locale } }: { params: { locale: string } }) {
   const t = useTranslations();

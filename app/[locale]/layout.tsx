@@ -3,6 +3,7 @@ import { getMessages } from 'next-intl/server';
 import { locales } from '@/i18n';
 import { notFound } from 'next/navigation';
 import type { Metadata, Viewport } from 'next';
+import LangSwitch from '@/components/LangSwitch';
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -33,7 +34,12 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} dir={dir}>
       <body>
-        <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider messages={messages}>
+          <div style={{ position: 'fixed', top: 12, insetInlineEnd: 12, zIndex: 200 }}>
+            <LangSwitch />
+          </div>
+          {children}
+        </NextIntlClientProvider>
       </body>
     </html>
   );

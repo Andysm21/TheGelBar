@@ -124,3 +124,45 @@ img {
   background: #eee;
   color: #666;
 }
+
+label {
+  display: block;
+  font-family: Arial, sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--sub);
+  margin-bottom: 0.4rem;
+}
+
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='tel'],
+input[type='date'],
+textarea,
+select {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-family: Arial, sans-serif;
+  font-size: 0.85rem;
+  background: #fff;
+  color: var(--text);
+  min-height: 44px;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.field {
+  margin-bottom: 1.1rem;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.68rem;
+}

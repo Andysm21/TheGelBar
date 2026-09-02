@@ -6,6 +6,19 @@ real bookings saved, real logins, real calendar sync — follow the steps
 below in order. None of this requires touching code beyond pasting keys into
 `.env.local`.
 
+## 0. Push to GitHub
+
+The repo is already committed locally (`git init`, `git add -A`, initial
+commit done) with the remote already pointed at
+`https://github.com/Andysm21/TheGelBar.git`. From this folder, just:
+
+```bash
+git push -u origin main
+```
+
+That's the only step needed here — it'll prompt for your GitHub login
+(browser or token) since it's your repo and I'm not authenticated as you.
+
 ## 1. Create the Supabase project (the database)
 
 1. Go to [supabase.com](https://supabase.com) → sign up (free tier is enough
@@ -33,6 +46,40 @@ below in order. None of this requires touching code beyond pasting keys into
    - **service_role** key (keep secret, never share) → becomes
      `SUPABASE_SERVICE_ROLE_KEY`
 7. Copy `.env.local.example` to `.env.local` and paste those three values in.
+
+## 1b. Create your admin (owner) login
+
+`/admin/login` (email + password, `app/[locale]/admin/login/page.tsx`) and
+route protection (`middleware.ts`) are now both built — every `/admin/*`
+URL checks for a real Supabase session **and** `profiles.role = 'owner'`
+before rendering, redirecting to `/admin/login` otherwise. Until this
+project is connected to Supabase (no env vars set), the middleware fails
+open in dev only, so you can keep browsing the mock-data admin pages while
+building — in production (`NODE_ENV=production`, i.e. once deployed to
+Vercel) with no Supabase configured, it fails closed instead (503) rather
+than leaving admin open. Once you complete the steps below, it's a real
+gate — no code changes needed to activate it.
+
+To actually create your login:
+
+**Easiest — Supabase dashboard:**
+1. **Authentication → Users → Add user** → enter an email + password for
+   yourself (e.g. `mariam@thegelbar.eg` + a strong password you choose —
+   pick it here, not asking me to invent one you'd have to trust me with).
+2. Copy the new user's UUID from that row.
+3. **SQL Editor** → run:
+   ```sql
+   update profiles set role = 'owner' where id = 'paste-the-uuid-here';
+   ```
+   (The `on_auth_user_created` trigger already created the `profiles` row
+   automatically when you added the user — this just flips its role.)
+4. Go to `/admin/login`, sign in with that email/password. You're in.
+
+**Still needed in code** (not built yet): an actual `/admin/login` page
+with an email/password form calling `supabase.auth.signInWithPassword`,
+plus middleware that checks `profiles.role === 'owner'` before allowing
+`/admin/*` — right now those pages are open to anyone who knows the URL.
+Flag this if you want it prioritized before real launch.
 
 ## 2. Turn on Google sign-in (for clients logging in)
 
@@ -96,6 +143,36 @@ Apple Calendar by adding that Google account on her iPhone
    a custom domain (thegelbar.eg or similar) can be added later under
    **Project Settings → Domains** for ~$10-15/yr through any registrar.
 6. Every future `git push` to `main` auto-deploys — no manual redeploy step.
+
+## Security — what "secure" actually means here
+
+No website is "100% secure" — that's not a real state any site reaches,
+including banks'. What's achievable, and what this project does:
+
+**Done:**
+- `/admin/*` routes require a real session + `role = 'owner'` (middleware,
+  above) — the biggest gap from before, now closed.
+- Row Level Security on every table (`supabase/schema.sql`) — even if
+  someone got a valid client session, Postgres itself blocks them from
+  reading/writing another client's bookings or profile; this holds even
+  if a future bug in application code forgot a check.
+- Passwords never touch this codebase — Supabase Auth owns them
+  (industry-standard hashing, not something rolled here).
+- `.env.local` (real keys) is gitignored — never committed, never pushed.
+- Storage bucket policies scope inspo photo access to their owner + the
+  admin only (`schema.sql`).
+
+**Still worth doing before real launch (flag if you want these next):**
+- Rate limiting on `/admin/login` and the booking-creation endpoint (stops
+  password brute-forcing and booking-spam) — not yet added, needs either
+  Vercel's built-in protection tier or a small middleware counter.
+- Security headers (`Content-Security-Policy`, `X-Frame-Options`, etc.) —
+  not yet set in `next.config.mjs`.
+- The `npm audit` items already flagged below — real vulnerabilities in
+  dependencies, fixed by version bumps, deferred so the build stayed
+  simple while everything was mock data.
+- 2FA on your own Supabase and Vercel accounts (not app code, but the
+  actual keys to everything — worth turning on regardless).
 
 ## Egress & caching strategy (keeping DB calls to a minimum)
 

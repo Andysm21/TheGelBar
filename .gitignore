@@ -3,3 +3,6 @@ node_modules
 .env.local
 .DS_Store
 mockups.zip
+
+# Raw unprocessed source photos — processed versions live in public/gallery
+public/nails-gallery
