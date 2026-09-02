@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { SERVICES_CATALOG, designOptionsForTier, summarizeBooking } from '@/lib/services-catalog';
@@ -33,6 +33,21 @@ export default function BookPage() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [inspoFiles, setInspoFiles] = useState<{ file: File; url: string }[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleFilesSelected(fileList: FileList | null) {
+    if (!fileList) return;
+    const next = Array.from(fileList).map((file) => ({ file, url: URL.createObjectURL(file) }));
+    setInspoFiles((prev) => [...prev, ...next]);
+  }
+
+  function removeInspoFile(index: number) {
+    setInspoFiles((prev) => {
+      URL.revokeObjectURL(prev[index].url);
+      return prev.filter((_, i) => i !== index);
+    });
+  }
 
   const service = SERVICES_CATALOG.find((s) => s.id === serviceId)!;
   const designOptions = designOptionsForTier(service.designTier);
@@ -260,20 +275,71 @@ export default function BookPage() {
           </p>
           <h1 style={{ fontSize: '1.4rem', color: 'var(--deep)', margin: '.3rem 0 1.25rem' }}>{t('uploadInspo')}</h1>
 
-          <div
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(e) => {
+              handleFilesSelected(e.target.files);
+              e.target.value = ''; // allow re-picking the same file later
+            }}
+            style={{ display: 'none' }}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
             className="sans"
             style={{
+              width: '100%',
               border: '2px dashed var(--border)',
               borderRadius: 16,
               padding: '2rem 1rem',
               textAlign: 'center',
               color: 'var(--sub)',
               fontSize: '.8rem',
-              marginBottom: '1.25rem',
+              background: 'none',
+              cursor: 'pointer',
+              marginBottom: inspoFiles.length ? '.9rem' : '1.25rem',
             }}
           >
-            📎 Drag photos here or tap to upload
-          </div>
+            📎 Tap to add photos
+          </button>
+
+          {inspoFiles.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.6rem', marginBottom: '1.25rem' }}>
+              {inspoFiles.map((f, i) => (
+                <div key={f.url} style={{ position: 'relative', width: 72, height: 72 }}>
+                  <img
+                    src={f.url}
+                    alt=""
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10, border: '1px solid var(--border)' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeInspoFile(i)}
+                    aria-label="Remove photo"
+                    style={{
+                      position: 'absolute',
+                      top: -6,
+                      insetInlineEnd: -6,
+                      width: 20,
+                      height: 20,
+                      borderRadius: '50%',
+                      background: 'var(--deep)',
+                      color: '#fff',
+                      border: '2px solid #fff',
+                      fontSize: '.7rem',
+                      lineHeight: 1,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
           <label className="sans" style={{ display: 'block', fontSize: '.68rem', textTransform: 'uppercase', color: 'var(--sub)', marginBottom: '.4rem' }}>
             {t('notes')}
