@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { adminSignIn } from '@/lib/supabase/actions';
+import NailLoader from '@/components/NailLoader/NailLoader';
 
 export default function AdminLoginPage() {
   const { locale } = useParams<{ locale: string }>();
@@ -62,7 +63,8 @@ export default function AdminLoginPage() {
             {error}
           </p>
         )}
-        <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+        <button type="submit" className="btn btn-primary btn-block" disabled={loading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem' }}>
+          {loading && <NailLoader size="mini" />}
           {loading ? 'Signing in…' : 'Sign in'}
         </button>
       </form>

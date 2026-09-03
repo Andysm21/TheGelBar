@@ -1,0 +1,16 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--milk, #fff1f6);
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+
+.fadeOut {
+  opacity: 0;
+  pointer-events: none;
+}

@@ -1,0 +1,128 @@
+.full {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.4rem;
+}
+
+.inlineWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1rem 0;
+}
+
+.row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.nail {
+  width: 30px;
+  height: 46px;
+  position: relative;
+}
+
+.svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+.bed {
+  fill: var(--milk, #fff1f6);
+  stroke: var(--border, #f0dbe4);
+  stroke-width: 1.4;
+}
+
+.polish {
+  transform-origin: 50% 100%;
+  animation: nlFill 2.1s cubic-bezier(0.5, 0, 0.2, 1) infinite;
+}
+
+.polish-marble { fill: url(#nl-marble); }
+.polish-foil { fill: #f3d9c9; }
+.polish-chrome { fill: url(#nl-chrome); }
+.polish-dotTip { fill: var(--rose, #d96696); }
+.polish-floral { fill: #fdf1e7; }
+
+.design {
+  opacity: 0;
+  animation: nlReveal 2.1s ease infinite;
+}
+
+.shine {
+  fill: rgba(255, 255, 255, 0.55);
+  opacity: 0;
+  animation: nlShine 2.1s ease infinite;
+}
+
+@keyframes nlFill {
+  0% { transform: scaleY(0); }
+  30% { transform: scaleY(1); }
+  80% { transform: scaleY(1); }
+  100% { transform: scaleY(0); }
+}
+
+@keyframes nlReveal {
+  0%, 28% { opacity: 0; }
+  38%, 80% { opacity: 1; }
+  92%, 100% { opacity: 0; }
+}
+
+@keyframes nlShine {
+  0%, 24% { opacity: 0; transform: translateX(-6px); }
+  34% { opacity: 0.9; transform: translateX(0); }
+  46%, 100% { opacity: 0; transform: translateX(6px); }
+}
+
+.caption {
+  font-family: Arial, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--sub, #8c5470);
+  text-align: center;
+}
+
+.mini {
+  display: inline-flex;
+  width: 16px;
+  height: 24px;
+  vertical-align: middle;
+}
+
+.mini .nail {
+  width: 16px;
+  height: 24px;
+}
+
+.mini .polish {
+  animation-duration: 1.3s;
+}
+.mini .shine {
+  animation-duration: 1.3s;
+}
+.mini .design {
+  animation-duration: 1.3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .polish,
+  .shine,
+  .design {
+    animation: none !important;
+  }
+  .polish {
+    transform: scaleY(1) !important;
+  }
+  .design {
+    opacity: 1 !important;
+  }
+  .shine {
+    opacity: 0 !important;
+  }
+}

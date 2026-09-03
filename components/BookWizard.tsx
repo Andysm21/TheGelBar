@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { formatDuration } from '@/lib/format';
 import Calendar, { DayAvailability } from '@/components/Calendar/Calendar';
+import NailLoader from '@/components/NailLoader/NailLoader';
 import { fetchMonthAvailability, fetchOpenTimesForDate, fetchServiceCatalog, fetchDesignOptions, createBooking } from '@/lib/supabase/actions';
 
 const STEPS = ['service', 'slot', 'details'] as const;
@@ -128,9 +129,7 @@ export default function BookWizard({ locale }: { locale: string }) {
   if (!catalogLoaded || !service) {
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '3rem 1.25rem', textAlign: 'center' }}>
-        <p className="sans" style={{ color: 'var(--sub)', fontSize: '.85rem' }}>
-          Loading services…
-        </p>
+        <NailLoader size="full" caption="Setting up your services…" />
       </div>
     );
   }
@@ -378,7 +377,8 @@ export default function BookWizard({ locale }: { locale: string }) {
             </p>
           )}
 
-          <button className="btn btn-primary btn-block" disabled={submitting} onClick={handleSubmit}>
+          <button className="btn btn-primary btn-block" disabled={submitting} onClick={handleSubmit} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem' }}>
+            {submitting && <NailLoader size="mini" />}
             {submitting ? 'Sending…' : `${t('requestBooking')} →`}
           </button>
         </>
