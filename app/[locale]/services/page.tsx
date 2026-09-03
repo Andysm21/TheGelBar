@@ -10,7 +10,13 @@ const GALLERY_IMAGES = Array.from({ length: 10 }, (_, i) => `/gallery/work-${i +
 export default async function ServicesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations();
-  const services = await getServiceCatalog();
+  let services: Awaited<ReturnType<typeof getServiceCatalog>> = [];
+  let debugError: string | null = null;
+  try {
+    services = await getServiceCatalog();
+  } catch (e) {
+    debugError = e instanceof Error ? `${e.name}: ${e.message}` : JSON.stringify(e);
+  }
 
   return (
     <div className={styles.wrap}>
@@ -18,6 +24,12 @@ export default async function ServicesPage({ params }: { params: Promise<{ local
       <p className="sans" style={{ textAlign: 'center', color: 'var(--sub)', fontSize: '.8rem', marginBottom: '2rem' }}>
         Every service, real pricing — no guesswork.
       </p>
+      {debugError && (
+        <p style={{ color: 'red', fontSize: '.7rem', textAlign: 'center', marginBottom: '1rem' }}>DEBUG: {debugError}</p>
+      )}
+      {!debugError && (
+        <p style={{ color: 'red', fontSize: '.7rem', textAlign: 'center', marginBottom: '1rem' }}>DEBUG: no error, count={services.length}</p>
+      )}
       <div className={styles.grid}>
         {services.map((s, i) => (
           <div key={s.id} className={styles.card}>
