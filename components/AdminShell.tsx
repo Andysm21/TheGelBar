@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useParams, usePathname } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import styles from './AdminShell.module.css';
 
 const NAV = [
@@ -16,6 +17,12 @@ const NAV = [
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const { locale } = useParams<{ locale: string }>();
   const pathname = usePathname();
+
+  async function logOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.href = `/${locale}/admin/login`;
+  }
 
   return (
     <div className={styles.shell}>
@@ -32,9 +39,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             </Link>
           );
         })}
-        <Link href={`/${locale}/login`} className={`sans ${styles.navLink} ${styles.logoutLink}`}>
+        <button onClick={logOut} className={`sans ${styles.navLink} ${styles.logoutLink}`} style={{ background: 'none', border: 'none', textAlign: 'start', cursor: 'pointer', width: '100%' }}>
           🚪 Log out
-        </Link>
+        </button>
       </div>
       <div className={styles.main}>{children}</div>
     </div>

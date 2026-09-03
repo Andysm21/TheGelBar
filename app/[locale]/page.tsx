@@ -4,7 +4,9 @@ import NailProcess from '@/components/NailProcess/NailProcess';
 import FloatingNails from '@/components/FloatingNails/FloatingNails';
 import styles from './page.module.css';
 
-const MAPS_URL = 'https://www.google.com/maps/search/?api=1&query=The+Gel+Bar+Mohandeseen+Cairo';
+const ADDRESS = '7 Ahmed Oraby, Madinet Al Eelam, Agouza, Giza Governorate 3755201';
+const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ADDRESS)}`;
+const MAPS_EMBED_URL = `https://www.google.com/maps?q=${encodeURIComponent(ADDRESS)}&output=embed`;
 
 export default async function LandingPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -46,15 +48,26 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
       <section className={styles.section}>
         <h2>Location</h2>
         <p className="sans" style={{ textAlign: 'center', color: 'var(--sub)', fontSize: '.85rem', marginBottom: '1.5rem' }}>
-          {t('brand.location')}
+          {ADDRESS}
         </p>
+        <div className={styles.mapEmbedWrap}>
+          <iframe
+            src={MAPS_EMBED_URL}
+            width="100%"
+            height="100%"
+            style={{ border: 0 }}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title="The Gel Bar location"
+          />
+        </div>
         <a href={MAPS_URL} target="_blank" rel="noopener noreferrer" className={styles.mapLink}>
           <div className={styles.mapCard}>
             <span>📍</span>
             <div>
               <div style={{ fontWeight: 600 }}>Open in Google Maps</div>
               <div className="sans" style={{ fontSize: '.7rem', color: 'var(--sub)' }}>
-                {t('brand.location')}
+                {ADDRESS}
               </div>
             </div>
           </div>

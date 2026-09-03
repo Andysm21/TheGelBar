@@ -168,6 +168,15 @@
   object-fit: cover;
 }
 
+.mapEmbedWrap {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 8px 22px rgba(217, 102, 150, 0.15);
+  margin-bottom: 1rem;
+}
+
 .mapLink {
   display: block;
 }

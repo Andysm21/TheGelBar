@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import { createClient } from './server';
+import { createPublicClient } from './public';
 
 // Every function here is wrapped in React's `cache()`, which de-dupes
 // identical calls within a single request/render pass — if three
@@ -30,7 +31,12 @@ import { createClient } from './server';
 export const getServiceCatalog = cache(
   unstable_cache(
     async () => {
-      const supabase = await createClient();
+      // Cookie-free client here on purpose: unstable_cache forbids
+      // calling dynamic APIs like cookies() inside its cached function
+      // (Next.js throws "used ... inside unstable_cache" at runtime) —
+      // this data has no per-user variation anyway, so a plain anon
+      // client is both correct and required.
+      const supabase = createPublicClient();
       const { data, error } = await supabase
         .from('services')
         .select('id, name_en, name_ar, base_price_egp, base_minutes, design_tier')
@@ -46,7 +52,7 @@ export const getServiceCatalog = cache(
 export const getDesignOptions = cache(
   unstable_cache(
     async () => {
-      const supabase = await createClient();
+      const supabase = createPublicClient();
       const { data, error } = await supabase
         .from('design_options')
         .select('id, name_en, name_ar, price_egp, tier')
@@ -63,7 +69,7 @@ export const getDesignOptions = cache(
 export const getAppSettings = cache(
   unstable_cache(
     async () => {
-      const supabase = await createClient();
+      const supabase = createPublicClient();
       const { data, error } = await supabase.from('app_settings').select('loyalty_enabled').eq('id', 1).single();
       if (error) throw error;
       return data;

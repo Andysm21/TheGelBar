@@ -13,7 +13,7 @@
   border-radius: 40% 40% 45% 45% / 55% 55% 45% 45%;
   overflow: hidden;
   box-shadow: 0 16px 30px rgba(152, 37, 82, 0.25);
-  animation: bob 4s ease-in-out infinite, spin 12s linear infinite;
+  animation: bob 4s ease-in-out infinite;
 }
 
 .nail img {
@@ -27,7 +27,7 @@
   top: 10px;
   margin-left: -38px;
   z-index: 5;
-  animation-duration: 4s, 11s;
+  animation-duration: 4s;
 }
 
 .n2 {
@@ -35,8 +35,8 @@
   top: 60px;
   z-index: 2;
   transform: rotate(-14deg);
-  animation-duration: 3.6s, 13s;
-  animation-delay: 0.3s, 0s;
+  animation-duration: 3.6s;
+  animation-delay: 0.3s;
 }
 
 .n3 {
@@ -44,9 +44,8 @@
   top: 40px;
   z-index: 2;
   transform: rotate(12deg);
-  animation-duration: 4.2s, 10s;
-  animation-delay: 0.6s, 0s;
-  animation-direction: normal, reverse;
+  animation-duration: 4.2s;
+  animation-delay: 0.6s;
 }
 
 .n4 {
@@ -54,8 +53,8 @@
   top: 150px;
   z-index: 6;
   transform: scale(0.78);
-  animation-duration: 3.8s, 14s;
-  animation-delay: 0.9s, 0s;
+  animation-duration: 3.8s;
+  animation-delay: 0.9s;
 }
 
 .n5 {
@@ -63,19 +62,13 @@
   top: 155px;
   z-index: 6;
   transform: scale(0.72);
-  animation-duration: 4.4s, 9.5s;
-  animation-delay: 1.2s, 0s;
-  animation-direction: normal, reverse;
+  animation-duration: 4.4s;
+  animation-delay: 1.2s;
 }
 
 @keyframes bob {
   0%, 100% { translate: 0 0; }
   50% { translate: 0 -14px; }
-}
-
-@keyframes spin {
-  from { transform: rotateY(0deg); }
-  to { transform: rotateY(360deg); }
 }
 
 @media (max-width: 480px) {

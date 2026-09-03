@@ -117,6 +117,7 @@ grant select, insert on public.booking_images to authenticated;
 grant select on public.services to anon, authenticated;
 grant select on public.design_options to anon, authenticated;
 grant select on public.availability_slots to anon, authenticated;
+grant insert, update, delete on public.availability_slots to authenticated;
 grant select on public.app_settings to anon, authenticated;
 grant update on public.app_settings to authenticated;
 
@@ -151,6 +152,20 @@ create policy "app_settings: anyone reads" on app_settings
 
 create policy "app_settings: owner updates" on app_settings
   for update using (public.is_owner());
+
+alter table availability_slots enable row level security;
+
+create policy "availability_slots: anyone reads" on availability_slots
+  for select using (true);
+
+create policy "availability_slots: owner writes" on availability_slots
+  for insert with check (public.is_owner());
+
+create policy "availability_slots: owner updates" on availability_slots
+  for update using (public.is_owner());
+
+create policy "availability_slots: owner deletes" on availability_slots
+  for delete using (public.is_owner());
 
 create policy "profiles: self read/write" on profiles
   for all using (auth.uid() = id);
