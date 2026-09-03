@@ -30,7 +30,7 @@ import { createClient } from './server';
 export const getServiceCatalog = cache(
   unstable_cache(
     async () => {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase
         .from('services')
         .select('id, name_en, name_ar, base_price_egp, base_minutes, design_tier')
@@ -46,7 +46,7 @@ export const getServiceCatalog = cache(
 export const getDesignOptions = cache(
   unstable_cache(
     async () => {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase
         .from('design_options')
         .select('id, name_en, name_ar, price_egp, tier')
@@ -63,7 +63,7 @@ export const getDesignOptions = cache(
 export const getAppSettings = cache(
   unstable_cache(
     async () => {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase.from('app_settings').select('loyalty_enabled').eq('id', 1).single();
       if (error) throw error;
       return data;
@@ -75,7 +75,7 @@ export const getAppSettings = cache(
 
 /** One query for the whole visible month grid — never per-day. */
 export const getMonthAvailability = cache(async (year: number, month: number) => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const start = `${year}-${String(month + 1).padStart(2, '0')}-01`;
   const endDate = new Date(year, month + 1, 0).getDate();
   const end = `${year}-${String(month + 1).padStart(2, '0')}-${endDate}`;
@@ -95,7 +95,7 @@ export const getMonthAvailability = cache(async (year: number, month: number) =>
  * separately (the N+1 that would otherwise happen on the bookings list).
  */
 export const getClientBookings = cache(async (clientId: string) => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('bookings')
     .select(
@@ -110,7 +110,7 @@ export const getClientBookings = cache(async (clientId: string) => {
 });
 
 export const getPendingBookingsForOwner = cache(async () => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('bookings')
     .select(
@@ -126,7 +126,7 @@ export const getPendingBookingsForOwner = cache(async () => {
 
 /** All bookings on a given day (used by admin calendar's day panel). */
 export const getBookingsForDate = cache(async (date: string) => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('bookings')
     .select(
@@ -143,7 +143,7 @@ export const getBookingsForDate = cache(async (date: string) => {
 
 /** Single booking with everything the admin detail / close-out screen needs. */
 export const getBookingById = cache(async (id: string) => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('bookings')
     .select(
@@ -162,7 +162,7 @@ export const getBookingById = cache(async (id: string) => {
 
 /** Every booking for the admin dashboard's "today" list — one day, one query. */
 export const getTodayBookings = cache(async () => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const today = new Date().toISOString().slice(0, 10);
   const { data, error } = await supabase
     .from('bookings')
@@ -180,7 +180,7 @@ export const getTodayBookings = cache(async () => {
 
 /** All clients (profiles with role='client') for the admin clients page. */
 export const getAllClients = cache(async () => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('profiles')
     .select('id, name, email, loyalty_points, admin_private_notes')
@@ -192,7 +192,7 @@ export const getAllClients = cache(async () => {
 
 /** One client's full visit history (for their admin profile page). */
 export const getClientHistory = cache(async (clientId: string) => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('bookings')
     .select(
@@ -208,7 +208,7 @@ export const getClientHistory = cache(async (clientId: string) => {
 
 /** Simple real aggregates for the analytics page — no fabricated numbers. */
 export const getAnalyticsSummary = cache(async () => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: done, error } = await supabase
     .from('bookings')
     .select('total_price_egp, client_id, scheduled_start')
@@ -233,7 +233,7 @@ export const getAnalyticsSummary = cache(async () => {
  * booking. One query per side (slots, bookings for the day), not per slot.
  */
 export const getOpenTimesForDate = cache(async (date: string) => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const [{ data: slots, error: slotsError }, { data: bookings, error: bookingsError }] = await Promise.all([
     supabase.from('availability_slots').select('start_time, is_blocked').eq('date', date),
     supabase

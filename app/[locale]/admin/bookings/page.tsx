@@ -1,7 +1,8 @@
 import AdminShell from '@/components/AdminShell';
 import { getPendingBookingsForOwner } from '@/lib/supabase/cached-queries';
 
-export default async function AdminBookingsQueuePage({ params: { locale } }: { params: { locale: string } }) {
+export default async function AdminBookingsQueuePage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   const pending = await getPendingBookingsForOwner();
 
   return (

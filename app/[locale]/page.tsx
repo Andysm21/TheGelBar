@@ -1,4 +1,4 @@
-import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import NailProcess from '@/components/NailProcess/NailProcess';
 import FloatingNails from '@/components/FloatingNails/FloatingNails';
@@ -6,8 +6,9 @@ import styles from './page.module.css';
 
 const MAPS_URL = 'https://www.google.com/maps/search/?api=1&query=The+Gel+Bar+Mohandeseen+Cairo';
 
-export default function LandingPage({ params: { locale } }: { params: { locale: string } }) {
-  const t = useTranslations();
+export default async function LandingPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const t = await getTranslations();
 
   return (
     <div className={styles.wrap}>

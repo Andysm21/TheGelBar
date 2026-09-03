@@ -1,11 +1,12 @@
-import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSessionProfile } from '@/lib/supabase/session';
 import { getClientBookings, getAppSettings } from '@/lib/supabase/cached-queries';
 
-export default async function DashboardPage({ params: { locale } }: { params: { locale: string } }) {
-  const t = useTranslations();
+export default async function DashboardPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const t = await getTranslations();
   const session = await getSessionProfile();
   if (!session) redirect(`/${locale}/login`);
 

@@ -3,7 +3,8 @@ import { getBookingById } from '@/lib/supabase/cached-queries';
 import { isFreeLoyaltySession, nextLoyaltyPoints } from '@/lib/services-catalog';
 import BookingDetailActions from '@/components/BookingDetailActions';
 
-export default async function AdminBookingDetailPage({ params: { id, locale } }: { params: { id: string; locale: string } }) {
+export default async function AdminBookingDetailPage({ params }: { params: Promise<{ id: string; locale: string }> }) {
+  const { id, locale } = await params;
   const booking = await getBookingById(id);
   const points = booking.profiles?.loyalty_points ?? 0;
   const isFree = isFreeLoyaltySession(points);

@@ -2,7 +2,7 @@ import { createClient } from './server';
 
 /** Current signed-in user + their profile row, or null if not signed in. */
 export async function getSessionProfile() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

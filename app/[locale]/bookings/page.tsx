@@ -1,4 +1,4 @@
-import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { getSessionProfile } from '@/lib/supabase/session';
 import { getClientBookings } from '@/lib/supabase/cached-queries';
@@ -9,8 +9,9 @@ function canActOn(scheduledStart: string) {
   return hoursUntil > 24;
 }
 
-export default async function BookingsPage({ params: { locale } }: { params: { locale: string } }) {
-  const t = useTranslations('booking');
+export default async function BookingsPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const t = await getTranslations('booking');
   const session = await getSessionProfile();
   if (!session) redirect(`/${locale}/login`);
 

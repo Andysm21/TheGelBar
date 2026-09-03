@@ -1,4 +1,4 @@
-import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { SERVICES_CATALOG } from '@/lib/services-catalog';
 import styles from './services.module.css';
@@ -7,8 +7,9 @@ import styles from './services.module.css';
 // image, without needing a dedicated photo shot per service yet.
 const GALLERY_IMAGES = Array.from({ length: 10 }, (_, i) => `/gallery/work-${i + 1}.jpg`);
 
-export default function ServicesPage({ params: { locale } }: { params: { locale: string } }) {
-  const t = useTranslations();
+export default async function ServicesPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const t = await getTranslations();
 
   return (
     <div className={styles.wrap}>

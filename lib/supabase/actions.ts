@@ -1,9 +1,40 @@
 'use server';
 
 import { revalidatePath, revalidateTag } from 'next/cache';
+import { headers } from 'next/headers';
 import { createClient } from './server';
 import { getService, getDesignOption, isFreeLoyaltySession, nextLoyaltyPoints } from '../services-catalog';
 import { getMonthAvailability, getOpenTimesForDate, getBookingsForDate, getAppSettings } from './cached-queries';
+import { rateLimit } from '../rate-limit';
+
+async function clientIp() {
+  const h = await headers();
+  return h.get('x-forwarded-for')?.split(',')[0].trim() ?? h.get('x-real-ip') ?? 'unknown';
+}
+
+/**
+ * Admin sign-in, server-side, so it can be rate-limited. Supabase's own
+ * auth endpoint has its own IP throttling too, but this adds a second,
+ * app-level layer that also covers the "not an owner account" check.
+ */
+export async function adminSignIn(email: string, password: string) {
+  const ip = await clientIp();
+  const limit = rateLimit(`admin-login:${ip}`, 8, 10 * 60 * 1000);
+  if (!limit.ok) {
+    throw new Error(`Too many attempts. Try again in ${Math.ceil(limit.retryAfterSeconds / 60)} min.`);
+  }
+
+  const supabase = await createClient();
+  const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+  if (signInError) throw new Error(signInError.message);
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
+  if (profile?.role !== 'owner') {
+    await supabase.auth.signOut();
+    throw new Error('This account is not an admin account.');
+  }
+  return { ok: true };
+}
 
 // ---------- Read passthroughs ----------
 // Client components (the booking wizard) can't import cached-queries.ts
@@ -25,7 +56,7 @@ export async function fetchBookingsForDate(date: string) {
 }
 
 async function requireUser() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -50,6 +81,11 @@ export async function createBooking(input: {
   healthNotes: string;
 }) {
   const { supabase, user } = await requireUser();
+
+  const limit = rateLimit(`create-booking:${user.id}`, 5, 10 * 60 * 1000);
+  if (!limit.ok) {
+    throw new Error(`Too many booking attempts. Try again in ${Math.ceil(limit.retryAfterSeconds / 60)} min.`);
+  }
 
   const { data: existing, error: existingError } = await supabase
     .from('bookings')
@@ -141,7 +177,7 @@ export async function requestReschedule(bookingId: string, newDate: string, newT
 
 export async function setBookingStatus(bookingId: string, status: 'confirmed' | 'declined' | 'needs_reschedule') {
   await requireOwner();
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from('bookings').update({ status }).eq('id', bookingId);
   if (error) throw error;
   revalidatePath('/[locale]/admin/bookings', 'page');
@@ -151,7 +187,7 @@ export async function setBookingStatus(bookingId: string, status: 'confirmed' | 
 
 export async function ownerReschedule(bookingId: string, newDate: string, newTime: string) {
   await requireOwner();
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: booking, error: fetchError } = await supabase
     .from('bookings')
     .select('scheduled_start, scheduled_end')
@@ -227,7 +263,7 @@ export async function markBookingPaid(bookingId: string, wasServiceCompleted: bo
 
 export async function addAvailabilitySlot(date: string, startTime: string) {
   await requireOwner();
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from('availability_slots').upsert(
     { date, start_time: startTime, is_blocked: false },
     { onConflict: 'date,start_time' }
@@ -238,7 +274,7 @@ export async function addAvailabilitySlot(date: string, startTime: string) {
 
 export async function removeAvailabilitySlot(date: string, startTime: string) {
   await requireOwner();
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from('availability_slots').delete().eq('date', date).eq('start_time', startTime);
   if (error) throw error;
   revalidatePath('/[locale]/admin/calendar', 'page');
@@ -246,7 +282,7 @@ export async function removeAvailabilitySlot(date: string, startTime: string) {
 
 export async function setDayBlocked(date: string, blocked: boolean) {
   await requireOwner();
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from('availability_slots').update({ is_blocked: blocked }).eq('date', date);
   if (error) throw error;
   revalidatePath('/[locale]/admin/calendar', 'page');
@@ -254,7 +290,7 @@ export async function setDayBlocked(date: string, blocked: boolean) {
 
 export async function updateClientNotes(clientId: string, adminPrivateNotes: string) {
   await requireOwner();
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from('profiles').update({ admin_private_notes: adminPrivateNotes }).eq('id', clientId);
   if (error) throw error;
   revalidatePath('/[locale]/admin/clients', 'page');
@@ -262,10 +298,10 @@ export async function updateClientNotes(clientId: string, adminPrivateNotes: str
 
 export async function setLoyaltyEnabled(enabled: boolean) {
   await requireOwner();
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from('app_settings').update({ loyalty_enabled: enabled }).eq('id', 1);
   if (error) throw error;
-  revalidateTag('app-settings');
+  revalidateTag('app-settings', 'minutes');
   revalidatePath('/[locale]/admin/services', 'page');
   revalidatePath('/[locale]/dashboard', 'page');
 }

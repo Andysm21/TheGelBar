@@ -1,10 +1,10 @@
-import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import styles from './work.module.css';
 
 const GALLERY_IMAGES = Array.from({ length: 10 }, (_, i) => `/gallery/work-${i + 1}.jpg`);
 
-export default function OurWorkPage() {
-  const t = useTranslations();
+export default async function OurWorkPage() {
+  const t = await getTranslations();
 
   return (
     <div className={styles.wrap}>

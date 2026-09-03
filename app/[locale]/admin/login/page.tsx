@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { adminSignIn } from '@/lib/supabase/actions';
 
 export default function AdminLoginPage() {
   const { locale } = useParams<{ locale: string }>();
@@ -19,29 +19,17 @@ export default function AdminLoginPage() {
       return;
     }
     setLoading(true);
-    const supabase = createClient();
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-    if (signInError) {
+    try {
+      // Sign-in now runs server-side (Server Action) so it can be rate
+      // limited — a client-side call to Supabase auth has no chokepoint
+      // our own code can throttle.
+      await adminSignIn(email, password);
+    } catch (e) {
       setLoading(false);
-      // Showing the real Supabase message (not a generic "invalid
-      // credentials") while this is being set up — it distinguishes a
-      // genuine wrong password from an unconfirmed email, missing user,
-      // or a project/env misconfiguration, which all otherwise look
-      // identical to the person typing.
-      setError(signInError.message);
+      setError(e instanceof Error ? e.message : 'Sign in failed.');
       return;
     }
-
-    // Role check happens again server-side in middleware on the next
-    // request — this is just a fast client-side confirmation so a
-    // non-owner account gets a clear message instead of a silent bounce.
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
     setLoading(false);
-    if (profile?.role !== 'owner') {
-      await supabase.auth.signOut();
-      setError('This account is not an admin account.');
-      return;
-    }
     // Full page load rather than a client-side transition — an auth
     // redirect needs the very next request to carry the fresh session
     // cookie through middleware cleanly, and a hard navigation sidesteps
