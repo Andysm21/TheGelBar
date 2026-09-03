@@ -6,20 +6,29 @@
 
 /* Fixed page-wide video background — stays put behind everything while
    the page scrolls over it, so it's the only background on this page. */
+/* Deliberately NOT using negative z-index here — a fixed, negative-z
+   element can end up painted below an ancestor's own background layer
+   depending on stacking-context quirks (confirmed: this exact video was
+   invisible at z-index:-2, instantly appeared at a positive z-index).
+   z-index:0 + being first in the DOM is enough: every real page section
+   comes after it in markup, so normal stacking order alone puts them on
+   top — no need to touch every section's z-index individually. */
 .bgVideo {
   position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  z-index: -2;
+  z-index: 0;
+  opacity: 0.58;
+  filter: saturate(1.9) contrast(1.15) brightness(0.92);
 }
 
 .bgScrim {
   position: fixed;
   inset: 0;
-  background: linear-gradient(180deg, rgba(255, 241, 246, 0.4), rgba(255, 241, 246, 0.72) 45%, rgba(255, 241, 246, 0.9));
-  z-index: -1;
+  background: linear-gradient(180deg, rgba(255, 241, 246, 0.35), rgba(255, 241, 246, 0.5) 45%, rgba(255, 241, 246, 0.62));
+  z-index: 0;
 }
 
 .hero {
@@ -56,8 +65,9 @@
 .brandName {
   font-size: 2.5rem;
   letter-spacing: 0.05em;
-  font-weight: 600;
-  color: var(--deep);
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(62, 20, 39, 0.9), 0 2px 16px rgba(62, 20, 39, 0.55);
 }
 
 .tag {
@@ -65,7 +75,9 @@
   font-size: 0.78rem;
   letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: var(--sub);
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(62, 20, 39, 0.9), 0 2px 16px rgba(62, 20, 39, 0.55);
   margin-top: 0.6rem;
 }
 
@@ -79,28 +91,35 @@
   font-family: Arial, sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.2em;
-  color: var(--sub);
-  opacity: 0.7;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(62, 20, 39, 0.9), 0 2px 16px rgba(62, 20, 39, 0.55);
+  opacity: 0.9;
 }
 
 .processIntro {
+  position: relative;
   padding: 3.5rem 1.5rem 1.5rem;
   text-align: center;
 }
 
 .processIntro h2 {
   font-size: 1.6rem;
-  color: var(--deep);
-  font-weight: 600;
+  color: #fff;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(62, 20, 39, 0.9), 0 2px 16px rgba(62, 20, 39, 0.55);
   margin-bottom: 0.6rem;
 }
 
 .processIntro p {
   font-size: 0.8rem;
-  color: var(--sub);
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(62, 20, 39, 0.9), 0 2px 16px rgba(62, 20, 39, 0.55);
 }
 
 .section {
+  position: relative;
   padding: 4.5rem 1.5rem;
 }
 
@@ -108,8 +127,9 @@
   font-size: 1.7rem;
   text-align: center;
   margin-bottom: 2.5rem;
-  color: var(--deep);
-  font-weight: 600;
+  color: #fff;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(62, 20, 39, 0.9), 0 2px 16px rgba(62, 20, 39, 0.55);
 }
 
 .services {
@@ -165,11 +185,14 @@
 }
 
 .footer {
+  position: relative;
   text-align: center;
   padding: 3rem 1.5rem;
   font-family: Arial, sans-serif;
   font-size: 0.65rem;
-  color: var(--sub);
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(62, 20, 39, 0.9), 0 2px 16px rgba(62, 20, 39, 0.55);
   letter-spacing: 0.1em;
 }
 

@@ -39,7 +39,19 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
 
       <section className={styles.section}>
         <h2>Who we are</h2>
-        <p className="sans" style={{ textAlign: 'center', color: 'var(--sub)', fontSize: '.85rem', lineHeight: 1.9, maxWidth: 420, margin: '0 auto' }}>
+        <p
+          className="sans"
+          style={{
+            textAlign: 'center',
+            color: '#fff',
+            fontWeight: 700,
+            textShadow: '0 1px 3px rgba(62,20,39,0.9), 0 2px 16px rgba(62,20,39,0.55)',
+            fontSize: '.85rem',
+            lineHeight: 1.9,
+            maxWidth: 420,
+            margin: '0 auto',
+          }}
+        >
           {t('brand.name')} is a solo nail studio run by Mariam Sherif El Gergawy in {t('brand.location')}. Every
           appointment is one-on-one, by reservation only — no rush, no crowd, just careful work on your nails.
         </p>
@@ -52,7 +64,10 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
 
       <section className={styles.section}>
         <h2>Location</h2>
-        <p className="sans" style={{ textAlign: 'center', color: 'var(--sub)', fontSize: '.85rem', marginBottom: '1.5rem' }}>
+        <p
+          className="sans"
+          style={{ textAlign: 'center', color: '#fff', fontWeight: 700, textShadow: '0 1px 3px rgba(62,20,39,0.9), 0 2px 16px rgba(62,20,39,0.55)', fontSize: '.85rem', marginBottom: '1.5rem' }}
+        >
           {ADDRESS}
         </p>
         <div className={styles.mapEmbedWrap}>
@@ -85,11 +100,11 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
 
       <footer className={styles.footer}>
         {t('brand.name')} &middot; {t('brand.location')} &middot;{' '}
-        <Link href={`/${locale}/login`} style={{ color: 'var(--deep)' }}>
+        <Link href={`/${locale}/login`} style={{ color: '#fff', textDecoration: 'underline' }}>
           {t('nav.login')}
         </Link>{' '}
         &middot;{' '}
-        <Link href={`/${locale}/admin/dashboard`} style={{ color: 'var(--deep)' }}>
+        <Link href={`/${locale}/admin/dashboard`} style={{ color: '#fff', textDecoration: 'underline' }}>
           Admin
         </Link>
       </footer>

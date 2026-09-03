@@ -15,7 +15,6 @@
   justify-content: center;
   gap: clamp(20px, 4vh, 40px);
   overflow: hidden;
-  background: #efe3e8;
   padding: 24px;
   box-sizing: border-box;
 }
