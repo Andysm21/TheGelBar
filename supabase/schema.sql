@@ -96,6 +96,25 @@ create index availability_slots_date_idx on availability_slots(date);
 
 -- Row Level Security: clients only see their own bookings/profile,
 -- owner (role = 'owner') sees everything.
+--
+-- A policy ON `profiles` can't query `profiles` directly in its own
+-- USING clause — Postgres re-applies RLS to that subquery, which
+-- re-triggers the same policy, infinitely (error 42P17). The fix is a
+-- SECURITY DEFINER function: it runs with the privileges of whoever
+-- created it (bypassing RLS internally), so checking "is this caller an
+-- owner" no longer recurses through the policy that's asking the
+-- question. Every owner-facing policy below calls this instead of
+-- inlining the subquery.
+create or replace function public.is_owner()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (select 1 from profiles where id = auth.uid() and role = 'owner');
+$$;
+
 alter table profiles enable row level security;
 alter table bookings enable row level security;
 alter table booking_images enable row level security;
@@ -104,9 +123,7 @@ create policy "profiles: self read/write" on profiles
   for all using (auth.uid() = id);
 
 create policy "profiles: owner reads all" on profiles
-  for select using (
-    exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'owner')
-  );
+  for select using (public.is_owner());
 
 create policy "bookings: client sees own" on bookings
   for select using (auth.uid() = client_id);
@@ -115,18 +132,14 @@ create policy "bookings: client creates own" on bookings
   for insert with check (auth.uid() = client_id);
 
 create policy "bookings: owner sees/manages all" on bookings
-  for all using (
-    exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'owner')
-  );
+  for all using (public.is_owner());
 
 create policy "booking_images: follow parent booking" on booking_images
   for all using (
     exists (
       select 1 from bookings b
       where b.id = booking_images.booking_id
-        and (b.client_id = auth.uid() or exists (
-          select 1 from profiles p where p.id = auth.uid() and p.role = 'owner'
-        ))
+        and (b.client_id = auth.uid() or public.is_owner())
     )
   );
 
