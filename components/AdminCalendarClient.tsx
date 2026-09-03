@@ -33,26 +33,39 @@ export default function AdminCalendarClient() {
   const [dayBlockedFlag, setDayBlockedFlag] = useState(false);
   const [dayBookings, setDayBookings] = useState<DayBooking[]>([]);
   const [customTime, setCustomTime] = useState('');
+  const [actionError, setActionError] = useState('');
 
   function loadMonth() {
-    fetchMonthAvailability(year, month).then(({ slots, blockedDates }) => {
+    return fetchMonthAvailability(year, month).then(({ slots, blockedDates }) => {
       const blockedSet = new Set(blockedDates);
       const openCounts = new Map<string, number>();
       for (const row of slots) openCounts.set(row.date, (openCounts.get(row.date) ?? 0) + 1);
       const dates = new Set([...openCounts.keys(), ...blockedSet]);
       setAvailability([...dates].map((date) => ({ date, openCount: blockedSet.has(date) ? undefined : openCounts.get(date), blocked: blockedSet.has(date) })));
+      return { slots, blockedDates };
     });
   }
 
-  useEffect(loadMonth, [year, month]);
+  // Refreshes the currently selected day's own slot list/blocked flag —
+  // separate from loadMonth() so a mutation on the selected day shows up
+  // immediately instead of only after re-selecting the date (the
+  // reported "added a slot but nothing changed" bug).
+  function loadDay(date: string) {
+    fetchMonthAvailability(year, month).then(({ slots, blockedDates }) => {
+      setDaySlots(slots.filter((r) => r.date === date).map((r) => ({ start_time: r.start_time })));
+      setDayBlockedFlag(blockedDates.includes(date));
+    });
+    fetchBookingsForDate(date).then(setDayBookings);
+  }
+
+  useEffect(() => {
+    loadMonth();
+  }, [year, month]);
 
   useEffect(() => {
     if (!selectedDate) return;
-    fetchMonthAvailability(year, month).then(({ slots, blockedDates }) => {
-      setDaySlots(slots.filter((r) => r.date === selectedDate).map((r) => ({ start_time: r.start_time })));
-      setDayBlockedFlag(blockedDates.includes(selectedDate));
-    });
-    fetchBookingsForDate(selectedDate).then(setDayBookings);
+    loadDay(selectedDate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate, year, month]);
 
   const dayBlocked = dayBlockedFlag;
@@ -61,11 +74,16 @@ export default function AdminCalendarClient() {
   const bookedTimes = new Set(bookingsOnDay.map((b) => new Date(b.scheduled_start).toTimeString().slice(0, 5)));
 
   function act(fn: () => Promise<void>) {
+    setActionError('');
     startTransition(async () => {
-      await fn();
-      loadMonth();
-      if (selectedDate) fetchBookingsForDate(selectedDate).then(setDayBookings);
-      router.refresh();
+      try {
+        await fn();
+        loadMonth();
+        if (selectedDate) loadDay(selectedDate);
+        router.refresh();
+      } catch (e) {
+        setActionError(e instanceof Error ? e.message : 'Something went wrong — try again.');
+      }
     });
   }
 
@@ -96,9 +114,15 @@ export default function AdminCalendarClient() {
               disabled={pending}
               onClick={() => act(() => setDayBlocked(selectedDate, !dayBlocked))}
             >
-              {dayBlocked ? 'Unblock day' : 'Block whole day'}
+              {pending ? 'Saving…' : dayBlocked ? 'Unblock day' : 'Block whole day'}
             </button>
           </div>
+
+          {actionError && (
+            <p className="sans" style={{ fontSize: '.75rem', color: 'var(--danger)', marginBottom: '.9rem' }}>
+              {actionError}
+            </p>
+          )}
 
           {!dayBlocked && (
             <>
