@@ -1,5 +1,6 @@
 import AdminShell from '@/components/AdminShell';
 import LoyaltyToggle from '@/components/LoyaltyToggle';
+import RefreshCacheButton from '@/components/RefreshCacheButton';
 import { getServiceCatalog, getDesignOptions, getAppSettings } from '@/lib/supabase/cached-queries';
 import { formatDuration } from '@/lib/format';
 
@@ -10,7 +11,11 @@ export default async function AdminServicesPage() {
     <AdminShell>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '.6rem' }}>
         <h1 style={{ fontSize: '1.3rem', color: 'var(--deep)' }}>Services</h1>
+        <RefreshCacheButton />
       </div>
+      <p className="sans" style={{ fontSize: '.7rem', color: 'var(--sub)', marginTop: '-1rem', marginBottom: '1.5rem' }}>
+        Services/prices are cached up to 1 hour. If you edit them directly in Supabase, tap "Refresh data" to see the change here immediately instead of waiting.
+      </p>
 
       <div className="card" style={{ overflowX: 'auto' }}>
         <table className="sans" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.78rem', minWidth: 460 }}>

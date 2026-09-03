@@ -348,6 +348,21 @@ export async function updateClientNotes(clientId: string, adminPrivateNotes: str
   revalidatePath('/[locale]/admin/clients', 'page');
 }
 
+/**
+ * Manual bust for the services/design-options/loyalty-flag cache
+ * (unstable_cache, up to 1hr stale) — for when the owner edits data
+ * directly in Supabase and doesn't want to wait.
+ */
+export async function refreshServicesCache() {
+  await requireOwner();
+  revalidateTag('services', 'max');
+  revalidateTag('app-settings', 'minutes');
+  revalidatePath('/[locale]/admin/services', 'page');
+  revalidatePath('/[locale]/services', 'page');
+  revalidatePath('/[locale]/book', 'page');
+  revalidatePath('/[locale]/dashboard', 'page');
+}
+
 export async function setLoyaltyEnabled(enabled: boolean) {
   await requireOwner();
   const supabase = await createClient();
