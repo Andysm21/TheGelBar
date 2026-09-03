@@ -22,6 +22,9 @@
   z-index: 0;
   opacity: 0.58;
   filter: saturate(1.9) contrast(1.15) brightness(0.92);
+  /* Purely decorative background — never intercept taps, so nothing
+     ever shows a play/pause toggle or controls flash on touch. */
+  pointer-events: none;
 }
 
 .bgScrim {
