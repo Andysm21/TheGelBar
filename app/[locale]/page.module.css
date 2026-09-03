@@ -4,9 +4,24 @@
   position: relative;
 }
 
-/* Full-bleed hero: escapes .wrap's mobile-width cap so the background
-   video shows as a real landscape strip on desktop, not a 480px column
-   stretched to look like a phone screenshot. */
+/* Fixed page-wide video background — stays put behind everything while
+   the page scrolls over it, so it's the only background on this page. */
+.bgVideo {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+}
+
+.bgScrim {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 241, 246, 0.4), rgba(255, 241, 246, 0.72) 45%, rgba(255, 241, 246, 0.9));
+  z-index: -1;
+}
+
 .hero {
   min-height: 100vh;
   position: relative;
@@ -16,31 +31,6 @@
   align-items: center;
   text-align: center;
   padding: 2rem 1.5rem;
-  background: radial-gradient(ellipse at 50% 15%, var(--deeppink), var(--bg) 75%);
-  overflow: hidden;
-  width: 100vw;
-  margin-inline-start: calc(50% - 50vw);
-}
-
-.heroVideo {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: 0;
-}
-
-.heroScrim {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(255, 241, 246, 0.55), rgba(255, 241, 246, 0.75) 60%, var(--bg) 96%);
-  z-index: 1;
-}
-
-.hero > *:not(.heroVideo):not(.heroScrim) {
-  position: relative;
-  z-index: 2;
 }
 
 /* Desktop: the rest of the page content can breathe wider than a phone

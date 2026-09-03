@@ -15,12 +15,12 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
 
   return (
     <div className={styles.wrap}>
+      <video className={styles.bgVideo} autoPlay muted loop playsInline preload="auto" poster="/gallery/work-1.jpg">
+        <source src="/GelbarBGVideo.mp4" type="video/mp4" />
+      </video>
+      <div className={styles.bgScrim} />
+
       <section className={styles.hero}>
-        <video className={styles.heroVideo} autoPlay muted loop playsInline preload="auto" poster="/gallery/work-1.jpg">
-          <source src="/GelbarBGVideo.mp4" type="video/mp4" />
-        </video>
-        <div className={styles.heroScrim} />
-        <div className={styles.glowOrb} />
         <FloatingNails />
         <div className={styles.brandName}>{t('brand.name')}</div>
         <div className={styles.tag}>{t('hero.subtitle')}</div>
