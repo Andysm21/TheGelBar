@@ -190,6 +190,23 @@ create policy "blocked_days: owner writes" on blocked_days
 create policy "blocked_days: owner deletes" on blocked_days
   for delete using (public.is_owner());
 
+-- Belt-and-suspenders: these two tables are meant to be world-readable
+-- via grants alone (no RLS needed), but Supabase's Table Editor has a
+-- one-click "Enable RLS" prompt that's easy to hit by accident while
+-- poking around — if that ever happens with zero policies attached, ALL
+-- rows become invisible to the anon/authenticated roles even though the
+-- table-level grant is fine. Adding explicit permissive policies here
+-- means this stays working either way.
+alter table services enable row level security;
+
+create policy "services: anyone reads" on services
+  for select using (true);
+
+alter table design_options enable row level security;
+
+create policy "design_options: anyone reads" on design_options
+  for select using (true);
+
 create policy "profiles: self read/write" on profiles
   for all using (auth.uid() = id);
 
