@@ -1,11 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const { locale } = useParams<{ locale: string }>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,7 +42,13 @@ export default function AdminLoginPage() {
       setError('This account is not an admin account.');
       return;
     }
-    router.push(`/${locale}/admin/dashboard`);
+    // Full page load rather than a client-side transition — an auth
+    // redirect needs the very next request to carry the fresh session
+    // cookie through middleware cleanly, and a hard navigation sidesteps
+    // any client-router/hydration edge case entirely (reported as a
+    // "HierarchyRequestError… Only one element on document allowed"
+    // crash on some mobile browsers after client-side router.push here).
+    window.location.href = `/${locale}/admin/dashboard`;
   }
 
   return (
