@@ -3,6 +3,7 @@ import Link from 'next/link';
 import NailProcess from '@/components/NailProcess/NailProcess';
 import FloatingNails from '@/components/FloatingNails/FloatingNails';
 import InstagramCard from '@/components/InstagramCard';
+import HeroVideo from '@/components/HeroVideo';
 import styles from './page.module.css';
 
 const ADDRESS = '7 Ahmed Oraby, Madinet Al Eelam, Agouza, Giza Governorate 3755201';
@@ -15,9 +16,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
 
   return (
     <div className={styles.wrap}>
-      <video className={styles.bgVideo} autoPlay muted loop playsInline preload="auto" poster="/gallery/work-1.jpg">
-        <source src="/GelbarBGVideo.mp4" type="video/mp4" />
-      </video>
+      <HeroVideo className={styles.bgVideo} />
       <div className={styles.bgScrim} />
 
       <section className={styles.hero}>
