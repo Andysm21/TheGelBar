@@ -131,7 +131,11 @@ grant insert, update, delete on public.availability_slots to authenticated;
 grant select on public.app_settings to anon, authenticated;
 grant update on public.app_settings to authenticated;
 grant select on public.blocked_days to anon, authenticated;
-grant insert, delete on public.blocked_days to authenticated;
+-- update, not just insert: setDayBlocked's upsert() compiles to
+-- "insert ... on conflict do update", and Postgres checks privileges
+-- for the whole statement up front — it requires UPDATE even on a
+-- request that only ever inserts a new row.
+grant insert, update, delete on public.blocked_days to authenticated;
 
 -- Row Level Security: clients only see their own bookings/profile,
 -- owner (role = 'owner') sees everything.
@@ -186,6 +190,9 @@ create policy "blocked_days: anyone reads" on blocked_days
 
 create policy "blocked_days: owner writes" on blocked_days
   for insert with check (public.is_owner());
+
+create policy "blocked_days: owner updates" on blocked_days
+  for update using (public.is_owner());
 
 create policy "blocked_days: owner deletes" on blocked_days
   for delete using (public.is_owner());
