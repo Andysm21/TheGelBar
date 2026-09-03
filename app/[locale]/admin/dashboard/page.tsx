@@ -2,22 +2,7 @@ import AdminShell from '@/components/AdminShell';
 import { getTodayBookings, getPendingBookingsForOwner } from '@/lib/supabase/cached-queries';
 
 export default async function AdminDashboardPage() {
-  let today: any[] = [];
-  let pending: any[] = [];
-  let debugError: string | null = null;
-  try {
-    [today, pending] = await Promise.all([getTodayBookings(), getPendingBookingsForOwner()]);
-  } catch (e) {
-    debugError = e instanceof Error ? `${e.name}: ${e.message}\n${e.stack}` : JSON.stringify(e);
-  }
-
-  if (debugError) {
-    return (
-      <AdminShell>
-        <pre style={{ whiteSpace: 'pre-wrap', fontSize: '.7rem', color: 'red' }}>{debugError}</pre>
-      </AdminShell>
-    );
-  }
+  const [today, pending] = await Promise.all([getTodayBookings(), getPendingBookingsForOwner()]);
 
   return (
     <AdminShell>

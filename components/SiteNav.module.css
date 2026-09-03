@@ -26,7 +26,7 @@
 .nav {
   position: fixed;
   top: 0;
-  inset-inline-start: 0;
+  inset-inline-start: -260px;
   height: 100vh;
   width: 240px;
   background: #fff;
@@ -36,12 +36,11 @@
   flex-direction: column;
   gap: 0.4rem;
   z-index: 205;
-  transform: translateX(-110%);
-  transition: transform 0.25s ease;
+  transition: inset-inline-start 0.25s ease;
 }
 
 .nav.open {
-  transform: translateX(0);
+  inset-inline-start: 0;
 }
 
 .brand {
@@ -73,7 +72,7 @@
 
 @media (min-width: 900px) {
   .nav {
-    transform: translateX(0);
+    inset-inline-start: 0;
     box-shadow: none;
     border-inline-end: 1px solid var(--border);
   }

@@ -37,13 +37,17 @@ export async function middleware(request: NextRequest) {
   const locale = path.split('/')[1];
   const loginUrl = new URL(`/${locale}/admin/login`, request.url);
 
-  const supabaseResponse = NextResponse.next({ request });
+  // Must build the Supabase cookie handler on top of `response` (the
+  // next-intl-processed response), not a fresh NextResponse.next() — a
+  // fresh one drops next-intl's internal locale rewrite headers, which
+  // 404'd every gated /admin/* route while /admin/login (not routed
+  // through this branch) kept working fine.
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll: (cookiesToSet: CookieToSet[]) => {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options));
+        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
       },
     },
   });
@@ -62,7 +66,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  return supabaseResponse;
+  return response;
 }
 
 export const config = {
