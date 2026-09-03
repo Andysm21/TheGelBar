@@ -35,6 +35,8 @@ create table services (
   id text primary key,
   name_en text not null,
   name_ar text not null,
+  description_en text not null default '',
+  description_ar text not null default '',
   base_price_egp int not null,
   base_minutes int not null,
   design_tier design_tier not null default 'none',
@@ -97,6 +99,14 @@ create table app_settings (
 );
 insert into app_settings (id, loyalty_enabled) values (1, false) on conflict (id) do nothing;
 
+-- Whole days the owner has blocked off. Separate from availability_slots
+-- on purpose: a day with zero slot rows still needs to be blockable, and
+-- toggling is_blocked on a per-slot basis can't represent "blocked" for
+-- a day that has no slots yet.
+create table blocked_days (
+  date date primary key
+);
+
 create index bookings_client_id_idx on bookings(client_id);
 create index bookings_scheduled_start_idx on bookings(scheduled_start);
 create index bookings_status_idx on bookings(status);
@@ -120,6 +130,8 @@ grant select on public.availability_slots to anon, authenticated;
 grant insert, update, delete on public.availability_slots to authenticated;
 grant select on public.app_settings to anon, authenticated;
 grant update on public.app_settings to authenticated;
+grant select on public.blocked_days to anon, authenticated;
+grant insert, delete on public.blocked_days to authenticated;
 
 -- Row Level Security: clients only see their own bookings/profile,
 -- owner (role = 'owner') sees everything.
@@ -167,6 +179,17 @@ create policy "availability_slots: owner updates" on availability_slots
 create policy "availability_slots: owner deletes" on availability_slots
   for delete using (public.is_owner());
 
+alter table blocked_days enable row level security;
+
+create policy "blocked_days: anyone reads" on blocked_days
+  for select using (true);
+
+create policy "blocked_days: owner writes" on blocked_days
+  for insert with check (public.is_owner());
+
+create policy "blocked_days: owner deletes" on blocked_days
+  for delete using (public.is_owner());
+
 create policy "profiles: self read/write" on profiles
   for all using (auth.uid() = id);
 
@@ -191,18 +214,17 @@ create policy "booking_images: follow parent booking" on booking_images
     )
   );
 
--- Seed the final confirmed service catalog (kept in sync manually with
--- lib/services-catalog.ts, which the app reads from until it's wired to
--- Supabase — see DEPLOY.md).
-insert into services (id, name_en, name_ar, base_price_egp, base_minutes, design_tier) values
-  ('gel-manicure', 'Gel manicure', 'مانيكير جل', 650, 120, 'simple'),
-  ('hard-gel-overlay', 'Hard gel overlay', 'هارد جل أوفرلاي', 850, 120, 'simple'),
-  ('hard-gel-new-set-simple', 'Hard gel new set — simple design', 'طقم هارد جل جديد - تصميم بسيط', 1200, 180, 'simple'),
-  ('hard-gel-new-set-complex', 'Hard gel new set — complex design', 'طقم هارد جل جديد - تصميم معقد', 1200, 240, 'complex'),
-  ('removal-only', 'Removal only', 'إزالة فقط', 150, 45, 'none'),
-  ('false-nails-simple', 'False nails — simple design', 'أظافر صناعية - تصميم بسيط', 550, 90, 'simple'),
-  ('false-nails-complex', 'False nails — complex design', 'أظافر صناعية - تصميم معقد', 550, 150, 'complex'),
-  ('nail-fix-one', 'Fixing one nail', 'إصلاح ظفر واحد', 50, 20, 'none');
+-- Seed the final confirmed service catalog. This is the only source of
+-- truth for services now — the app has no hardcoded catalog in code.
+insert into services (id, name_en, name_ar, description_en, description_ar, base_price_egp, base_minutes, design_tier) values
+  ('gel-manicure', 'Gel manicure', 'مانيكير جل', 'Color or a simple design (french/chrome) on your natural nails.', 'لون أو تصميم بسيط (فرنش/كروم) على أظافرك الطبيعية.', 650, 120, 'simple'),
+  ('hard-gel-overlay', 'Hard gel overlay', 'هارد جل أوفرلاي', 'A protective hard gel layer over your natural nails, with color or a simple design.', 'طبقة هارد جل واقية فوق أظافرك الطبيعية، مع لون أو تصميم بسيط.', 850, 120, 'simple'),
+  ('hard-gel-new-set-simple', 'Hard gel new set — simple design', 'طقم هارد جل جديد - تصميم بسيط', 'A full new hard gel set with a simple design.', 'طقم هارد جل جديد بالكامل مع تصميم بسيط.', 1200, 180, 'simple'),
+  ('hard-gel-new-set-complex', 'Hard gel new set — complex design', 'طقم هارد جل جديد - تصميم معقد', 'A full new hard gel set with a complex, detailed design.', 'طقم هارد جل جديد بالكامل مع تصميم معقد ومفصل.', 1200, 240, 'complex'),
+  ('removal-only', 'Removal only', 'إزالة فقط', 'Safe removal of your existing gel or hard gel set.', 'إزالة آمنة لطقم الجل أو الهارد جل الحالي.', 150, 45, 'none'),
+  ('false-nails-simple', 'False nails — simple design', 'أظافر صناعية - تصميم بسيط', 'Press-on style false nails with a simple design.', 'أظافر صناعية بتصميم بسيط.', 550, 90, 'simple'),
+  ('false-nails-complex', 'False nails — complex design', 'أظافر صناعية - تصميم معقد', 'Press-on style false nails with a complex, detailed design.', 'أظافر صناعية بتصميم معقد ومفصل.', 550, 150, 'complex'),
+  ('nail-fix-one', 'Fixing one nail', 'إصلاح ظفر واحد', 'Quick repair for a single broken or damaged nail.', 'إصلاح سريع لظفر واحد مكسور أو تالف.', 50, 20, 'none');
 
 insert into design_options (id, name_en, name_ar, price_egp, tier) values
   ('chrome-cateye-ombre', 'Chrome / cat-eye / ombré', 'كروم / كات آي / أومبريه', 100, 'simple'),

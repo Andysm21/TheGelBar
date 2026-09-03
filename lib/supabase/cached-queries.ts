@@ -39,7 +39,7 @@ export const getServiceCatalog = cache(
       const supabase = createPublicClient();
       const { data, error } = await supabase
         .from('services')
-        .select('id, name_en, name_ar, base_price_egp, base_minutes, design_tier')
+        .select('id, name_en, name_ar, description_en, description_ar, base_price_egp, base_minutes, design_tier')
         .eq('is_active', true);
       if (error) throw error;
       return data;
@@ -79,20 +79,24 @@ export const getAppSettings = cache(
   )
 );
 
-/** One query for the whole visible month grid — never per-day. */
+/**
+ * One query for the whole visible month grid — never per-day. Blocked
+ * days are a separate table (blocked_days), not a per-slot flag, so a
+ * day with zero slots is still blockable.
+ */
 export const getMonthAvailability = cache(async (year: number, month: number) => {
   const supabase = await createClient();
   const start = `${year}-${String(month + 1).padStart(2, '0')}-01`;
   const endDate = new Date(year, month + 1, 0).getDate();
   const end = `${year}-${String(month + 1).padStart(2, '0')}-${endDate}`;
 
-  const { data, error } = await supabase
-    .from('availability_slots')
-    .select('date, start_time, is_blocked')
-    .gte('date', start)
-    .lte('date', end);
-  if (error) throw error;
-  return data;
+  const [{ data: slots, error: slotsError }, { data: blockedRows, error: blockedError }] = await Promise.all([
+    supabase.from('availability_slots').select('date, start_time').gte('date', start).lte('date', end),
+    supabase.from('blocked_days').select('date').gte('date', start).lte('date', end),
+  ]);
+  if (slotsError) throw slotsError;
+  if (blockedError) throw blockedError;
+  return { slots: slots ?? [], blockedDates: (blockedRows ?? []).map((r) => r.date) };
 });
 
 /**
@@ -234,24 +238,28 @@ export const getAnalyticsSummary = cache(async () => {
 });
 
 /**
- * Open time slots for one date: every non-blocked availability_slots row
- * for that day, minus any that overlap an existing non-cancelled/declined
- * booking. One query per side (slots, bookings for the day), not per slot.
+ * Open time slots for one date: every availability_slots row for that
+ * day, minus any that overlap an existing non-cancelled/declined
+ * booking — or all of them, if the whole day is in blocked_days.
  */
 export const getOpenTimesForDate = cache(async (date: string) => {
   const supabase = await createClient();
-  const [{ data: slots, error: slotsError }, { data: bookings, error: bookingsError }] = await Promise.all([
-    supabase.from('availability_slots').select('start_time, is_blocked').eq('date', date),
-    supabase
-      .from('bookings')
-      .select('scheduled_start')
-      .gte('scheduled_start', `${date}T00:00:00`)
-      .lt('scheduled_start', `${date}T23:59:59`)
-      .in('status', ['pending', 'confirmed', 'needs_reschedule']),
-  ]);
+  const [{ data: slots, error: slotsError }, { data: bookings, error: bookingsError }, { data: blockedRows, error: blockedError }] =
+    await Promise.all([
+      supabase.from('availability_slots').select('start_time').eq('date', date),
+      supabase
+        .from('bookings')
+        .select('scheduled_start')
+        .gte('scheduled_start', `${date}T00:00:00`)
+        .lt('scheduled_start', `${date}T23:59:59`)
+        .in('status', ['pending', 'confirmed', 'needs_reschedule']),
+      supabase.from('blocked_days').select('date').eq('date', date),
+    ]);
   if (slotsError) throw slotsError;
   if (bookingsError) throw bookingsError;
+  if (blockedError) throw blockedError;
+  if (blockedRows && blockedRows.length > 0) return [];
 
   const bookedTimes = new Set((bookings ?? []).map((b) => new Date(b.scheduled_start).toTimeString().slice(0, 5)));
-  return (slots ?? []).filter((s) => !s.is_blocked && !bookedTimes.has(s.start_time.slice(0, 5)));
+  return (slots ?? []).filter((s) => !bookedTimes.has(s.start_time.slice(0, 5)));
 });

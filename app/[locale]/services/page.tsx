@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
-import { SERVICES_CATALOG } from '@/lib/services-catalog';
+import { getServiceCatalog } from '@/lib/supabase/cached-queries';
 import styles from './services.module.css';
 
 // Cycle through the real work photos so every service card has an
@@ -10,6 +10,7 @@ const GALLERY_IMAGES = Array.from({ length: 10 }, (_, i) => `/gallery/work-${i +
 export default async function ServicesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations();
+  const services = await getServiceCatalog();
 
   return (
     <div className={styles.wrap}>
@@ -18,14 +19,17 @@ export default async function ServicesPage({ params }: { params: Promise<{ local
         Every service, real pricing — no guesswork.
       </p>
       <div className={styles.grid}>
-        {SERVICES_CATALOG.map((s, i) => (
+        {services.map((s, i) => (
           <div key={s.id} className={styles.card}>
             <div className={styles.imgWrap}>
               <img src={GALLERY_IMAGES[i % GALLERY_IMAGES.length]} alt="" loading="lazy" />
             </div>
             <div className={styles.body}>
-              <h3>{locale === 'ar' ? s.nameAr : s.nameEn}</h3>
-              <div className={styles.price}>{s.basePriceEgp} EGP</div>
+              <h3>{locale === 'ar' ? s.name_ar : s.name_en}</h3>
+              <p className="sans" style={{ fontSize: '.75rem', color: 'var(--sub)', marginTop: '.3rem' }}>
+                {locale === 'ar' ? s.description_ar : s.description_en}
+              </p>
+              <div className={styles.price}>{s.base_price_egp} EGP</div>
             </div>
           </div>
         ))}

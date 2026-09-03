@@ -3,8 +3,8 @@
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { headers } from 'next/headers';
 import { createClient } from './server';
-import { getService, getDesignOption, isFreeLoyaltySession, nextLoyaltyPoints } from '../services-catalog';
-import { getMonthAvailability, getOpenTimesForDate, getBookingsForDate, getAppSettings } from './cached-queries';
+import { isFreeLoyaltySession, nextLoyaltyPoints } from '../services-catalog';
+import { getMonthAvailability, getOpenTimesForDate, getBookingsForDate, getAppSettings, getServiceCatalog, getDesignOptions } from './cached-queries';
 import { rateLimit } from '../rate-limit';
 
 async function clientIp() {
@@ -55,6 +55,14 @@ export async function fetchBookingsForDate(date: string) {
   return getBookingsForDate(date);
 }
 
+export async function fetchServiceCatalog() {
+  return getServiceCatalog();
+}
+
+export async function fetchDesignOptions() {
+  return getDesignOptions();
+}
+
 async function requireUser() {
   const supabase = await createClient();
   const {
@@ -98,13 +106,31 @@ export async function createBooking(input: {
     throw new Error('You already have an active booking. Cancel or finish it before booking another slot.');
   }
 
-  const service = getService(input.serviceId);
-  if (!service) throw new Error('Unknown service.');
-  const design = input.designId ? getDesignOption(input.designId) : undefined;
+  const { data: service, error: serviceError } = await supabase
+    .from('services')
+    .select('base_price_egp, base_minutes')
+    .eq('id', input.serviceId)
+    .single();
+  if (serviceError || !service) throw new Error('Unknown service.');
+
+  let designPriceEgp = 0;
+  if (input.designId) {
+    const { data: design, error: designError } = await supabase
+      .from('design_options')
+      .select('price_egp')
+      .eq('id', input.designId)
+      .single();
+    if (designError || !design) throw new Error('Unknown design option.');
+    designPriceEgp = design.price_egp;
+  }
+
+  const { data: blockedRows, error: blockedError } = await supabase.from('blocked_days').select('date').eq('date', input.date);
+  if (blockedError) throw blockedError;
+  if (blockedRows && blockedRows.length > 0) throw new Error('That day is not available.');
 
   const start = new Date(`${input.date}T${input.time}:00`);
-  const end = new Date(start.getTime() + service.baseMinutes * 60_000);
-  const totalPriceEgp = service.basePriceEgp + (design?.priceEgp ?? 0);
+  const end = new Date(start.getTime() + service.base_minutes * 60_000);
+  const totalPriceEgp = service.base_price_egp + designPriceEgp;
 
   const { data, error } = await supabase
     .from('bookings')
@@ -230,11 +256,27 @@ export async function markBookingPaid(bookingId: string, wasServiceCompleted: bo
     .single();
   if (profileError) throw profileError;
 
-  const service = getService(booking.service_id);
-  const design = booking.design_id ? getDesignOption(booking.design_id) : undefined;
+  const { data: service, error: serviceError } = await supabase
+    .from('services')
+    .select('base_price_egp')
+    .eq('id', booking.service_id)
+    .single();
+  if (serviceError) throw serviceError;
+
+  let designPriceEgp = 0;
+  if (booking.design_id) {
+    const { data: design, error: designError } = await supabase
+      .from('design_options')
+      .select('price_egp')
+      .eq('id', booking.design_id)
+      .single();
+    if (designError) throw designError;
+    designPriceEgp = design.price_egp;
+  }
+
   const settings = await getAppSettings();
   const isFree = settings.loyalty_enabled && isFreeLoyaltySession(profile.loyalty_points);
-  const rawPrice = (wasServiceCompleted ? service?.basePriceEgp ?? 0 : 0) + (wasDesignCompleted && design ? design.priceEgp : 0);
+  const rawPrice = (wasServiceCompleted ? service.base_price_egp : 0) + (wasDesignCompleted ? designPriceEgp : 0);
   const finalPrice = isFree ? 0 : rawPrice;
 
   const { error: bookingUpdateError } = await supabase
@@ -265,7 +307,7 @@ export async function addAvailabilitySlot(date: string, startTime: string) {
   await requireOwner();
   const supabase = await createClient();
   const { error } = await supabase.from('availability_slots').upsert(
-    { date, start_time: startTime, is_blocked: false },
+    { date, start_time: startTime },
     { onConflict: 'date,start_time' }
   );
   if (error) throw error;
@@ -280,11 +322,21 @@ export async function removeAvailabilitySlot(date: string, startTime: string) {
   revalidatePath('/[locale]/admin/calendar', 'page');
 }
 
+// Blocking is a separate table (blocked_days), not a flag on slot rows —
+// a day with zero slots still needs to be blockable, which the old
+// "update every slot row for this date" approach couldn't do (it was a
+// silent no-op on empty days — the reported "block whole day does
+// nothing" bug).
 export async function setDayBlocked(date: string, blocked: boolean) {
   await requireOwner();
   const supabase = await createClient();
-  const { error } = await supabase.from('availability_slots').update({ is_blocked: blocked }).eq('date', date);
-  if (error) throw error;
+  if (blocked) {
+    const { error } = await supabase.from('blocked_days').upsert({ date }, { onConflict: 'date' });
+    if (error) throw error;
+  } else {
+    const { error } = await supabase.from('blocked_days').delete().eq('date', date);
+    if (error) throw error;
+  }
   revalidatePath('/[locale]/admin/calendar', 'page');
 }
 

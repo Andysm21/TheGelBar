@@ -2,13 +2,29 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { SERVICES_CATALOG, designOptionsForTier, summarizeBooking } from '@/lib/services-catalog';
 import { formatDuration } from '@/lib/format';
 import Calendar, { DayAvailability } from '@/components/Calendar/Calendar';
-import { fetchMonthAvailability, fetchOpenTimesForDate, createBooking } from '@/lib/supabase/actions';
+import { fetchMonthAvailability, fetchOpenTimesForDate, fetchServiceCatalog, fetchDesignOptions, createBooking } from '@/lib/supabase/actions';
 
 const STEPS = ['service', 'slot', 'details'] as const;
 type Step = (typeof STEPS)[number];
+
+interface DbService {
+  id: string;
+  name_en: string;
+  name_ar: string;
+  base_price_egp: number;
+  base_minutes: number;
+  design_tier: 'none' | 'simple' | 'complex';
+}
+
+interface DbDesign {
+  id: string;
+  name_en: string;
+  name_ar: string;
+  price_egp: number;
+  tier: 'simple' | 'complex';
+}
 
 function formatTime24to12(t: string) {
   const [h, m] = t.split(':').map(Number);
@@ -20,9 +36,22 @@ function formatTime24to12(t: string) {
 export default function BookWizard({ locale }: { locale: string }) {
   const t = useTranslations('booking');
 
+  const [catalog, setCatalog] = useState<DbService[]>([]);
+  const [designs, setDesigns] = useState<DbDesign[]>([]);
+  const [catalogLoaded, setCatalogLoaded] = useState(false);
+
   const [step, setStep] = useState<Step>('service');
-  const [serviceId, setServiceId] = useState<string>('gel-manicure');
+  const [serviceId, setServiceId] = useState<string>('');
   const [designId, setDesignId] = useState<string | null>(null);
+
+  useEffect(() => {
+    Promise.all([fetchServiceCatalog(), fetchDesignOptions()]).then(([services, designOpts]) => {
+      setCatalog(services as DbService[]);
+      setDesigns(designOpts as DbDesign[]);
+      setServiceId((services as DbService[])[0]?.id ?? '');
+      setCatalogLoaded(true);
+    });
+  }, []);
 
   const now = new Date();
   const [calYear, setCalYear] = useState(now.getFullYear());
@@ -38,24 +67,29 @@ export default function BookWizard({ locale }: { locale: string }) {
   const [submitError, setSubmitError] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  const service = SERVICES_CATALOG.find((s) => s.id === serviceId)!;
-  const designOptions = designOptionsForTier(service.designTier);
-  const { totalMinutes, totalPriceEgp } = useMemo(() => summarizeBooking(serviceId, designId), [serviceId, designId]);
-  const requiresDesign = service.designTier !== 'none';
+  const service = catalog.find((s) => s.id === serviceId);
+  const designOptions = service ? designs.filter((d) => d.tier === service.design_tier) : [];
+  const { totalMinutes, totalPriceEgp } = useMemo(() => {
+    const design = designId ? designs.find((d) => d.id === designId) : undefined;
+    return {
+      totalMinutes: service?.base_minutes ?? 0,
+      totalPriceEgp: (service?.base_price_egp ?? 0) + (design?.price_egp ?? 0),
+    };
+  }, [service, designId, designs]);
+  const requiresDesign = service ? service.design_tier !== 'none' : false;
   const canContinueFromService = !requiresDesign || !!designId;
 
   useEffect(() => {
     let cancelled = false;
-    fetchMonthAvailability(calYear, calMonth).then((rows) => {
+    fetchMonthAvailability(calYear, calMonth).then(({ slots, blockedDates }) => {
       if (cancelled) return;
       const byDate = new Map<string, number>();
-      for (const row of rows) {
-        if (row.is_blocked) continue;
-        byDate.set(row.date, (byDate.get(row.date) ?? 0) + 1);
-      }
-      const blockedDates = new Set(rows.filter((r) => r.is_blocked).map((r) => r.date));
+      for (const row of slots) byDate.set(row.date, (byDate.get(row.date) ?? 0) + 1);
       const days: DayAvailability[] = [];
-      for (const [date, count] of byDate) days.push({ date, openCount: count });
+      for (const [date, count] of byDate) {
+        if (blockedDates.includes(date)) continue;
+        days.push({ date, openCount: count });
+      }
       for (const date of blockedDates) days.push({ date, blocked: true });
       setAvailability(days);
     });
@@ -91,6 +125,16 @@ export default function BookWizard({ locale }: { locale: string }) {
   const hours = Math.floor(totalMinutes / 60);
   const mins = totalMinutes % 60;
 
+  if (!catalogLoaded || !service) {
+    return (
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '3rem 1.25rem', textAlign: 'center' }}>
+        <p className="sans" style={{ color: 'var(--sub)', fontSize: '.85rem' }}>
+          Loading services…
+        </p>
+      </div>
+    );
+  }
+
   if (submitted) {
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '3rem 1.25rem', textAlign: 'center' }}>
@@ -117,7 +161,7 @@ export default function BookWizard({ locale }: { locale: string }) {
           <span className="badge badge-pending" style={{ marginBottom: '.6rem', display: 'inline-block' }}>
             {t('pending')}
           </span>
-          <h3 style={{ fontSize: '1.05rem' }}>{locale === 'ar' ? service.nameAr : service.nameEn}</h3>
+          <h3 style={{ fontSize: '1.05rem' }}>{locale === 'ar' ? service.name_ar : service.name_en}</h3>
           <p className="sans" style={{ fontSize: '.8rem', color: 'var(--sub)', marginTop: '.4rem' }}>
             {selectedDate} · {selectedTime && formatTime24to12(selectedTime)} · {formatDuration(totalMinutes)} · {totalPriceEgp} EGP
           </p>
@@ -139,7 +183,7 @@ export default function BookWizard({ locale }: { locale: string }) {
           <h1 style={{ fontSize: '1.4rem', color: 'var(--deep)', margin: '.3rem 0 1.25rem' }}>Choose your service</h1>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '.7rem' }}>
-            {SERVICES_CATALOG.map((svc) => {
+            {catalog.map((svc) => {
               const isSelected = serviceId === svc.id;
               return (
                 <label
@@ -166,15 +210,15 @@ export default function BookWizard({ locale }: { locale: string }) {
                     style={{ marginInlineEnd: '.8rem', width: 20, height: 20, flexShrink: 0 }}
                   />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <h3 style={{ fontSize: '.95rem', fontWeight: 600 }}>{locale === 'ar' ? svc.nameAr : svc.nameEn}</h3>
-                    {svc.baseMinutes > 0 && (
+                    <h3 style={{ fontSize: '.95rem', fontWeight: 600 }}>{locale === 'ar' ? svc.name_ar : svc.name_en}</h3>
+                    {svc.base_minutes > 0 && (
                       <p className="sans" style={{ fontSize: '.7rem', color: 'var(--sub)', marginTop: '.2rem' }}>
-                        {formatDuration(svc.baseMinutes)}
+                        {formatDuration(svc.base_minutes)}
                       </p>
                     )}
                   </div>
                   <div className="sans" style={{ fontWeight: 700, color: 'var(--deep)', fontSize: '.85rem', flexShrink: 0 }}>
-                    {svc.basePriceEgp} EGP
+                    {svc.base_price_egp} EGP
                   </div>
                 </label>
               );
@@ -208,9 +252,9 @@ export default function BookWizard({ locale }: { locale: string }) {
                         onChange={() => setDesignId(d.id)}
                         style={{ marginInlineEnd: '.8rem', width: 18, height: 18, flexShrink: 0 }}
                       />
-                      <span style={{ flex: 1, fontSize: '.88rem' }}>{locale === 'ar' ? d.nameAr : d.nameEn}</span>
+                      <span style={{ flex: 1, fontSize: '.88rem' }}>{locale === 'ar' ? d.name_ar : d.name_en}</span>
                       <span className="sans" style={{ color: 'var(--deep)', fontWeight: 700, fontSize: '.8rem' }}>
-                        +{d.priceEgp} EGP
+                        +{d.price_egp} EGP
                       </span>
                     </label>
                   );
@@ -246,7 +290,7 @@ export default function BookWizard({ locale }: { locale: string }) {
             {t('step2')}
           </p>
           <h1 style={{ fontSize: '1.4rem', color: 'var(--deep)', margin: '.3rem 0 1.25rem' }}>
-            {locale === 'ar' ? service.nameAr : service.nameEn}
+            {locale === 'ar' ? service.name_ar : service.name_en}
           </h1>
           <p className="sans" style={{ fontSize: '.8rem', color: 'var(--sub)', marginBottom: '1.2rem' }}>
             {formatDuration(totalMinutes)} needed · {totalPriceEgp} EGP total

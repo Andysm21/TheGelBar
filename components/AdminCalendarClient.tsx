@@ -29,20 +29,18 @@ export default function AdminCalendarClient() {
   const [month, setMonth] = useState(now.getMonth());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [availability, setAvailability] = useState<DayAvailability[]>([]);
-  const [daySlots, setDaySlots] = useState<{ start_time: string; is_blocked: boolean }[]>([]);
+  const [daySlots, setDaySlots] = useState<{ start_time: string }[]>([]);
+  const [dayBlockedFlag, setDayBlockedFlag] = useState(false);
   const [dayBookings, setDayBookings] = useState<DayBooking[]>([]);
   const [customTime, setCustomTime] = useState('');
 
   function loadMonth() {
-    fetchMonthAvailability(year, month).then((rows) => {
-      const byDate = new Map<string, { open: number; blocked: boolean }>();
-      for (const row of rows) {
-        const entry = byDate.get(row.date) ?? { open: 0, blocked: false };
-        if (row.is_blocked) entry.blocked = true;
-        else entry.open += 1;
-        byDate.set(row.date, entry);
-      }
-      setAvailability([...byDate.entries()].map(([date, v]) => ({ date, openCount: v.blocked ? undefined : v.open, blocked: v.blocked })));
+    fetchMonthAvailability(year, month).then(({ slots, blockedDates }) => {
+      const blockedSet = new Set(blockedDates);
+      const openCounts = new Map<string, number>();
+      for (const row of slots) openCounts.set(row.date, (openCounts.get(row.date) ?? 0) + 1);
+      const dates = new Set([...openCounts.keys(), ...blockedSet]);
+      setAvailability([...dates].map((date) => ({ date, openCount: blockedSet.has(date) ? undefined : openCounts.get(date), blocked: blockedSet.has(date) })));
     });
   }
 
@@ -50,14 +48,15 @@ export default function AdminCalendarClient() {
 
   useEffect(() => {
     if (!selectedDate) return;
-    fetchMonthAvailability(year, month).then((rows) => {
-      setDaySlots(rows.filter((r) => r.date === selectedDate).map((r) => ({ start_time: r.start_time, is_blocked: r.is_blocked })));
+    fetchMonthAvailability(year, month).then(({ slots, blockedDates }) => {
+      setDaySlots(slots.filter((r) => r.date === selectedDate).map((r) => ({ start_time: r.start_time })));
+      setDayBlockedFlag(blockedDates.includes(selectedDate));
     });
     fetchBookingsForDate(selectedDate).then(setDayBookings);
   }, [selectedDate, year, month]);
 
-  const dayBlocked = daySlots.some((s) => s.is_blocked);
-  const openSlots = daySlots.filter((s) => !s.is_blocked).map((s) => s.start_time.slice(0, 5));
+  const dayBlocked = dayBlockedFlag;
+  const openSlots = daySlots.map((s) => s.start_time.slice(0, 5));
   const bookingsOnDay = dayBookings;
   const bookedTimes = new Set(bookingsOnDay.map((b) => new Date(b.scheduled_start).toTimeString().slice(0, 5)));
 
