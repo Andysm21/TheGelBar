@@ -1,9 +1,9 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { createClient } from './server';
 import { getService, getDesignOption, isFreeLoyaltySession, nextLoyaltyPoints } from '../services-catalog';
-import { getMonthAvailability, getOpenTimesForDate, getBookingsForDate } from './cached-queries';
+import { getMonthAvailability, getOpenTimesForDate, getBookingsForDate, getAppSettings } from './cached-queries';
 
 // ---------- Read passthroughs ----------
 // Client components (the booking wizard) can't import cached-queries.ts
@@ -50,6 +50,17 @@ export async function createBooking(input: {
   healthNotes: string;
 }) {
   const { supabase, user } = await requireUser();
+
+  const { data: existing, error: existingError } = await supabase
+    .from('bookings')
+    .select('id')
+    .eq('client_id', user.id)
+    .in('status', ['pending', 'confirmed', 'needs_reschedule'])
+    .limit(1);
+  if (existingError) throw existingError;
+  if (existing && existing.length > 0) {
+    throw new Error('You already have an active booking. Cancel or finish it before booking another slot.');
+  }
 
   const service = getService(input.serviceId);
   if (!service) throw new Error('Unknown service.');
@@ -185,7 +196,8 @@ export async function markBookingPaid(bookingId: string, wasServiceCompleted: bo
 
   const service = getService(booking.service_id);
   const design = booking.design_id ? getDesignOption(booking.design_id) : undefined;
-  const isFree = isFreeLoyaltySession(profile.loyalty_points);
+  const settings = await getAppSettings();
+  const isFree = settings.loyalty_enabled && isFreeLoyaltySession(profile.loyalty_points);
   const rawPrice = (wasServiceCompleted ? service?.basePriceEgp ?? 0 : 0) + (wasDesignCompleted && design ? design.priceEgp : 0);
   const finalPrice = isFree ? 0 : rawPrice;
 
@@ -201,11 +213,13 @@ export async function markBookingPaid(bookingId: string, wasServiceCompleted: bo
     .eq('id', bookingId);
   if (bookingUpdateError) throw bookingUpdateError;
 
-  const { error: loyaltyError } = await supabase
-    .from('profiles')
-    .update({ loyalty_points: nextLoyaltyPoints(profile.loyalty_points) })
-    .eq('id', booking.client_id);
-  if (loyaltyError) throw loyaltyError;
+  if (settings.loyalty_enabled) {
+    const { error: loyaltyError } = await supabase
+      .from('profiles')
+      .update({ loyalty_points: nextLoyaltyPoints(profile.loyalty_points) })
+      .eq('id', booking.client_id);
+    if (loyaltyError) throw loyaltyError;
+  }
 
   revalidatePath('/[locale]/admin/bookings/[id]', 'page');
   revalidatePath('/[locale]/admin/clients', 'page');
@@ -244,4 +258,14 @@ export async function updateClientNotes(clientId: string, adminPrivateNotes: str
   const { error } = await supabase.from('profiles').update({ admin_private_notes: adminPrivateNotes }).eq('id', clientId);
   if (error) throw error;
   revalidatePath('/[locale]/admin/clients', 'page');
+}
+
+export async function setLoyaltyEnabled(enabled: boolean) {
+  await requireOwner();
+  const supabase = createClient();
+  const { error } = await supabase.from('app_settings').update({ loyalty_enabled: enabled }).eq('id', 1);
+  if (error) throw error;
+  revalidateTag('app-settings');
+  revalidatePath('/[locale]/admin/services', 'page');
+  revalidatePath('/[locale]/dashboard', 'page');
 }

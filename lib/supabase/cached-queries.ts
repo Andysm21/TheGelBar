@@ -1,4 +1,5 @@
 import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import { createClient } from './server';
 
 // Every function here is wrapped in React's `cache()`, which de-dupes
@@ -21,25 +22,56 @@ import { createClient } from './server';
 //    `revalidate` + on-demand `revalidateTag` from the admin "save"
 //    action, so most requests never touch the DB at all.
 
-export const getServiceCatalog = cache(async () => {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from('services')
-    .select('id, name_en, name_ar, base_price_egp, base_minutes, design_tier')
-    .eq('is_active', true);
-  if (error) throw error;
-  return data;
-});
+// Services/design options change only from the admin "Services" screen
+// (not built as an edit UI yet — currently seeded once via schema.sql),
+// so these are safe to cache across requests, not just within one:
+// unstable_cache with a tag means near-zero Supabase egress for these
+// reads until someone explicitly revalidates the tag.
+export const getServiceCatalog = cache(
+  unstable_cache(
+    async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('services')
+        .select('id, name_en, name_ar, base_price_egp, base_minutes, design_tier')
+        .eq('is_active', true);
+      if (error) throw error;
+      return data;
+    },
+    ['service-catalog'],
+    { revalidate: 3600, tags: ['services'] }
+  )
+);
 
-export const getDesignOptions = cache(async () => {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from('design_options')
-    .select('id, name_en, name_ar, price_egp, tier')
-    .eq('is_active', true);
-  if (error) throw error;
-  return data;
-});
+export const getDesignOptions = cache(
+  unstable_cache(
+    async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('design_options')
+        .select('id, name_en, name_ar, price_egp, tier')
+        .eq('is_active', true);
+      if (error) throw error;
+      return data;
+    },
+    ['design-options'],
+    { revalidate: 3600, tags: ['services'] }
+  )
+);
+
+/** Loyalty on/off — cached briefly, not per-request only, since admin flips it rarely. */
+export const getAppSettings = cache(
+  unstable_cache(
+    async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from('app_settings').select('loyalty_enabled').eq('id', 1).single();
+      if (error) throw error;
+      return data;
+    },
+    ['app-settings'],
+    { revalidate: 60, tags: ['app-settings'] }
+  )
+);
 
 /** One query for the whole visible month grid — never per-day. */
 export const getMonthAvailability = cache(async (year: number, month: number) => {

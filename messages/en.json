@@ -6,6 +6,8 @@
   },
   "nav": {
     "home": "Home",
+    "services": "Services",
+    "ourWork": "Our Work",
     "bookings": "Bookings",
     "login": "Log in",
     "logout": "Log out",

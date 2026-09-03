@@ -1,0 +1,83 @@
+.burger {
+  position: fixed;
+  top: 14px;
+  inset-inline-start: 14px;
+  z-index: 210;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 14px rgba(217, 102, 150, 0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.burger span {
+  width: 18px;
+  height: 2px;
+  background: var(--deep);
+  border-radius: 2px;
+}
+
+.nav {
+  position: fixed;
+  top: 0;
+  inset-inline-start: 0;
+  height: 100vh;
+  width: 240px;
+  background: #fff;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
+  padding: 5rem 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  z-index: 205;
+  transform: translateX(-110%);
+  transition: transform 0.25s ease;
+}
+
+.nav.open {
+  transform: translateX(0);
+}
+
+.brand {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--deep);
+  margin-bottom: 1.5rem;
+}
+
+.link {
+  padding: 0.75rem 0.8rem;
+  border-radius: 12px;
+  color: var(--sub);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.active {
+  background: var(--milk, #fff1f6);
+  color: var(--deep);
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 204;
+}
+
+@media (min-width: 900px) {
+  .nav {
+    transform: translateX(0);
+    box-shadow: none;
+    border-inline-end: 1px solid var(--border);
+  }
+  .burger {
+    display: none;
+  }
+}

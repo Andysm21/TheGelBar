@@ -2,13 +2,9 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import NailProcess from '@/components/NailProcess/NailProcess';
 import FloatingNails from '@/components/FloatingNails/FloatingNails';
-import { SERVICES_CATALOG } from '@/lib/services-catalog';
-import { formatDuration } from '@/lib/format';
 import styles from './page.module.css';
 
-// Real work photos (public/nails-gallery → public/gallery). No captions
-// per her request — grid tiles only.
-const GALLERY_IMAGES = Array.from({ length: 10 }, (_, i) => `/gallery/work-${i + 1}.jpg`);
+const MAPS_URL = 'https://www.google.com/maps/search/?api=1&query=The+Gel+Bar+Mohandeseen+Cairo';
 
 export default function LandingPage({ params: { locale } }: { params: { locale: string } }) {
   const t = useTranslations();
@@ -34,32 +30,34 @@ export default function LandingPage({ params: { locale } }: { params: { locale: 
       <NailProcess />
 
       <section className={styles.section}>
-        <h2>{t('services.title')}</h2>
-        <div className={styles.services}>
-          {SERVICES_CATALOG.map((s) => (
-            <div key={s.id} className={styles.serviceCard}>
-              <div>
-                <h3>{locale === 'ar' ? s.nameAr : s.nameEn}</h3>
-                <p className="sans">{formatDuration(s.baseMinutes)}</p>
-              </div>
-              <div className={styles.price}>{s.basePriceEgp} EGP</div>
-            </div>
-          ))}
+        <h2>Who we are</h2>
+        <p className="sans" style={{ textAlign: 'center', color: 'var(--sub)', fontSize: '.85rem', lineHeight: 1.9, maxWidth: 420, margin: '0 auto' }}>
+          {t('brand.name')} is a solo nail studio run by Mariam Sherif El Gergawy in {t('brand.location')}. Every
+          appointment is one-on-one, by reservation only — no rush, no crowd, just careful work on your nails.
+        </p>
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
+          <Link href={`/${locale}/services`} className={styles.bookBtn} style={{ margin: 0 }}>
+            View services
+          </Link>
         </div>
-        <Link href={`/${locale}/book`} className={styles.bookBtn}>
-          {t('hero.cta')}
-        </Link>
       </section>
 
       <section className={styles.section}>
-        <h2>Recent work</h2>
-        <div className={styles.gallery}>
-          {GALLERY_IMAGES.map((src, i) => (
-            <div key={i} className={styles.galItem}>
-              <img src={src} alt="" loading="lazy" />
+        <h2>Location</h2>
+        <p className="sans" style={{ textAlign: 'center', color: 'var(--sub)', fontSize: '.85rem', marginBottom: '1.5rem' }}>
+          {t('brand.location')}
+        </p>
+        <a href={MAPS_URL} target="_blank" rel="noopener noreferrer" className={styles.mapLink}>
+          <div className={styles.mapCard}>
+            <span>📍</span>
+            <div>
+              <div style={{ fontWeight: 600 }}>Open in Google Maps</div>
+              <div className="sans" style={{ fontSize: '.7rem', color: 'var(--sub)' }}>
+                {t('brand.location')}
+              </div>
             </div>
-          ))}
-        </div>
+          </div>
+        </a>
       </section>
 
       <footer className={styles.footer}>

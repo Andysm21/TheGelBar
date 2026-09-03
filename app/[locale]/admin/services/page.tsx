@@ -1,9 +1,10 @@
 import AdminShell from '@/components/AdminShell';
-import { getServiceCatalog, getDesignOptions } from '@/lib/supabase/cached-queries';
+import LoyaltyToggle from '@/components/LoyaltyToggle';
+import { getServiceCatalog, getDesignOptions, getAppSettings } from '@/lib/supabase/cached-queries';
 import { formatDuration } from '@/lib/format';
 
 export default async function AdminServicesPage() {
-  const [services, designs] = await Promise.all([getServiceCatalog(), getDesignOptions()]);
+  const [services, designs, settings] = await Promise.all([getServiceCatalog(), getDesignOptions(), getAppSettings()]);
 
   return (
     <AdminShell>
@@ -56,7 +57,8 @@ export default async function AdminServicesPage() {
 
       <div style={{ fontSize: '1rem', fontWeight: 600, margin: '1.5rem 0 .8rem' }}>Loyalty program</div>
       <div className="card" style={{ maxWidth: 420 }}>
-        <p className="sans" style={{ fontSize: '.82rem', lineHeight: 2 }}>
+        <LoyaltyToggle initialEnabled={settings.loyalty_enabled} />
+        <p className="sans" style={{ fontSize: '.78rem', lineHeight: 1.9, marginTop: '1rem', borderTop: '1px solid var(--border)', paddingTop: '.8rem' }}>
           1 point per completed &amp; paid session
           <br />
           Free at the 11th session (client sitting at exactly 10 points)

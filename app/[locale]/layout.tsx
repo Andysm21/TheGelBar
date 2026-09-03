@@ -4,6 +4,7 @@ import { locales } from '@/i18n';
 import { notFound } from 'next/navigation';
 import type { Metadata, Viewport } from 'next';
 import LangSwitch from '@/components/LangSwitch';
+import SiteNavGate from '@/components/SiteNavGate';
 
 // Not using generateStaticParams here: several routes (admin/*, book,
 // dashboard) need to render dynamically anyway (auth-gated or
@@ -42,7 +43,7 @@ export default async function LocaleLayout({
           <div style={{ position: 'fixed', top: 12, insetInlineEnd: 12, zIndex: 200 }}>
             <LangSwitch />
           </div>
-          {children}
+          <SiteNavGate>{children}</SiteNavGate>
         </NextIntlClientProvider>
       </body>
     </html>

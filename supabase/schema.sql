@@ -89,6 +89,14 @@ create table availability_slots (
   unique (date, start_time)
 );
 
+-- Single-row app settings (currently just the loyalty on/off switch).
+-- `id` is pinned to 1 so there's always exactly one row to upsert/read.
+create table app_settings (
+  id int primary key default 1 check (id = 1),
+  loyalty_enabled boolean not null default false
+);
+insert into app_settings (id, loyalty_enabled) values (1, false) on conflict (id) do nothing;
+
 create index bookings_client_id_idx on bookings(client_id);
 create index bookings_scheduled_start_idx on bookings(scheduled_start);
 create index bookings_status_idx on bookings(status);
@@ -109,6 +117,8 @@ grant select, insert on public.booking_images to authenticated;
 grant select on public.services to anon, authenticated;
 grant select on public.design_options to anon, authenticated;
 grant select on public.availability_slots to anon, authenticated;
+grant select on public.app_settings to anon, authenticated;
+grant update on public.app_settings to authenticated;
 
 -- Row Level Security: clients only see their own bookings/profile,
 -- owner (role = 'owner') sees everything.
@@ -134,6 +144,13 @@ $$;
 alter table profiles enable row level security;
 alter table bookings enable row level security;
 alter table booking_images enable row level security;
+alter table app_settings enable row level security;
+
+create policy "app_settings: anyone reads" on app_settings
+  for select using (true);
+
+create policy "app_settings: owner updates" on app_settings
+  for update using (public.is_owner());
 
 create policy "profiles: self read/write" on profiles
   for all using (auth.uid() = id);

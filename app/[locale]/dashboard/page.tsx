@@ -2,14 +2,14 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSessionProfile } from '@/lib/supabase/session';
-import { getClientBookings } from '@/lib/supabase/cached-queries';
+import { getClientBookings, getAppSettings } from '@/lib/supabase/cached-queries';
 
 export default async function DashboardPage({ params: { locale } }: { params: { locale: string } }) {
   const t = useTranslations();
   const session = await getSessionProfile();
   if (!session) redirect(`/${locale}/login`);
 
-  const bookings = await getClientBookings(session.user.id);
+  const [bookings, settings] = await Promise.all([getClientBookings(session.user.id), getAppSettings()]);
   const upcoming = bookings.filter((b: any) => ['pending', 'confirmed', 'needs_reschedule'].includes(b.status));
   const next = upcoming[0];
   const points = session.profile.loyalty_points;
@@ -40,46 +40,50 @@ export default async function DashboardPage({ params: { locale } }: { params: { 
         </div>
       )}
 
-      <div style={{ fontSize: '1.1rem', fontWeight: 600, margin: '1.75rem 0 .9rem' }}>{t('loyalty.points')}</div>
-      <div className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <div style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--deep)' }}>{points} pts</div>
-            <p className="sans" style={{ fontSize: '.72rem', color: 'var(--sub)' }}>
-              {t('loyalty.toNextFree', { count: toNextFree })}
-            </p>
-          </div>
-          <div
-            style={{
-              width: 60,
-              height: 60,
-              borderRadius: '50%',
-              background: `conic-gradient(var(--pink) ${pct}%, #f3e6ea 0)`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: '50%',
-                background: '#fff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: 'Arial',
-                fontSize: '.7rem',
-                fontWeight: 700,
-                color: 'var(--deep)',
-              }}
-            >
-              {pct}%
+      {settings.loyalty_enabled && (
+        <>
+          <div style={{ fontSize: '1.1rem', fontWeight: 600, margin: '1.75rem 0 .9rem' }}>{t('loyalty.points')}</div>
+          <div className="card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--deep)' }}>{points} pts</div>
+                <p className="sans" style={{ fontSize: '.72rem', color: 'var(--sub)' }}>
+                  {t('loyalty.toNextFree', { count: toNextFree })}
+                </p>
+              </div>
+              <div
+                style={{
+                  width: 60,
+                  height: 60,
+                  borderRadius: '50%',
+                  background: `conic-gradient(var(--pink) ${pct}%, #f3e6ea 0)`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <div
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: '50%',
+                    background: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontFamily: 'Arial',
+                    fontSize: '.7rem',
+                    fontWeight: 700,
+                    color: 'var(--deep)',
+                  }}
+                >
+                  {pct}%
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
 
       <div style={{ fontSize: '1.1rem', fontWeight: 600, margin: '1.75rem 0 .9rem' }}>Book something new</div>
       <Link href={`/${locale}/book`} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

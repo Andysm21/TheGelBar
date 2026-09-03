@@ -167,3 +167,23 @@
   height: 100%;
   object-fit: cover;
 }
+
+.mapLink {
+  display: block;
+}
+
+.mapCard {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1.2rem 1.4rem;
+  box-shadow: 0 8px 22px rgba(217, 102, 150, 0.1);
+  font-size: 0.85rem;
+}
+
+.mapCard span {
+  font-size: 1.6rem;
+}
