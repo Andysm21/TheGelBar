@@ -1,7 +1,11 @@
 import AdminShell from '@/components/AdminShell';
-import { MOCK_CLIENT } from '@/lib/mock-data';
+import { getAllClients } from '@/lib/supabase/cached-queries';
+import ClientNotesEditor from '@/components/ClientNotesEditor';
 
-export default function AdminClientsPage() {
+export default async function AdminClientsPage() {
+  const clients = await getAllClients();
+  const firstClient = clients[0];
+
   return (
     <AdminShell>
       <h1 style={{ fontSize: '1.3rem', color: 'var(--deep)', marginBottom: '1.5rem' }}>Clients</h1>
@@ -15,20 +19,33 @@ export default function AdminClientsPage() {
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td style={{ padding: '.75rem .5rem', borderBottom: '1px solid #f6eef1' }}>{MOCK_CLIENT.name}</td>
-              <td style={{ padding: '.75rem .5rem', borderBottom: '1px solid #f6eef1' }}>{MOCK_CLIENT.loyaltyPoints}</td>
-              <td style={{ padding: '.75rem .5rem', borderBottom: '1px solid #f6eef1' }}>{MOCK_CLIENT.email}</td>
-            </tr>
+            {clients.map((c) => (
+              <tr key={c.id}>
+                <td style={{ padding: '.75rem .5rem', borderBottom: '1px solid #f6eef1' }}>{c.name ?? '—'}</td>
+                <td style={{ padding: '.75rem .5rem', borderBottom: '1px solid #f6eef1' }}>{c.loyalty_points}</td>
+                <td style={{ padding: '.75rem .5rem', borderBottom: '1px solid #f6eef1' }}>{c.email}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
+        {clients.length === 0 && (
+          <p className="sans" style={{ padding: '1rem', color: 'var(--sub)' }}>
+            No clients yet.
+          </p>
+        )}
       </div>
 
-      <div style={{ fontSize: '1.1rem', fontWeight: 600, margin: '1.75rem 0 .9rem' }}>{MOCK_CLIENT.name} — private notes</div>
-      <div className="card" style={{ maxWidth: 480 }}>
-        <p className="sans" style={{ fontSize: '.85rem' }}>{MOCK_CLIENT.adminPrivateNotes}</p>
-        <p className="sans" style={{ fontSize: '.68rem', color: 'var(--sub)', marginTop: '.6rem' }}>Not visible to the client.</p>
-      </div>
+      {firstClient && (
+        <>
+          <div style={{ fontSize: '1.1rem', fontWeight: 600, margin: '1.75rem 0 .9rem' }}>{firstClient.name} — private notes</div>
+          <div className="card" style={{ maxWidth: 480 }}>
+            <ClientNotesEditor clientId={firstClient.id} initialNotes={firstClient.admin_private_notes ?? ''} />
+            <p className="sans" style={{ fontSize: '.68rem', color: 'var(--sub)', marginTop: '.6rem' }}>
+              Not visible to the client. Select a different client from the table to edit theirs (coming soon).
+            </p>
+          </div>
+        </>
+      )}
     </AdminShell>
   );
 }

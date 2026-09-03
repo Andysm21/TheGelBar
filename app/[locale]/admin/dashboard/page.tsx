@@ -1,8 +1,8 @@
 import AdminShell from '@/components/AdminShell';
-import { MOCK_BOOKINGS, getPendingBookingsForOwner } from '@/lib/mock-data';
+import { getTodayBookings, getPendingBookingsForOwner } from '@/lib/supabase/cached-queries';
 
-export default function AdminDashboardPage() {
-  const pending = getPendingBookingsForOwner();
+export default async function AdminDashboardPage() {
+  const [today, pending] = await Promise.all([getTodayBookings(), getPendingBookingsForOwner()]);
 
   return (
     <AdminShell>
@@ -14,26 +14,24 @@ export default function AdminDashboardPage() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem', marginBottom: '1.75rem' }}>
-        {[
-          { label: "Today's bookings", value: String(MOCK_BOOKINGS.length), delta: `${pending.length} pending approval` },
-          { label: "This week's revenue", value: '4,850 EGP', delta: '↑ 12% vs last week' },
-          { label: 'New clients', value: '4', delta: 'this month' },
-          { label: 'No-show rate', value: '3%', delta: 'last 30 days' },
-        ].map((s) => (
-          <div key={s.label} className="card">
-            <div className="sans" style={{ fontSize: '.68rem', textTransform: 'uppercase', color: 'var(--sub)', marginBottom: '.4rem' }}>
-              {s.label}
-            </div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 600 }}>{s.value}</div>
-            <div className="sans" style={{ fontSize: '.68rem', color: 'var(--success)', marginTop: '.3rem' }}>
-              {s.delta}
-            </div>
+        <div className="card">
+          <div className="sans" style={{ fontSize: '.68rem', textTransform: 'uppercase', color: 'var(--sub)', marginBottom: '.4rem' }}>
+            Today's bookings
           </div>
-        ))}
+          <div style={{ fontSize: '1.5rem', fontWeight: 600 }}>{today.length}</div>
+          <div className="sans" style={{ fontSize: '.68rem', color: 'var(--success)', marginTop: '.3rem' }}>
+            {pending.length} pending approval
+          </div>
+        </div>
       </div>
 
       <div style={{ fontSize: '1.1rem', fontWeight: 600, margin: '1.75rem 0 .9rem' }}>Pending requests</div>
-      {pending.map((b) => (
+      {pending.length === 0 && (
+        <p className="sans" style={{ color: 'var(--sub)', fontSize: '.85rem' }}>
+          No pending requests.
+        </p>
+      )}
+      {pending.map((b: any) => (
         <a
           key={b.id}
           href={`admin/bookings/${b.id}`}
@@ -41,13 +39,28 @@ export default function AdminDashboardPage() {
           style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.8rem' }}
         >
           <div>
-            <h3 style={{ fontSize: '1rem' }}>{b.clientName}</h3>
+            <h3 style={{ fontSize: '1rem' }}>{b.profiles?.name ?? 'Client'}</h3>
             <p className="sans" style={{ fontSize: '.75rem', color: 'var(--sub)', marginTop: '.2rem' }}>
-              {new Date(b.scheduledStart).toLocaleString()} · {b.totalPriceEgp} EGP
+              {b.services?.name_en} · {new Date(b.scheduled_start).toLocaleString()} · {b.total_price_egp} EGP
             </p>
           </div>
           <span className="badge badge-pending">Pending</span>
         </a>
+      ))}
+
+      <div style={{ fontSize: '1.1rem', fontWeight: 600, margin: '1.75rem 0 .9rem' }}>Today's schedule</div>
+      {today.length === 0 && (
+        <p className="sans" style={{ color: 'var(--sub)', fontSize: '.85rem' }}>
+          Nothing booked today.
+        </p>
+      )}
+      {today.map((b: any) => (
+        <div key={b.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.6rem' }}>
+          <div className="sans" style={{ fontSize: '.85rem' }}>
+            {new Date(b.scheduled_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {b.profiles?.name} · {b.services?.name_en}
+          </div>
+          <span className={`badge ${b.status === 'pending' ? 'badge-pending' : b.status === 'confirmed' ? 'badge-confirmed' : 'badge-done'}`}>{b.status}</span>
+        </div>
       ))}
     </AdminShell>
   );

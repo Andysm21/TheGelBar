@@ -1,19 +1,20 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
   const t = useTranslations();
-  const router = useRouter();
   const { locale } = useParams<{ locale: string }>();
+  const searchParams = useSearchParams();
+  const next = searchParams.get('next') || '/dashboard';
 
   async function signInWithGoogle() {
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/${locale}/dashboard` },
+      options: { redirectTo: `${window.location.origin}/${locale}${next}` },
     });
   }
 
@@ -36,7 +37,7 @@ export default function LoginPage() {
       </div>
 
       <p className="sans" style={{ textAlign: 'center', fontSize: '.7rem', color: 'var(--sub)', marginTop: '1.5rem' }}>
-        Salon owner? <a href={`/${locale}/admin/dashboard`} style={{ color: 'var(--deep)', fontWeight: 700 }}>Go to admin →</a>
+        Salon owner? <a href={`/${locale}/admin/login`} style={{ color: 'var(--deep)', fontWeight: 700 }}>Go to admin →</a>
       </p>
     </div>
   );

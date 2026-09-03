@@ -1,15 +1,14 @@
 import AdminShell from '@/components/AdminShell';
-import { SERVICES_CATALOG, DESIGN_OPTIONS } from '@/lib/services-catalog';
+import { getServiceCatalog, getDesignOptions } from '@/lib/supabase/cached-queries';
 import { formatDuration } from '@/lib/format';
 
-export default function AdminServicesPage() {
+export default async function AdminServicesPage() {
+  const [services, designs] = await Promise.all([getServiceCatalog(), getDesignOptions()]);
+
   return (
     <AdminShell>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '.6rem' }}>
         <h1 style={{ fontSize: '1.3rem', color: 'var(--deep)' }}>Services</h1>
-        <button className="btn btn-primary" style={{ fontSize: '.68rem', padding: '.55rem 1rem' }}>
-          + Add service
-        </button>
       </div>
 
       <div className="card" style={{ overflowX: 'auto' }}>
@@ -22,11 +21,11 @@ export default function AdminServicesPage() {
             </tr>
           </thead>
           <tbody>
-            {SERVICES_CATALOG.map((s) => (
+            {services.map((s) => (
               <tr key={s.id}>
-                <td style={{ padding: '.7rem .5rem', borderBottom: '1px solid #f6eef1' }}>{s.nameEn}</td>
-                <td style={{ padding: '.7rem .5rem', borderBottom: '1px solid #f6eef1' }}>{formatDuration(s.baseMinutes)}</td>
-                <td style={{ padding: '.7rem .5rem', borderBottom: '1px solid #f6eef1' }}>{s.basePriceEgp} EGP</td>
+                <td style={{ padding: '.7rem .5rem', borderBottom: '1px solid #f6eef1' }}>{s.name_en}</td>
+                <td style={{ padding: '.7rem .5rem', borderBottom: '1px solid #f6eef1' }}>{formatDuration(s.base_minutes)}</td>
+                <td style={{ padding: '.7rem .5rem', borderBottom: '1px solid #f6eef1' }}>{s.base_price_egp} EGP</td>
               </tr>
             ))}
           </tbody>
@@ -44,11 +43,11 @@ export default function AdminServicesPage() {
             </tr>
           </thead>
           <tbody>
-            {DESIGN_OPTIONS.map((d) => (
+            {designs.map((d) => (
               <tr key={d.id}>
-                <td style={{ padding: '.7rem .5rem', borderBottom: '1px solid #f6eef1' }}>{d.nameEn}</td>
+                <td style={{ padding: '.7rem .5rem', borderBottom: '1px solid #f6eef1' }}>{d.name_en}</td>
                 <td style={{ padding: '.7rem .5rem', borderBottom: '1px solid #f6eef1', textTransform: 'capitalize' }}>{d.tier}</td>
-                <td style={{ padding: '.7rem .5rem', borderBottom: '1px solid #f6eef1' }}>+{d.priceEgp} EGP</td>
+                <td style={{ padding: '.7rem .5rem', borderBottom: '1px solid #f6eef1' }}>+{d.price_egp} EGP</td>
               </tr>
             ))}
           </tbody>

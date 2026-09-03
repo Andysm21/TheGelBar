@@ -74,7 +74,7 @@ export const getClientBookings = cache(async (clientId: string) => {
     .eq('client_id', clientId)
     .order('scheduled_start', { ascending: true });
   if (error) throw error;
-  return data;
+  return data as any;
 });
 
 export const getPendingBookingsForOwner = cache(async () => {
@@ -89,5 +89,131 @@ export const getPendingBookingsForOwner = cache(async () => {
     .eq('status', 'pending')
     .order('scheduled_start', { ascending: true });
   if (error) throw error;
+  return data as any;
+});
+
+/** All bookings on a given day (used by admin calendar's day panel). */
+export const getBookingsForDate = cache(async (date: string) => {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('bookings')
+    .select(
+      `id, status, scheduled_start, scheduled_end,
+       profiles ( name ),
+       services ( name_en )`
+    )
+    .gte('scheduled_start', `${date}T00:00:00`)
+    .lt('scheduled_start', `${date}T23:59:59`)
+    .order('scheduled_start', { ascending: true });
+  if (error) throw error;
+  return data as any;
+});
+
+/** Single booking with everything the admin detail / close-out screen needs. */
+export const getBookingById = cache(async (id: string) => {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('bookings')
+    .select(
+      `id, status, scheduled_start, scheduled_end, total_price_egp, is_loyalty_free,
+       health_notes, service_id, design_id, was_service_completed, was_design_completed,
+       client_id,
+       profiles ( name, email, loyalty_points, admin_private_notes ),
+       services ( name_en, name_ar, base_price_egp ),
+       design_options ( name_en, name_ar, price_egp )`
+    )
+    .eq('id', id)
+    .single();
+  if (error) throw error;
+  return data as any;
+});
+
+/** Every booking for the admin dashboard's "today" list — one day, one query. */
+export const getTodayBookings = cache(async () => {
+  const supabase = createClient();
+  const today = new Date().toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from('bookings')
+    .select(
+      `id, status, scheduled_start, total_price_egp,
+       profiles ( name ),
+       services ( name_en )`
+    )
+    .gte('scheduled_start', `${today}T00:00:00`)
+    .lt('scheduled_start', `${today}T23:59:59`)
+    .order('scheduled_start', { ascending: true });
+  if (error) throw error;
+  return data as any;
+});
+
+/** All clients (profiles with role='client') for the admin clients page. */
+export const getAllClients = cache(async () => {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, name, email, loyalty_points, admin_private_notes')
+    .eq('role', 'client')
+    .order('name', { ascending: true });
+  if (error) throw error;
   return data;
+});
+
+/** One client's full visit history (for their admin profile page). */
+export const getClientHistory = cache(async (clientId: string) => {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('bookings')
+    .select(
+      `id, status, scheduled_start, total_price_egp,
+       services ( name_en )`
+    )
+    .eq('client_id', clientId)
+    .eq('status', 'done')
+    .order('scheduled_start', { ascending: false });
+  if (error) throw error;
+  return data;
+});
+
+/** Simple real aggregates for the analytics page — no fabricated numbers. */
+export const getAnalyticsSummary = cache(async () => {
+  const supabase = createClient();
+  const { data: done, error } = await supabase
+    .from('bookings')
+    .select('total_price_egp, client_id, scheduled_start')
+    .eq('status', 'done');
+  if (error) throw error;
+
+  const revenue = done.reduce((sum, b) => sum + b.total_price_egp, 0);
+  const bookingCount = done.length;
+  const avgTicket = bookingCount > 0 ? Math.round(revenue / bookingCount) : 0;
+  const uniqueClients = new Set(done.map((b) => b.client_id));
+  const clientVisitCounts = new Map<string, number>();
+  for (const b of done) clientVisitCounts.set(b.client_id, (clientVisitCounts.get(b.client_id) ?? 0) + 1);
+  const repeatClients = [...clientVisitCounts.values()].filter((n) => n > 1).length;
+  const repeatPct = uniqueClients.size > 0 ? Math.round((repeatClients / uniqueClients.size) * 100) : 0;
+
+  return { revenue, bookingCount, avgTicket, repeatPct };
+});
+
+/**
+ * Open time slots for one date: every non-blocked availability_slots row
+ * for that day, minus any that overlap an existing non-cancelled/declined
+ * booking. One query per side (slots, bookings for the day), not per slot.
+ */
+export const getOpenTimesForDate = cache(async (date: string) => {
+  const supabase = createClient();
+  const [{ data: slots, error: slotsError }, { data: bookings, error: bookingsError }] = await Promise.all([
+    supabase.from('availability_slots').select('start_time, is_blocked').eq('date', date),
+    supabase
+      .from('bookings')
+      .select('scheduled_start')
+      .gte('scheduled_start', `${date}T00:00:00`)
+      .lt('scheduled_start', `${date}T23:59:59`)
+      .in('status', ['pending', 'confirmed', 'needs_reschedule']),
+  ]);
+  if (slotsError) throw slotsError;
+  if (bookingsError) throw bookingsError;
+
+  const bookedTimes = new Set((bookings ?? []).map((b) => new Date(b.scheduled_start).toTimeString().slice(0, 5)));
+  return (slots ?? []).filter((s) => !s.is_blocked && !bookedTimes.has(s.start_time.slice(0, 5)));
 });
