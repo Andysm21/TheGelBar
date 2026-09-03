@@ -94,6 +94,22 @@ create index bookings_scheduled_start_idx on bookings(scheduled_start);
 create index bookings_status_idx on bookings(status);
 create index availability_slots_date_idx on availability_slots(date);
 
+-- Base table-level grants. RLS policies below control WHICH rows a role
+-- can touch, but Postgres also requires this separate, coarser
+-- table-level permission before RLS is even consulted — normally set up
+-- automatically by Supabase's own project bootstrapping, but NOT
+-- reapplied if you ever manually `drop schema public cascade` and rerun
+-- this file, which is exactly the reset flow documented in DEPLOY.md.
+-- Without these grants every query fails with 42501 "permission denied"
+-- regardless of how correct the RLS policies are.
+grant usage on schema public to anon, authenticated;
+grant select, insert, update on public.profiles to authenticated;
+grant select, insert, update on public.bookings to authenticated;
+grant select, insert on public.booking_images to authenticated;
+grant select on public.services to anon, authenticated;
+grant select on public.design_options to anon, authenticated;
+grant select on public.availability_slots to anon, authenticated;
+
 -- Row Level Security: clients only see their own bookings/profile,
 -- owner (role = 'owner') sees everything.
 --
