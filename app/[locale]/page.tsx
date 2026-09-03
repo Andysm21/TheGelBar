@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import NailProcess from '@/components/NailProcess/NailProcess';
 import FloatingNails from '@/components/FloatingNails/FloatingNails';
+import InstagramCard from '@/components/InstagramCard';
 import styles from './page.module.css';
 
 const ADDRESS = '7 Ahmed Oraby, Madinet Al Eelam, Agouza, Giza Governorate 3755201';
@@ -72,6 +73,10 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
             </div>
           </div>
         </a>
+      </section>
+
+      <section className={styles.section} style={{ paddingTop: 0 }}>
+        <InstagramCard />
       </section>
 
       <footer className={styles.footer}>

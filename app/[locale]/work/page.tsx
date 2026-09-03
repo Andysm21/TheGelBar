@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import InstagramCard from '@/components/InstagramCard';
 import styles from './work.module.css';
 
 const GALLERY_IMAGES = Array.from({ length: 10 }, (_, i) => `/gallery/work-${i + 1}.jpg`);
@@ -18,6 +19,10 @@ export default async function OurWorkPage() {
             <img src={src} alt="" loading="lazy" />
           </div>
         ))}
+      </div>
+
+      <div style={{ marginTop: '2rem', maxWidth: 420 }}>
+        <InstagramCard />
       </div>
     </div>
   );
