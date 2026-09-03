@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import Calendar, { DayAvailability } from '@/components/Calendar/Calendar';
 import { fetchMonthAvailability, fetchBookingsForDate, addAvailabilitySlot, removeAvailabilitySlot, setDayBlocked } from '@/lib/supabase/actions';
 
@@ -22,7 +21,6 @@ interface DayBooking {
 }
 
 export default function AdminCalendarClient() {
-  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -80,7 +78,11 @@ export default function AdminCalendarClient() {
         await fn();
         loadMonth();
         if (selectedDate) loadDay(selectedDate);
-        router.refresh();
+        // Not calling router.refresh() here on purpose: the Server
+        // Action already revalidates this page's own data via
+        // revalidatePath, and router.refresh() doesn't return a promise
+        // — if the re-render it triggers throws, nothing can catch it,
+        // which is what was crashing the whole page on "block day".
       } catch (e) {
         setActionError(e instanceof Error ? e.message : 'Something went wrong — try again.');
       }
