@@ -70,5 +70,8 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)'],
+  // /auth/* (the OAuth callback route) must stay unprefixed — next-intl
+  // otherwise rewrites it to /en/auth/callback, which 404s since the
+  // route handler lives at the unprefixed app/auth/callback.
+  matcher: ['/((?!api|_next|_vercel|auth|.*\\..*).*)'],
 };
