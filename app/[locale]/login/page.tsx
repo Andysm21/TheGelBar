@@ -10,11 +10,16 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const next = searchParams.get('next') || '/dashboard';
 
+  const oauthError = searchParams.get('error') === 'oauth';
+
   async function signInWithGoogle() {
     const supabase = createClient();
+    const callbackUrl = new URL(`${window.location.origin}/auth/callback`);
+    callbackUrl.searchParams.set('locale', locale);
+    callbackUrl.searchParams.set('next', next);
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/${locale}${next}` },
+      options: { redirectTo: callbackUrl.toString() },
     });
   }
 
@@ -28,6 +33,11 @@ export default function LoginPage() {
       </div>
 
       <div className="card">
+        {oauthError && (
+          <p className="sans" style={{ fontSize: '.75rem', color: 'var(--danger)', marginBottom: '1rem', textAlign: 'center' }}>
+            Google sign-in didn't go through — try again.
+          </p>
+        )}
         <button onClick={signInWithGoogle} className="btn btn-ghost btn-block" style={{ marginBottom: '.8rem', gap: '.6rem' }}>
           Continue with Google
         </button>
