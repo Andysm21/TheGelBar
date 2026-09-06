@@ -1,11 +1,17 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
+import { Playfair_Display } from 'next/font/google';
 import { locales } from '@/i18n';
 import { notFound } from 'next/navigation';
 import type { Metadata, Viewport } from 'next';
 import LangSwitch from '@/components/LangSwitch';
 import SiteNavGate from '@/components/SiteNavGate';
 import SplashLoader from '@/components/SplashLoader';
+
+// Editorial serif for headings — matches the "new-inspo" design
+// direction (thebestnailsmiami.com). Self-hosted via next/font, so no
+// external request/CSP concern.
+const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
 
 // Not using generateStaticParams here: several routes (admin/*, book,
 // dashboard) need to render dynamically anyway (auth-gated or
@@ -39,7 +45,7 @@ export default async function LocaleLayout({
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
 
   return (
-    <html lang={locale} dir={dir}>
+    <html lang={locale} dir={dir} className={playfair.variable}>
       <body>
         <NextIntlClientProvider messages={messages}>
           <SplashLoader />

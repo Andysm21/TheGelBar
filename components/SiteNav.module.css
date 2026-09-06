@@ -8,7 +8,7 @@
   border-radius: 50%;
   background: #fff;
   border: 1px solid var(--border);
-  box-shadow: 0 4px 14px rgba(217, 102, 150, 0.18);
+  box-shadow: 0 4px 14px rgba(43, 33, 23, 0.14);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -44,22 +44,24 @@
 }
 
 .brand {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-family: var(--font-display, Georgia), serif;
+  font-size: 1.2rem;
   color: var(--deep);
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .link {
   padding: 0.75rem 0.8rem;
-  border-radius: 12px;
   color: var(--sub);
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-family: Arial, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .active {
-  background: var(--milk, #fff1f6);
+  background: var(--graybg);
   color: var(--deep);
 }
 

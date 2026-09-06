@@ -1,18 +1,20 @@
 :root {
-  /* Powder Pink Editorial — The Gel Bar official palette */
-  --bg: #fff1f6;
-  --bg2: #f1b7cd;
-  --pink: #d96696;
-  --deep: #982552;
-  --gold: #e79bb8;
-  --deeppink: #f1b7cd;
-  --text: #3e1427;
-  --sub: #8c5470;
-  --graybg: #efe3e8;
-  --border: #f3d3e0;
+  /* Editorial Nude & Gold — "new-inspo" palette, styled after
+     thebestnailsmiami.com's warm taupe/cream/gold look, kept under the
+     same var names the rest of the app already reads from. */
+  --bg: #f7f1e8;
+  --bg2: #e7d7c2;
+  --pink: #b3894f;
+  --deep: #2e2015;
+  --gold: #c9a24b;
+  --deeppink: #ded0b8;
+  --text: #2b2117;
+  --sub: #83725e;
+  --graybg: #efe7d9;
+  --border: #e3d5bd;
   --success: #3fa66b;
-  --warn: #e79bb8;
-  --danger: #c0304f;
+  --warn: #c9a24b;
+  --danger: #b3453a;
 }
 
 * {
@@ -30,6 +32,23 @@ body {
 body {
   font-family: Georgia, 'Times New Roman', serif;
   overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+.serif {
+  font-family: var(--font-display, Georgia), 'Playfair Display', serif;
+  font-weight: 600;
+}
+
+.eyebrow {
+  font-family: Arial, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold);
 }
 
 .sans {
@@ -52,29 +71,34 @@ img {
 
 .btn {
   font-family: Arial, sans-serif;
-  font-size: 0.82rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  padding: 0.85rem 1.6rem;
-  border-radius: 40px;
-  border: none;
+  padding: 0.9rem 1.8rem;
+  border-radius: 2px;
+  border: 1px solid var(--gold);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .btn-primary {
-  background: linear-gradient(120deg, var(--pink), var(--deep));
+  background: transparent;
+  color: var(--deep);
+}
+
+.btn-primary:hover {
+  background: var(--gold);
   color: #fff;
-  box-shadow: 0 10px 24px rgba(217, 102, 150, 0.3);
 }
 
 .btn-ghost {
-  background: #fff;
-  color: var(--deep);
+  background: transparent;
+  color: var(--sub);
   border: 1px solid var(--border);
 }
 
@@ -89,9 +113,9 @@ img {
 .card {
   background: #fff;
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: 4px;
   padding: 1.25rem;
-  box-shadow: 0 8px 20px rgba(217, 102, 150, 0.08);
+  box-shadow: 0 8px 20px rgba(43, 33, 23, 0.06);
 }
 
 .badge {

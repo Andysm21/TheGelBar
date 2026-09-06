@@ -7,9 +7,9 @@
 .card {
   background: #fff;
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: 2px;
   overflow: hidden;
-  box-shadow: 0 8px 22px rgba(217, 102, 150, 0.1);
+  box-shadow: 0 8px 22px rgba(43, 33, 23, 0.1);
   text-align: start;
   padding: 0;
   cursor: pointer;
@@ -19,7 +19,7 @@
 .card:hover,
 .card:focus-visible {
   transform: translateY(-3px);
-  box-shadow: 0 14px 30px rgba(217, 102, 150, 0.18);
+  box-shadow: 0 14px 30px rgba(43, 33, 23, 0.18);
 }
 
 .imgWrap {
@@ -66,7 +66,7 @@
 
 .modal {
   background: #fff;
-  border-radius: 22px;
+  border-radius: 2px;
   overflow: hidden;
   max-width: 420px;
   width: 100%;

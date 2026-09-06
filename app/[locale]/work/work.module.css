@@ -19,9 +19,8 @@
 
 .galItem {
   aspect-ratio: 1;
-  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 8px 18px rgba(217, 102, 150, 0.15);
+  box-shadow: 0 8px 18px rgba(43, 33, 23, 0.12);
 }
 
 .galItem img {
