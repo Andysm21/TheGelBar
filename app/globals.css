@@ -1,26 +1,33 @@
 :root {
-  /* Editorial Nude & Gold — "new-inspo" palette, styled after
-     thebestnailsmiami.com's warm taupe/cream/gold look, kept under the
-     same var names the rest of the app already reads from. */
+  /* Editorial Nude & Gold — The Gel Bar */
   --bg: #f7f1e8;
-  --bg2: #e7d7c2;
-  --pink: #b3894f;
+  --bg-alt: #efe7d9;
+  --surface: #ffffff;
+  --ink: #2b2117;
   --deep: #2e2015;
   --gold: #c9a24b;
-  --deeppink: #ded0b8;
-  --text: #2b2117;
+  --gold-soft: #e6d3a8;
   --sub: #83725e;
-  --graybg: #efe7d9;
   --border: #e3d5bd;
+  --text: #2b2117;
+  --graybg: #efe7d9;
+  --pink: #b3894f;
   --success: #3fa66b;
   --warn: #c9a24b;
   --danger: #b3453a;
+
+  --header-h: 104px;
+  --maxw: 1160px;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 html,
@@ -37,22 +44,16 @@ body {
 h1,
 h2,
 h3,
+h4,
 .serif {
   font-family: var(--font-display, Georgia), 'Playfair Display', serif;
-  font-weight: 600;
-}
-
-.eyebrow {
-  font-family: Arial, sans-serif;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--gold);
+  font-weight: 500;
+  line-height: 1.15;
+  text-wrap: balance;
 }
 
 .sans {
-  font-family: Arial, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 a {
@@ -69,94 +70,143 @@ img {
   transform: scaleX(-1);
 }
 
-.btn {
-  font-family: Arial, sans-serif;
-  font-size: 0.72rem;
+/* ---------- shared layout ---------- */
+.shell {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding-inline: 1.5rem;
+}
+
+.eyebrow {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.26em;
   text-transform: uppercase;
-  padding: 0.9rem 1.8rem;
-  border-radius: 2px;
+  color: var(--gold);
+}
+
+.lede {
+  font-size: 0.95rem;
+  line-height: 1.9;
+  color: var(--sub);
+}
+
+/* ---------- buttons ---------- */
+.btn {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 0.95rem 1.9rem;
+  border-radius: 0;
   border: 1px solid var(--gold);
+  background: transparent;
+  color: var(--deep);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  transition: background 0.2s ease, color 0.2s ease;
+  gap: 0.5rem;
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
 
-.btn-primary {
-  background: transparent;
-  color: var(--deep);
-}
-
-.btn-primary:hover {
+.btn:hover {
   background: var(--gold);
   color: #fff;
 }
 
+.btn-solid {
+  background: var(--deep);
+  border-color: var(--deep);
+  color: #fff;
+}
+
+.btn-solid:hover {
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.btn-light {
+  border-color: #fff;
+  color: #fff;
+}
+
+.btn-light:hover {
+  background: #fff;
+  color: var(--deep);
+}
+
 .btn-ghost {
-  background: transparent;
+  border-color: var(--border);
   color: var(--sub);
-  border: 1px solid var(--border);
+}
+
+.btn-ghost:hover {
+  background: var(--border);
+  color: var(--deep);
 }
 
 .btn-block {
   width: 100%;
 }
 
-.btn:active {
-  transform: scale(0.97);
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
+.btn-sm {
+  padding: 0.6rem 1.1rem;
+  font-size: 0.62rem;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+/* ---------- cards / badges ---------- */
 .card {
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 1.25rem;
-  box-shadow: 0 8px 20px rgba(43, 33, 23, 0.06);
+  border-radius: 0;
+  padding: 1.4rem;
 }
 
 .badge {
-  font-family: Arial, sans-serif;
-  font-size: 0.62rem;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.6rem;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  padding: 0.3rem 0.65rem;
-  border-radius: 20px;
+  padding: 0.35rem 0.7rem;
   display: inline-block;
+  border: 1px solid currentColor;
 }
 
 .badge-pending {
-  background: #fbe6d4;
   color: #a5720c;
 }
-
 .badge-confirmed {
-  background: #e2f5ea;
   color: #1f7a48;
 }
-
 .badge-declined {
-  background: #fbdfe6;
   color: #a5192f;
 }
-
 .badge-done {
-  background: #eee;
-  color: #666;
+  color: #6b6b6b;
 }
 
+/* ---------- forms ---------- */
 label {
   display: block;
-  font-family: Arial, sans-serif;
-  font-size: 0.7rem;
-  letter-spacing: 0.05em;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.64rem;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--sub);
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.5rem;
 }
 
 input[type='text'],
@@ -164,35 +214,83 @@ input[type='email'],
 input[type='password'],
 input[type='tel'],
 input[type='date'],
+input[type='time'],
 textarea,
 select {
   width: 100%;
-  padding: 0.75rem 0.9rem;
+  padding: 0.85rem 1rem;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  font-family: Arial, sans-serif;
+  border-radius: 0;
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 0.85rem;
-  background: #fff;
+  background: var(--surface);
   color: var(--text);
-  min-height: 44px;
+  min-height: 46px;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--gold);
 }
 
 textarea {
   resize: vertical;
-  min-height: 80px;
+  min-height: 90px;
 }
 
 .field {
-  margin-bottom: 1.1rem;
+  margin-bottom: 1.2rem;
 }
 
-.btn-sm {
-  padding: 0.5rem 1rem;
-  font-size: 0.68rem;
+/* ---------- motion ---------- */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 
-@media (min-width: 900px) {
-  .site-content {
-    margin-inline-start: 240px;
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scroll reveal — starts visible, so the page still reads with JS off
+   or before the observer fires (no content parked at opacity:0). */
+.reveal {
+  animation: fadeUp 0.7s cubic-bezier(0.22, 0.8, 0.3, 1) both;
+}
+
+.zoomable {
+  overflow: hidden;
+}
+
+.zoomable img {
+  transition: transform 0.6s cubic-bezier(0.22, 0.8, 0.3, 1);
+}
+
+.zoomable:hover img {
+  transform: scale(1.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .reveal {
+    animation: none;
+  }
+  .zoomable img {
+    transition: none;
   }
 }

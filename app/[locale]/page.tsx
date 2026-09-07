@@ -1,16 +1,33 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import NailProcess from '@/components/NailProcess/NailProcess';
-import InstagramCard from '@/components/InstagramCard';
 import HeroVideo from '@/components/HeroVideo';
+import MarqueeBand from '@/components/MarqueeBand';
+import Reveal from '@/components/Reveal';
 import { getServiceCatalog } from '@/lib/supabase/cached-queries';
 import styles from './page.module.css';
 
 const ADDRESS = '7 Ahmed Oraby, Madinet Al Eelam, Agouza, Giza Governorate 3755201';
 const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ADDRESS)}`;
 const MAPS_EMBED_URL = `https://www.google.com/maps?q=${encodeURIComponent(ADDRESS)}&output=embed`;
-const WORK_IMAGES = Array.from({ length: 3 }, (_, i) => `/gallery/work-${i + 1}.jpg`);
+
 const FEATURED_IMAGES = ['/gallery/work-4.jpg', '/gallery/work-6.jpg', '/gallery/work-8.jpg'];
+const GALLERY_TEASER = ['/gallery/work-1.jpg', '/gallery/work-2.jpg', '/gallery/work-3.jpg', '/gallery/work-9.jpg'];
+
+const VALUES = [
+  {
+    title: 'One client at a time',
+    body: 'No overlapping appointments, no rushing. The studio is booked for you alone, so the set gets the hours it actually needs.',
+  },
+  {
+    title: 'Bring your inspiration',
+    body: 'Screenshots, Pinterest boards, a colour you saw once — bring it in. Every design is hand-painted to match, not approximated.',
+  },
+  {
+    title: 'Built to last',
+    body: 'Gel and hard-gel systems applied properly, cuticle work done carefully, and a finish that holds up for weeks of real life.',
+  },
+];
 
 export default async function LandingPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -19,146 +36,166 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
   const featured = services.slice(0, 3);
 
   return (
-    <div className={styles.wrap}>
-      <HeroVideo className={styles.bgVideo} />
-      <div className={styles.bgScrim} />
-
+    <div className={styles.page}>
+      {/* ---------- HERO ---------- */}
       <section className={styles.hero}>
-        <p className={`eyebrow ${styles.heroEyebrow}`}>Welcome to</p>
-        <h1 className={styles.brandName}>{t('brand.name')}</h1>
-        <p className={styles.tag}>{t('hero.subtitle')}</p>
-        <Link href={`/${locale}/book`} className={`btn btn-primary ${styles.ctaHero}`}>
-          Schedule your appointment
-        </Link>
-      </section>
-
-      <section className={styles.aboutSection}>
-        <p className="eyebrow" style={{ textAlign: 'center', display: 'block' }}>
-          About &middot; Salon
-        </p>
-        <h2 className={styles.aboutTitle}>Instagram-Worthy Nails You Deserve</h2>
-        <p className={styles.aboutBody}>
-          {t('brand.name')} is a solo nail studio run by Mariam Sherif El Gergawy in {t('brand.location')}. Every
-          appointment is one-on-one, by reservation only — no rush, no crowd, just careful, detailed work using
-          quality gel and hard-gel systems built to last.
-        </p>
-        <div style={{ textAlign: 'center' }}>
-          <Link href={`/${locale}/book`} className="btn btn-primary">
-            Book Appointment
-          </Link>
-        </div>
-      </section>
-
-      <section className={styles.featuredGrid}>
-        {featured.map((s, i) => (
-          <div key={s.id} className={styles.featuredItem}>
-            <div className={styles.featuredImg}>
-              <img src={FEATURED_IMAGES[i % FEATURED_IMAGES.length]} alt="" loading="lazy" />
-            </div>
-            <p className="eyebrow" style={{ display: 'block', marginTop: '1.4rem' }}>
-              {s.design_tier === 'complex' ? 'Detailed' : s.design_tier === 'simple' ? 'Signature' : 'Essential'}
-            </p>
-            <h3 className={styles.featuredTitle}>{locale === 'ar' ? s.name_ar : s.name_en}</h3>
-            <p className={styles.featuredDesc}>{locale === 'ar' ? s.description_ar : s.description_en}</p>
+        <HeroVideo className={styles.heroVideo} />
+        <div className={styles.heroScrim} />
+        <div className={styles.heroInner}>
+          <p className={`eyebrow ${styles.heroEyebrow}`}>Welcome to</p>
+          <h1 className={styles.heroTitle}>The Gel Bar</h1>
+          <p className={styles.heroSub}>A solo nail studio in Mohandeseen, Cairo — by appointment only</p>
+          <div className={styles.heroCtas}>
+            <Link href={`/${locale}/book`} className="btn btn-light">
+              Schedule your appointment
+            </Link>
+            <Link href={`/${locale}/services`} className={styles.heroTextLink}>
+              View services &amp; prices →
+            </Link>
           </div>
-        ))}
-        <div className={styles.featuredCta}>
-          <Link href={`/${locale}/services`} className="btn btn-primary">
-            Explore Services
-          </Link>
+        </div>
+        <div className={styles.scrollCue}>
+          <span>Scroll</span>
+          <i />
         </div>
       </section>
 
+      <MarqueeBand items={['Hand-painted nail art', 'Gel & hard gel', 'By appointment only', 'Mohandeseen · Cairo']} />
+
+      {/* ---------- ABOUT ---------- */}
+      <section className={styles.about}>
+        <Reveal>
+          <p className="eyebrow">About · The Studio</p>
+          <h2 className={styles.aboutTitle}>Nails worth the appointment</h2>
+          <p className={`lede ${styles.aboutBody}`}>
+            The Gel Bar is run start-to-finish by Mariam Sherif El Gergawy. Every booking is one-on-one in a calm studio
+            — no crowd, no conveyor belt. Just careful prep, precise hand-painted detail, and a finish built to last.
+          </p>
+          <Link href={`/${locale}/book`} className="btn">
+            Book appointment
+          </Link>
+        </Reveal>
+      </section>
+
+      {/* ---------- FEATURED SERVICES ---------- */}
+      <section className={styles.featured}>
+        <Reveal className={styles.sectionHead}>
+          <p className="eyebrow">The Menu</p>
+          <h2 className={styles.sectionTitle}>Signature services</h2>
+        </Reveal>
+        <div className={styles.featuredGrid}>
+          {featured.map((s, i) => (
+            <Reveal key={s.id} delay={i * 110}>
+              <article className={styles.featuredCard}>
+                <div className={`zoomable ${styles.featuredImg}`}>
+                  <img src={FEATURED_IMAGES[i % FEATURED_IMAGES.length]} alt="" loading="lazy" />
+                </div>
+                <p className="eyebrow">
+                  {s.design_tier === 'complex' ? 'Detailed' : s.design_tier === 'simple' ? 'Signature' : 'Essential'}
+                </p>
+                <h3 className={styles.featuredName}>{locale === 'ar' ? s.name_ar : s.name_en}</h3>
+                <p className={styles.featuredDesc}>{locale === 'ar' ? s.description_ar : s.description_en}</p>
+                <p className={styles.featuredPrice}>{s.base_price_egp} EGP</p>
+              </article>
+            </Reveal>
+          ))}
+        </div>
+        <Reveal className={styles.centerCta}>
+          <Link href={`/${locale}/services`} className="btn">
+            Explore all services
+          </Link>
+        </Reveal>
+      </section>
+
+      {/* ---------- PROCESS ---------- */}
       <div className={styles.processIntro}>
-        <p className="eyebrow" style={{ display: 'block' }}>
-          The Process
-        </p>
-        <h2>{t('process.title')}</h2>
-        <p className="sans">{t('process.subtitle')}</p>
+        <Reveal>
+          <p className="eyebrow">The Process</p>
+          <h2 className={styles.sectionTitle}>{t('process.title')}</h2>
+          <p className={styles.processSub}>{t('process.subtitle')}</p>
+        </Reveal>
       </div>
 
       <NailProcess />
 
-      <section className={styles.twoCol}>
-        <div className={styles.twoColItem}>
-          <div className={styles.twoColImg}>
-            <img src="/gallery/work-2.jpg" alt="" loading="lazy" />
+      {/* ---------- VALUES (split) ---------- */}
+      <section className={styles.split}>
+        <Reveal className={styles.splitMedia}>
+          <div className={`zoomable ${styles.splitImgTall}`}>
+            <img src="/gallery/work-5.jpg" alt="" loading="lazy" />
           </div>
-          <p className="eyebrow" style={{ display: 'block', marginTop: '1.2rem' }}>
-            Our Work
-          </p>
-          <h3 className={styles.twoColTitle}>Browse Real Nail Designs</h3>
-          <p className={styles.twoColDesc}>
-            A gallery of real sets {t('brand.name')} has created — bring any of them as inspiration, or start from
-            scratch.
-          </p>
-          <Link href={`/${locale}/work`} className="btn btn-ghost">
-            View Gallery
+          <div className={`zoomable ${styles.splitImgSmall}`}>
+            <img src="/gallery/work-10.jpg" alt="" loading="lazy" />
+          </div>
+        </Reveal>
+        <Reveal delay={120} className={styles.splitText}>
+          <p className="eyebrow">Why the studio</p>
+          <h2 className={styles.sectionTitle}>A quieter kind of nail appointment</h2>
+          {VALUES.map((v) => (
+            <div key={v.title} className={styles.valueItem}>
+              <h3 className={styles.valueTitle}>{v.title}</h3>
+              <p className={styles.valueBody}>{v.body}</p>
+            </div>
+          ))}
+        </Reveal>
+      </section>
+
+      {/* ---------- GALLERY TEASER ---------- */}
+      <section className={styles.galleryTeaser}>
+        <Reveal className={styles.sectionHead}>
+          <p className="eyebrow">Our Work</p>
+          <h2 className={styles.sectionTitle}>Browse real sets</h2>
+        </Reveal>
+        <div className={styles.teaserGrid}>
+          {GALLERY_TEASER.map((src, i) => (
+            <Reveal key={src} delay={i * 90}>
+              <div className={`zoomable ${styles.teaserItem}`}>
+                <img src={src} alt="" loading="lazy" />
+              </div>
+            </Reveal>
+          ))}
+        </div>
+        <Reveal className={styles.centerCta}>
+          <Link href={`/${locale}/work`} className="btn">
+            View the gallery
           </Link>
-        </div>
+        </Reveal>
+      </section>
 
-        <div className={styles.twoColItem}>
-          <div className={styles.twoColImg}>
-            <iframe
-              src={MAPS_EMBED_URL}
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              title="The Gel Bar location"
-            />
-          </div>
-          <p className="eyebrow" style={{ display: 'block', marginTop: '1.2rem' }}>
-            Location
-          </p>
-          <h3 className={styles.twoColTitle}>Find The Studio</h3>
-          <p className={styles.twoColDesc}>{ADDRESS}</p>
-          <a href={MAPS_URL} target="_blank" rel="noopener noreferrer" className="btn btn-ghost">
-            Open in Maps
+      {/* ---------- LOCATION ---------- */}
+      <section className={styles.location}>
+        <Reveal className={styles.locationText}>
+          <p className="eyebrow">Find us</p>
+          <h2 className={styles.sectionTitle}>The studio</h2>
+          <p className={`lede ${styles.locationAddr}`}>{ADDRESS}</p>
+          <p className={styles.locationHours}>By appointment only · Confirmed per booking</p>
+          <a href={MAPS_URL} target="_blank" rel="noopener noreferrer" className="btn">
+            Open in Google Maps
           </a>
-        </div>
+        </Reveal>
+        <Reveal delay={120} className={styles.locationMap}>
+          <iframe
+            src={MAPS_EMBED_URL}
+            width="100%"
+            height="100%"
+            style={{ border: 0 }}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title="The Gel Bar location"
+          />
+        </Reveal>
       </section>
 
-      <section className={styles.section} style={{ paddingTop: 0 }}>
-        <InstagramCard />
+      {/* ---------- CLOSING CTA ---------- */}
+      <section className={styles.closing}>
+        <Reveal>
+          <p className={`eyebrow ${styles.closingEyebrow}`}>Ready when you are</p>
+          <h2 className={styles.closingTitle}>Book your next set</h2>
+          <Link href={`/${locale}/book`} className="btn btn-light">
+            {t('hero.cta')}
+          </Link>
+        </Reveal>
       </section>
-
-      <footer className={styles.footer}>
-        <div className={styles.footerGrid}>
-          <div>
-            <div className={styles.footerBrand}>{t('brand.name')}</div>
-            <p className={styles.footerSub}>{t('brand.tagline')}</p>
-          </div>
-          <div>
-            <p className={styles.footerHeading}>Salon</p>
-            <Link href={`/${locale}/services`} className={styles.footerLink}>
-              Services
-            </Link>
-            <Link href={`/${locale}/work`} className={styles.footerLink}>
-              Our Work
-            </Link>
-            <Link href={`/${locale}/book`} className={styles.footerLink}>
-              Book Now
-            </Link>
-          </div>
-          <div>
-            <p className={styles.footerHeading}>Hours</p>
-            <p className={styles.footerText}>By appointment only</p>
-            <p className={styles.footerText}>{ADDRESS}</p>
-          </div>
-          <div>
-            <p className={styles.footerHeading}>Account</p>
-            <Link href={`/${locale}/login`} className={styles.footerLink}>
-              {t('nav.login')}
-            </Link>
-            <Link href={`/${locale}/admin/dashboard`} className={styles.footerLink}>
-              Admin
-            </Link>
-          </div>
-        </div>
-        <p className={styles.footerCopy}>&copy; {new Date().getFullYear()} {t('brand.name')}. All rights reserved.</p>
-      </footer>
     </div>
   );
 }

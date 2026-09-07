@@ -6,6 +6,7 @@ import { formatDuration } from '@/lib/format';
 import Calendar, { DayAvailability } from '@/components/Calendar/Calendar';
 import NailLoader from '@/components/NailLoader/NailLoader';
 import { fetchMonthAvailability, fetchOpenTimesForDate, fetchServiceCatalog, fetchDesignOptions, createBooking } from '@/lib/supabase/actions';
+import styles from './BookWizard.module.css';
 
 const STEPS = ['service', 'slot', 'details'] as const;
 type Step = (typeof STEPS)[number];
@@ -123,12 +124,9 @@ export default function BookWizard({ locale }: { locale: string }) {
     }
   }
 
-  const hours = Math.floor(totalMinutes / 60);
-  const mins = totalMinutes % 60;
-
   if (!catalogLoaded || !service) {
     return (
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '3rem 1.25rem', textAlign: 'center' }}>
+      <div className={styles.done}>
         <NailLoader size="full" caption="Setting up your services…" />
       </div>
     );
@@ -136,68 +134,47 @@ export default function BookWizard({ locale }: { locale: string }) {
 
   if (submitted) {
     return (
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '3rem 1.25rem', textAlign: 'center' }}>
-        <div
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: '50%',
-            background: '#fbe6d4',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 1.2rem',
-            fontSize: '1.8rem',
-          }}
-        >
-          ⏳
-        </div>
-        <h1 style={{ fontSize: '1.5rem', color: 'var(--deep)', marginBottom: '.4rem' }}>Request sent!</h1>
-        <p className="sans" style={{ color: 'var(--sub)', marginBottom: '1.5rem' }}>
-          You'll get an email once it's confirmed.
-        </p>
-        <div className="card" style={{ textAlign: 'left' }}>
-          <span className="badge badge-pending" style={{ marginBottom: '.6rem', display: 'inline-block' }}>
-            {t('pending')}
-          </span>
-          <h3 style={{ fontSize: '1.05rem' }}>{locale === 'ar' ? service.name_ar : service.name_en}</h3>
-          <p className="sans" style={{ fontSize: '.8rem', color: 'var(--sub)', marginTop: '.4rem' }}>
-            {selectedDate} · {selectedTime && formatTime24to12(selectedTime)} · {formatDuration(totalMinutes)} · {totalPriceEgp} EGP
+      <div className={styles.done}>
+        <p className="eyebrow">Request sent</p>
+        <h1 className={styles.doneTitle}>See you soon</h1>
+        <p className={styles.subtle}>You'll get an email once Mariam confirms the time.</p>
+        <div className={styles.doneCard}>
+          <span className="badge badge-pending">{t('pending')}</span>
+          <h3 className={styles.doneService}>{locale === 'ar' ? service.name_ar : service.name_en}</h3>
+          <p className={styles.subtle}>
+            {selectedDate} · {selectedTime && formatTime24to12(selectedTime)} · {formatDuration(totalMinutes)} ·{' '}
+            {totalPriceEgp} EGP
           </p>
         </div>
-        <a href={`/${locale}/bookings`} className="btn btn-primary btn-block" style={{ marginTop: '1.2rem' }}>
+        <a href={`/${locale}/bookings`} className="btn btn-solid">
           View my bookings
         </a>
       </div>
     );
   }
 
+  const stepIndex = STEPS.indexOf(step);
+
   return (
-    <div style={{ maxWidth: 480, margin: '0 auto', padding: '1.25rem 1rem 4rem' }}>
+    <div className={styles.wrap}>
+      <div className={styles.steps} aria-hidden="true">
+        {STEPS.map((s, i) => (
+          <span key={s} className={`${styles.stepDot} ${i <= stepIndex ? styles.stepDotActive : ''}`} />
+        ))}
+      </div>
+
       {step === 'service' && (
         <>
-          <p className="sans" style={{ fontSize: '.68rem', color: 'var(--sub)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-            {t('step1')}
-          </p>
-          <h1 style={{ fontSize: '1.4rem', color: 'var(--deep)', margin: '.3rem 0 1.25rem' }}>Choose your service</h1>
+          <div className={styles.head}>
+            <p className="eyebrow">{t('step1')}</p>
+            <h1 className={styles.title}>Choose your service</h1>
+          </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '.7rem' }}>
+          <div className={styles.options}>
             {catalog.map((svc) => {
               const isSelected = serviceId === svc.id;
               return (
-                <label
-                  key={svc.id}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '1rem',
-                    border: `1.5px solid ${isSelected ? 'var(--pink)' : 'var(--border)'}`,
-                    borderRadius: 16,
-                    background: isSelected ? '#fff0f5' : '#fff',
-                    minHeight: 44,
-                  }}
-                >
+                <label key={svc.id} className={`${styles.option} ${isSelected ? styles.optionSelected : ''}`}>
                   <input
                     type="radio"
                     name="service"
@@ -206,19 +183,14 @@ export default function BookWizard({ locale }: { locale: string }) {
                       setServiceId(svc.id);
                       setDesignId(null);
                     }}
-                    style={{ marginInlineEnd: '.8rem', width: 20, height: 20, flexShrink: 0 }}
+                    style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }}
                   />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <h3 style={{ fontSize: '.95rem', fontWeight: 600 }}>{locale === 'ar' ? svc.name_ar : svc.name_en}</h3>
-                    {svc.base_minutes > 0 && (
-                      <p className="sans" style={{ fontSize: '.7rem', color: 'var(--sub)', marginTop: '.2rem' }}>
-                        {formatDuration(svc.base_minutes)}
-                      </p>
-                    )}
-                  </div>
-                  <div className="sans" style={{ fontWeight: 700, color: 'var(--deep)', fontSize: '.85rem', flexShrink: 0 }}>
-                    {svc.base_price_egp} EGP
-                  </div>
+                  <span className={styles.radio} aria-hidden="true" />
+                  <span className={styles.optionMain}>
+                    <span className={styles.optionName}>{locale === 'ar' ? svc.name_ar : svc.name_en}</span>
+                    {svc.base_minutes > 0 && <span className={styles.optionMeta}>{formatDuration(svc.base_minutes)}</span>}
+                  </span>
+                  <span className={styles.optionPrice}>{svc.base_price_egp} EGP</span>
                 </label>
               );
             })}
@@ -226,35 +198,24 @@ export default function BookWizard({ locale }: { locale: string }) {
 
           {requiresDesign && (
             <>
-              <div style={{ fontSize: '1rem', fontWeight: 600, margin: '1.5rem 0 .8rem' }}>Pick a design</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '.6rem' }}>
+              <p className={`eyebrow ${styles.groupLabel}`}>Pick a design</p>
+              <div className={styles.options}>
                 {designOptions.map((d) => {
                   const isSelected = designId === d.id;
                   return (
-                    <label
-                      key={d.id}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '.85rem 1rem',
-                        border: `1.5px solid ${isSelected ? 'var(--pink)' : 'var(--border)'}`,
-                        borderRadius: 14,
-                        background: isSelected ? '#fff0f5' : '#fff',
-                        minHeight: 44,
-                      }}
-                    >
+                    <label key={d.id} className={`${styles.option} ${isSelected ? styles.optionSelected : ''}`}>
                       <input
                         type="radio"
                         name="design"
                         checked={isSelected}
                         onChange={() => setDesignId(d.id)}
-                        style={{ marginInlineEnd: '.8rem', width: 18, height: 18, flexShrink: 0 }}
+                        style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }}
                       />
-                      <span style={{ flex: 1, fontSize: '.88rem' }}>{locale === 'ar' ? d.name_ar : d.name_en}</span>
-                      <span className="sans" style={{ color: 'var(--deep)', fontWeight: 700, fontSize: '.8rem' }}>
-                        +{d.price_egp} EGP
+                      <span className={styles.radio} aria-hidden="true" />
+                      <span className={styles.optionMain}>
+                        <span className={styles.optionName}>{locale === 'ar' ? d.name_ar : d.name_en}</span>
                       </span>
+                      <span className={styles.optionPrice}>+{d.price_egp} EGP</span>
                     </label>
                   );
                 })}
@@ -262,38 +223,34 @@ export default function BookWizard({ locale }: { locale: string }) {
             </>
           )}
 
-          <div className="card" style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between' }}>
+          <div className={styles.summary}>
             <div>
-              <div className="sans" style={{ fontSize: '.65rem', textTransform: 'uppercase', color: 'var(--sub)' }}>
-                {t('duration')}
-              </div>
-              <div style={{ fontWeight: 700 }}>{formatDuration(totalMinutes)}</div>
+              <div className={styles.summaryLabel}>{t('duration')}</div>
+              <div className={styles.summaryValue}>{formatDuration(totalMinutes)}</div>
             </div>
-            <div>
-              <div className="sans" style={{ fontSize: '.65rem', textTransform: 'uppercase', color: 'var(--sub)' }}>
-                {t('total')}
-              </div>
-              <div style={{ fontWeight: 700, color: 'var(--deep)' }}>{totalPriceEgp} EGP</div>
+            <div style={{ textAlign: 'end' }}>
+              <div className={styles.summaryLabel}>{t('total')}</div>
+              <div className={styles.summaryValue}>{totalPriceEgp} EGP</div>
             </div>
           </div>
 
-          <button className="btn btn-primary btn-block" style={{ marginTop: '1.3rem' }} disabled={!canContinueFromService} onClick={() => setStep('slot')}>
-            {t('continue')} →
-          </button>
+          <div className={styles.actions}>
+            <button className={`btn btn-solid ${styles.btnGrow}`} disabled={!canContinueFromService} onClick={() => setStep('slot')}>
+              {t('continue')} →
+            </button>
+          </div>
         </>
       )}
 
       {step === 'slot' && (
         <>
-          <p className="sans" style={{ fontSize: '.68rem', color: 'var(--sub)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-            {t('step2')}
-          </p>
-          <h1 style={{ fontSize: '1.4rem', color: 'var(--deep)', margin: '.3rem 0 1.25rem' }}>
-            {locale === 'ar' ? service.name_ar : service.name_en}
-          </h1>
-          <p className="sans" style={{ fontSize: '.8rem', color: 'var(--sub)', marginBottom: '1.2rem' }}>
-            {formatDuration(totalMinutes)} needed · {totalPriceEgp} EGP total
-          </p>
+          <div className={styles.head}>
+            <p className="eyebrow">{t('step2')}</p>
+            <h1 className={styles.title}>{locale === 'ar' ? service.name_ar : service.name_en}</h1>
+            <p className={styles.subtle}>
+              {formatDuration(totalMinutes)} needed · {totalPriceEgp} EGP total
+            </p>
+          </div>
 
           <Calendar
             year={calYear}
@@ -309,33 +266,18 @@ export default function BookWizard({ locale }: { locale: string }) {
 
           {selectedDate && (
             <>
-              <p className="sans" style={{ fontSize: '.7rem', textTransform: 'uppercase', color: 'var(--sub)', margin: '1.2rem 0 .6rem' }}>
-                Open times — {selectedDate}
-              </p>
+              <p className={`eyebrow ${styles.slotLabel}`}>Open times — {selectedDate}</p>
               {loadingTimes ? (
-                <p className="sans" style={{ fontSize: '.78rem', color: 'var(--sub)' }}>
-                  Loading…
-                </p>
+                <NailLoader size="inline" />
               ) : openTimes.length === 0 ? (
-                <p className="sans" style={{ fontSize: '.78rem', color: 'var(--sub)' }}>
-                  No open times this day.
-                </p>
+                <p className={styles.empty}>No open times this day.</p>
               ) : (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.6rem' }}>
+                <div className={styles.slots}>
                   {openTimes.map((time) => (
                     <button
                       key={time}
                       onClick={() => setSelectedTime(time)}
-                      className="sans"
-                      style={{
-                        fontSize: '.78rem',
-                        padding: '.6rem 1rem',
-                        minHeight: 44,
-                        borderRadius: 20,
-                        border: `1px solid ${selectedTime === time ? 'var(--pink)' : 'var(--border)'}`,
-                        background: selectedTime === time ? 'var(--pink)' : '#fff',
-                        color: selectedTime === time ? '#fff' : 'var(--text)',
-                      }}
+                      className={`${styles.slot} ${selectedTime === time ? styles.slotActive : ''}`}
                     >
                       {formatTime24to12(time)}
                     </button>
@@ -345,42 +287,48 @@ export default function BookWizard({ locale }: { locale: string }) {
             </>
           )}
 
-          <button className="btn btn-primary btn-block" style={{ marginTop: '1.5rem' }} disabled={!selectedDate || !selectedTime} onClick={() => setStep('details')}>
-            {t('continue')} →
-          </button>
+          <div className={styles.actions}>
+            <button className="btn btn-ghost" onClick={() => setStep('service')}>
+              ← Back
+            </button>
+            <button
+              className={`btn btn-solid ${styles.btnGrow}`}
+              disabled={!selectedDate || !selectedTime}
+              onClick={() => setStep('details')}
+            >
+              {t('continue')} →
+            </button>
+          </div>
         </>
       )}
 
       {step === 'details' && (
         <>
-          <p className="sans" style={{ fontSize: '.68rem', color: 'var(--sub)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-            {t('step3')}
-          </p>
-          <h1 style={{ fontSize: '1.4rem', color: 'var(--deep)', margin: '.3rem 0 1.25rem' }}>{t('notes')}</h1>
+          <div className={styles.head}>
+            <p className="eyebrow">{t('step3')}</p>
+            <h1 className={styles.title}>{t('notes')}</h1>
+          </div>
 
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder={t('notesPlaceholder')}
-            style={{ width: '100%', minHeight: 90, marginBottom: '1.25rem' }}
+            style={{ marginBottom: '1.5rem' }}
           />
 
-          <div className="card" style={{ background: '#fdf3f6', border: 'none', marginBottom: '1.25rem' }}>
-            <p className="sans" style={{ fontSize: '.7rem', color: 'var(--sub)' }}>
-              {t('rescheduleWindowNotice')}
-            </p>
+          <div className={styles.notice}>{t('rescheduleWindowNotice')}</div>
+
+          {submitError && <p className={styles.error}>{submitError}</p>}
+
+          <div className={styles.actions}>
+            <button className="btn btn-ghost" onClick={() => setStep('slot')}>
+              ← Back
+            </button>
+            <button className={`btn btn-solid ${styles.btnGrow}`} disabled={submitting} onClick={handleSubmit}>
+              {submitting && <NailLoader size="mini" />}
+              {submitting ? 'Sending…' : `${t('requestBooking')} →`}
+            </button>
           </div>
-
-          {submitError && (
-            <p className="sans" style={{ fontSize: '.75rem', color: 'var(--danger)', marginBottom: '1rem' }}>
-              {submitError}
-            </p>
-          )}
-
-          <button className="btn btn-primary btn-block" disabled={submitting} onClick={handleSubmit} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem' }}>
-            {submitting && <NailLoader size="mini" />}
-            {submitting ? 'Sending…' : `${t('requestBooking')} →`}
-          </button>
         </>
       )}
     </div>

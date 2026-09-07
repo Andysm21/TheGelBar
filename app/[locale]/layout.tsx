@@ -4,8 +4,8 @@ import { Playfair_Display } from 'next/font/google';
 import { locales } from '@/i18n';
 import { notFound } from 'next/navigation';
 import type { Metadata, Viewport } from 'next';
-import LangSwitch from '@/components/LangSwitch';
-import SiteNavGate from '@/components/SiteNavGate';
+import SiteChromeGate from '@/components/SiteChromeGate';
+import SiteFooter from '@/components/SiteFooter';
 import SplashLoader from '@/components/SplashLoader';
 
 // Editorial serif for headings — matches the "new-inspo" design
@@ -49,10 +49,7 @@ export default async function LocaleLayout({
       <body>
         <NextIntlClientProvider messages={messages}>
           <SplashLoader />
-          <div style={{ position: 'fixed', top: 12, insetInlineEnd: 12, zIndex: 200 }}>
-            <LangSwitch />
-          </div>
-          <SiteNavGate>{children}</SiteNavGate>
+          <SiteChromeGate footer={<SiteFooter locale={locale} />}>{children}</SiteChromeGate>
         </NextIntlClientProvider>
       </body>
     </html>
