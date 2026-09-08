@@ -53,8 +53,18 @@ export default async function BookingsPage({ params }: { params: Promise<{ local
                     <span className={`badge ${badgeClass}`}>{statusLabel}</span>
                     <span className={styles.ref}>#{b.id.slice(0, 8)}</span>
                   </div>
-                  <h3 className={styles.service}>{b.services?.name_en ?? 'Service'}</h3>
-                  {b.design_options?.name_en && <p className={styles.design}>+ {b.design_options.name_en}</p>}
+                  <h3 className={styles.service}>
+                    {b.services?.name_en ?? 'Service'}
+                    {b.service_variants?.name_en ? ` — ${b.service_variants.name_en}` : ''}
+                  </h3>
+                  {(b.booking_addons ?? []).length > 0 && (
+                    <p className={styles.design}>
+                      {(b.booking_addons ?? [])
+                        .map((a: any) => (a.quantity > 1 ? `${a.addons?.name_en} ×${a.quantity}` : a.addons?.name_en))
+                        .join(' · ')}
+                    </p>
+                  )}
+                  {b.tier_change_note && <p className={styles.notice}>{b.tier_change_note}</p>}
                   <p className={styles.when}>
                     {new Date(b.scheduled_start).toLocaleString()}
                     <br />
@@ -62,7 +72,11 @@ export default async function BookingsPage({ params }: { params: Promise<{ local
                   </p>
                 </div>
                 {canAct ? (
-                  <BookingActions bookingId={b.id} />
+                  <BookingActions
+                    bookingId={b.id}
+                    durationMinutes={b.total_minutes}
+                    currentLabel={new Date(b.scheduled_start).toLocaleString()}
+                  />
                 ) : (
                   <p className={styles.locked}>Within 24h — contact the studio directly to change this booking.</p>
                 )}
@@ -87,7 +101,10 @@ export default async function BookingsPage({ params }: { params: Promise<{ local
                   <span className="badge badge-done">{b.status}</span>
                   <span className={styles.ref}>#{b.id.slice(0, 8)}</span>
                 </div>
-                <h3 className={styles.service}>{b.services?.name_en ?? 'Service'}</h3>
+                <h3 className={styles.service}>
+                  {b.services?.name_en ?? 'Service'}
+                  {b.service_variants?.name_en ? ` — ${b.service_variants.name_en}` : ''}
+                </h3>
                 <p className={styles.when}>
                   {new Date(b.scheduled_start).toLocaleDateString()}
                   <br />

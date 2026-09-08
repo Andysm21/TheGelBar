@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
-import { getServiceCatalog, getDesignOptions } from '@/lib/supabase/cached-queries';
+import { getServiceCatalog, getAddons } from '@/lib/supabase/cached-queries';
 import ServicesGrid from '@/components/ServicesGrid';
 import MarqueeBand from '@/components/MarqueeBand';
 import Reveal from '@/components/Reveal';
@@ -9,7 +9,7 @@ import styles from './services.module.css';
 export default async function ServicesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations();
-  const [services, designs] = await Promise.all([getServiceCatalog(), getDesignOptions()]);
+  const [services, addons] = await Promise.all([getServiceCatalog(), getAddons()]);
 
   return (
     <div className={styles.page}>
@@ -22,7 +22,7 @@ export default async function ServicesPage({ params }: { params: Promise<{ local
       </header>
 
       <div className={styles.gridWrap}>
-        <ServicesGrid services={services} locale={locale} />
+        <ServicesGrid services={services as any} locale={locale} bookHref={`/${locale}/book`} />
       </div>
 
       <MarqueeBand items={['Hand-painted detail', 'Gel & hard gel', 'Design add-ons available']} />
@@ -30,16 +30,18 @@ export default async function ServicesPage({ params }: { params: Promise<{ local
       <section className={styles.addons}>
         <Reveal className={styles.addonsHead}>
           <p className="eyebrow">Add-ons</p>
-          <h2 className={styles.addonsTitle}>Nail art &amp; finishes</h2>
-          <p className={styles.sub}>Layer any of these onto a base service when you book.</p>
+          <h2 className={styles.addonsTitle}>Extras you can add on</h2>
+          <p className={styles.sub}>Add any of these to your booking — pick as many as you need.</p>
         </Reveal>
         <Reveal delay={100}>
           <ul className={styles.addonList}>
-            {designs.map((d) => (
-              <li key={d.id} className={styles.addonRow}>
-                <span className={styles.addonName}>{locale === 'ar' ? d.name_ar : d.name_en}</span>
+            {addons.map((a: any) => (
+              <li key={a.id} className={styles.addonRow}>
+                <span className={styles.addonName}>{locale === 'ar' ? a.name_ar : a.name_en}</span>
                 <span className={styles.addonDots} aria-hidden="true" />
-                <span className={styles.addonPrice}>+{d.price_egp} EGP</span>
+                <span className={styles.addonPrice}>
+                  +{a.price_egp} EGP{a.is_quantity ? ' each' : ''}
+                </span>
               </li>
             ))}
           </ul>

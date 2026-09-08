@@ -33,7 +33,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
   const { locale } = await params;
   const t = await getTranslations();
   const services = await getServiceCatalog();
-  const featured = services.slice(0, 3);
+  const featured = (services as any[]).slice(0, 3);
 
   return (
     <div className={styles.page}>
@@ -90,12 +90,15 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                 <div className={`zoomable ${styles.featuredImg}`}>
                   <img src={FEATURED_IMAGES[i % FEATURED_IMAGES.length]} alt="" loading="lazy" />
                 </div>
-                <p className="eyebrow">
-                  {s.design_tier === 'complex' ? 'Detailed' : s.design_tier === 'simple' ? 'Signature' : 'Essential'}
-                </p>
+                <p className="eyebrow">{(s.service_variants ?? []).length} options</p>
                 <h3 className={styles.featuredName}>{locale === 'ar' ? s.name_ar : s.name_en}</h3>
-                <p className={styles.featuredDesc}>{locale === 'ar' ? s.description_ar : s.description_en}</p>
-                <p className={styles.featuredPrice}>{s.base_price_egp} EGP</p>
+                <p className={styles.featuredDesc}>
+                  {(locale === 'ar' ? s.description_ar : s.description_en) ||
+                    (s.service_variants ?? []).map((v: any) => (locale === 'ar' ? v.name_ar : v.name_en)).join(' · ')}
+                </p>
+                <p className={styles.featuredPrice}>
+                  from {Math.min(...(s.service_variants ?? [{ price_egp: 0 }]).map((v: any) => v.price_egp))} EGP
+                </p>
               </article>
             </Reveal>
           ))}

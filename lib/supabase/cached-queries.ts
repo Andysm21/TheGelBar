@@ -3,220 +3,245 @@ import { unstable_cache } from 'next/cache';
 import { createClient } from './server';
 import { createPublicClient } from './public';
 
-// Every function here is wrapped in React's `cache()`, which de-dupes
-// identical calls within a single request/render pass — if three
-// components on one page each need the service catalog, this hits
-// Supabase once, not three times. Combined with the rules below, this is
-// the whole egress strategy: no N+1, no redundant round trips.
-//
-// Rules this file follows (apply the same pattern to any new query):
-// 1. Select only the columns a page actually renders — never `select('*')`
-//    on a wide table when three columns are shown.
-// 2. Fetch a whole month of availability/bookings in ONE query
-//    (`.gte('date', start).lte('date', end)`), never one query per day.
-// 3. Use Supabase's embedded resource syntax to join in one round trip
-//    (e.g. `.select('*, services(name_en, base_price_egp)')`) instead of
-//    fetching a booking then separately fetching its service — that's
-//    the classic N+1.
-// 4. Static, rarely-changing data (the service catalog, design options)
-//    is a great candidate for `unstable_cache` with a long
-//    `revalidate` + on-demand `revalidateTag` from the admin "save"
-//    action, so most requests never touch the DB at all.
+// Read layer. Rules:
+// 1. Select only the columns a page renders.
+// 2. One query per month/day, never per row (no N+1).
+// 3. Use embedded resources to join in a single round trip.
+// 4. Catalog data (services/variants/addons/settings) is world-readable
+//    and changes rarely — cached with unstable_cache + a tag, and read
+//    through a cookie-free client (unstable_cache forbids cookies()).
 
-// Services/design options change only from the admin "Services" screen
-// (not built as an edit UI yet — currently seeded once via schema.sql),
-// so these are safe to cache across requests, not just within one:
-// unstable_cache with a tag means near-zero Supabase egress for these
-// reads until someone explicitly revalidates the tag.
+const BOOKING_SELECT = `
+  id, status, scheduled_start, scheduled_end, total_price_egp, total_minutes,
+  is_loyalty_free, health_notes, service_id, variant_id, client_id,
+  tier_change_note, tier_changed_at, created_at,
+  services ( name_en, name_ar ),
+  service_variants ( id, name_en, name_ar, kind, price_egp, duration_minutes, requires_inspo ),
+  booking_addons ( id, quantity, unit_price_egp, unit_duration_minutes, addons ( id, name_en, name_ar ) ),
+  booking_images ( id, storage_path )
+`;
+
+/* ---------------- catalog ---------------- */
+
 export const getServiceCatalog = cache(
   unstable_cache(
     async () => {
-      // Cookie-free client here on purpose: unstable_cache forbids
-      // calling dynamic APIs like cookies() inside its cached function
-      // (Next.js throws "used ... inside unstable_cache" at runtime) —
-      // this data has no per-user variation anyway, so a plain anon
-      // client is both correct and required.
       const supabase = createPublicClient();
       const { data, error } = await supabase
         .from('services')
-        .select('id, name_en, name_ar, description_en, description_ar, base_price_egp, base_minutes, design_tier')
-        .eq('is_active', true);
+        .select(
+          `id, name_en, name_ar, description_en, description_ar, sort_order,
+           service_variants ( id, kind, name_en, name_ar, price_egp, duration_minutes, requires_inspo, sort_order, is_active )`
+        )
+        .eq('is_active', true)
+        .order('sort_order');
       if (error) throw error;
-      return data;
+      // keep variants ordered and drop inactive ones
+      return (data ?? []).map((s: any) => ({
+        ...s,
+        service_variants: (s.service_variants ?? [])
+          .filter((v: any) => v.is_active)
+          .sort((a: any, b: any) => a.sort_order - b.sort_order),
+      }));
     },
-    ['service-catalog'],
-    { revalidate: 3600, tags: ['services'] }
+    ['service-catalog-v2'],
+    { revalidate: 3600, tags: ['catalog'] }
   )
 );
 
-export const getDesignOptions = cache(
+export const getAddons = cache(
   unstable_cache(
     async () => {
       const supabase = createPublicClient();
       const { data, error } = await supabase
-        .from('design_options')
-        .select('id, name_en, name_ar, price_egp, tier')
-        .eq('is_active', true);
+        .from('addons')
+        .select('id, name_en, name_ar, description_en, description_ar, price_egp, duration_minutes, is_quantity, max_quantity, sort_order')
+        .eq('is_active', true)
+        .order('sort_order');
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
-    ['design-options'],
-    { revalidate: 3600, tags: ['services'] }
+    ['addons-v1'],
+    { revalidate: 3600, tags: ['catalog'] }
   )
 );
 
-/** Loyalty on/off — cached briefly, not per-request only, since admin flips it rarely. */
 export const getAppSettings = cache(
   unstable_cache(
     async () => {
       const supabase = createPublicClient();
-      const { data, error } = await supabase.from('app_settings').select('loyalty_enabled').eq('id', 1).single();
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('loyalty_enabled, slot_step_minutes, owner_email')
+        .eq('id', 1)
+        .single();
       if (error) throw error;
       return data;
     },
-    ['app-settings'],
+    ['app-settings-v2'],
     { revalidate: 60, tags: ['app-settings'] }
   )
 );
 
-/**
- * One query for the whole visible month grid — never per-day. Blocked
- * days are a separate table (blocked_days), not a per-slot flag, so a
- * day with zero slots is still blockable.
- */
+/** Full catalog including inactive rows — admin editor only. */
+export const getCatalogForAdmin = cache(async () => {
+  const supabase = await createClient();
+  const [services, addons] = await Promise.all([
+    supabase
+      .from('services')
+      .select(
+        `id, name_en, name_ar, description_en, description_ar, sort_order, is_active,
+         service_variants ( id, kind, name_en, name_ar, price_egp, duration_minutes, requires_inspo, sort_order, is_active )`
+      )
+      .order('sort_order'),
+    supabase.from('addons').select('*').order('sort_order'),
+  ]);
+  if (services.error) throw services.error;
+  if (addons.error) throw addons.error;
+  return {
+    services: (services.data ?? []).map((s: any) => ({
+      ...s,
+      service_variants: (s.service_variants ?? []).sort((a: any, b: any) => a.sort_order - b.sort_order),
+    })),
+    addons: addons.data ?? [],
+  };
+});
+
+/* ---------------- availability ---------------- */
+
+/** Free ranges + blocked days + booked spans for a whole month, in 3 queries. */
 export const getMonthAvailability = cache(async (year: number, month: number) => {
   const supabase = await createClient();
   const start = `${year}-${String(month + 1).padStart(2, '0')}-01`;
   const endDate = new Date(year, month + 1, 0).getDate();
-  const end = `${year}-${String(month + 1).padStart(2, '0')}-${endDate}`;
+  const end = `${year}-${String(month + 1).padStart(2, '0')}-${String(endDate).padStart(2, '0')}`;
 
-  const [{ data: slots, error: slotsError }, { data: blockedRows, error: blockedError }] = await Promise.all([
-    supabase.from('availability_slots').select('date, start_time').gte('date', start).lte('date', end),
+  const [ranges, blocked, bookings] = await Promise.all([
+    supabase.from('availability_ranges').select('id, date, start_time, end_time').gte('date', start).lte('date', end),
     supabase.from('blocked_days').select('date').gte('date', start).lte('date', end),
+    supabase
+      .from('bookings')
+      .select('id, scheduled_start, scheduled_end')
+      .gte('scheduled_start', `${start}T00:00:00`)
+      .lte('scheduled_start', `${end}T23:59:59`)
+      .in('status', ['pending', 'confirmed', 'needs_reschedule']),
   ]);
-  if (slotsError) throw slotsError;
-  if (blockedError) throw blockedError;
-  return { slots: slots ?? [], blockedDates: (blockedRows ?? []).map((r) => r.date) };
+  if (ranges.error) throw ranges.error;
+  if (blocked.error) throw blocked.error;
+  if (bookings.error) throw bookings.error;
+
+  return {
+    ranges: ranges.data ?? [],
+    blockedDates: (blocked.data ?? []).map((b: any) => b.date),
+    bookings: bookings.data ?? [],
+  };
 });
 
-/**
- * Bookings for a client, joined with the service/design names in the SAME
- * query — this is the join that avoids fetching each booking's service
- * separately (the N+1 that would otherwise happen on the bookings list).
- */
+/* ---------------- bookings ---------------- */
+
 export const getClientBookings = cache(async (clientId: string) => {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('bookings')
-    .select(
-      `id, status, scheduled_start, scheduled_end, total_price_egp, is_loyalty_free,
-       services ( name_en, name_ar ),
-       design_options ( name_en, name_ar )`
-    )
+    .select(BOOKING_SELECT)
     .eq('client_id', clientId)
     .order('scheduled_start', { ascending: true });
   if (error) throw error;
-  return data as any;
+  return (data ?? []) as any[];
 });
 
 export const getPendingBookingsForOwner = cache(async () => {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('bookings')
-    .select(
-      `id, status, scheduled_start, total_price_egp,
-       profiles ( name ),
-       services ( name_en )`
-    )
+    .select(`${BOOKING_SELECT}, profiles ( name, email )`)
     .eq('status', 'pending')
     .order('scheduled_start', { ascending: true });
   if (error) throw error;
-  return data as any;
+  return (data ?? []) as any[];
 });
 
-/** All bookings on a given day (used by admin calendar's day panel). */
+export const getAllBookingsForOwner = cache(async () => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('bookings')
+    .select(`${BOOKING_SELECT}, profiles ( name, email )`)
+    .order('scheduled_start', { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  return (data ?? []) as any[];
+});
+
 export const getBookingsForDate = cache(async (date: string) => {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('bookings')
-    .select(
-      `id, status, scheduled_start, scheduled_end,
-       profiles ( name ),
-       services ( name_en )`
-    )
+    .select(`${BOOKING_SELECT}, profiles ( name, email )`)
     .gte('scheduled_start', `${date}T00:00:00`)
     .lt('scheduled_start', `${date}T23:59:59`)
     .order('scheduled_start', { ascending: true });
   if (error) throw error;
-  return data as any;
+  return (data ?? []) as any[];
 });
 
-/** Single booking with everything the admin detail / close-out screen needs. */
 export const getBookingById = cache(async (id: string) => {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('bookings')
-    .select(
-      `id, status, scheduled_start, scheduled_end, total_price_egp, is_loyalty_free,
-       health_notes, service_id, design_id, was_service_completed, was_design_completed,
-       client_id,
-       profiles ( name, email, loyalty_points, admin_private_notes ),
-       services ( name_en, name_ar, base_price_egp ),
-       design_options ( name_en, name_ar, price_egp )`
-    )
+    .select(`${BOOKING_SELECT}, profiles ( id, name, email, loyalty_points, admin_private_notes )`)
     .eq('id', id)
     .single();
   if (error) throw error;
   return data as any;
 });
 
-/** Every booking for the admin dashboard's "today" list — one day, one query. */
 export const getTodayBookings = cache(async () => {
   const supabase = await createClient();
   const today = new Date().toISOString().slice(0, 10);
   const { data, error } = await supabase
     .from('bookings')
-    .select(
-      `id, status, scheduled_start, total_price_egp,
-       profiles ( name ),
-       services ( name_en )`
-    )
+    .select(`${BOOKING_SELECT}, profiles ( name, email )`)
     .gte('scheduled_start', `${today}T00:00:00`)
     .lt('scheduled_start', `${today}T23:59:59`)
     .order('scheduled_start', { ascending: true });
   if (error) throw error;
-  return data as any;
+  return (data ?? []) as any[];
 });
 
-/** All clients (profiles with role='client') for the admin clients page. */
+/** Signed URLs for a booking's inspiration photos (bucket is private). */
+export const getBookingImageUrls = cache(async (paths: string[]) => {
+  if (paths.length === 0) return [];
+  const supabase = await createClient();
+  const { data, error } = await supabase.storage.from('inspo-images').createSignedUrls(paths, 60 * 60);
+  if (error) return [];
+  return (data ?? []).map((d) => d.signedUrl).filter(Boolean) as string[];
+});
+
+/* ---------------- clients / analytics ---------------- */
+
 export const getAllClients = cache(async () => {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, name, email, loyalty_points, admin_private_notes')
+    .select('id, name, email, loyalty_points, admin_private_notes, created_at')
     .eq('role', 'client')
     .order('name', { ascending: true });
   if (error) throw error;
-  return data;
+  return data ?? [];
 });
 
-/** One client's full visit history (for their admin profile page). */
 export const getClientHistory = cache(async (clientId: string) => {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('bookings')
-    .select(
-      `id, status, scheduled_start, total_price_egp,
-       services ( name_en )`
-    )
+    .select(`id, status, scheduled_start, total_price_egp, services ( name_en )`)
     .eq('client_id', clientId)
     .eq('status', 'done')
     .order('scheduled_start', { ascending: false });
   if (error) throw error;
-  return data;
+  return data ?? [];
 });
 
-/** Simple real aggregates for the analytics page — no fabricated numbers. */
 export const getAnalyticsSummary = cache(async () => {
   const supabase = await createClient();
   const { data: done, error } = await supabase
@@ -225,41 +250,14 @@ export const getAnalyticsSummary = cache(async () => {
     .eq('status', 'done');
   if (error) throw error;
 
-  const revenue = done.reduce((sum, b) => sum + b.total_price_egp, 0);
+  const revenue = done.reduce((sum: number, b: any) => sum + b.total_price_egp, 0);
   const bookingCount = done.length;
   const avgTicket = bookingCount > 0 ? Math.round(revenue / bookingCount) : 0;
-  const uniqueClients = new Set(done.map((b) => b.client_id));
-  const clientVisitCounts = new Map<string, number>();
-  for (const b of done) clientVisitCounts.set(b.client_id, (clientVisitCounts.get(b.client_id) ?? 0) + 1);
-  const repeatClients = [...clientVisitCounts.values()].filter((n) => n > 1).length;
+  const uniqueClients = new Set(done.map((b: any) => b.client_id));
+  const counts = new Map<string, number>();
+  for (const b of done as any[]) counts.set(b.client_id, (counts.get(b.client_id) ?? 0) + 1);
+  const repeatClients = [...counts.values()].filter((n) => n > 1).length;
   const repeatPct = uniqueClients.size > 0 ? Math.round((repeatClients / uniqueClients.size) * 100) : 0;
 
-  return { revenue, bookingCount, avgTicket, repeatPct };
-});
-
-/**
- * Open time slots for one date: every availability_slots row for that
- * day, minus any that overlap an existing non-cancelled/declined
- * booking — or all of them, if the whole day is in blocked_days.
- */
-export const getOpenTimesForDate = cache(async (date: string) => {
-  const supabase = await createClient();
-  const [{ data: slots, error: slotsError }, { data: bookings, error: bookingsError }, { data: blockedRows, error: blockedError }] =
-    await Promise.all([
-      supabase.from('availability_slots').select('start_time').eq('date', date),
-      supabase
-        .from('bookings')
-        .select('scheduled_start')
-        .gte('scheduled_start', `${date}T00:00:00`)
-        .lt('scheduled_start', `${date}T23:59:59`)
-        .in('status', ['pending', 'confirmed', 'needs_reschedule']),
-      supabase.from('blocked_days').select('date').eq('date', date),
-    ]);
-  if (slotsError) throw slotsError;
-  if (bookingsError) throw bookingsError;
-  if (blockedError) throw blockedError;
-  if (blockedRows && blockedRows.length > 0) return [];
-
-  const bookedTimes = new Set((bookings ?? []).map((b) => new Date(b.scheduled_start).toTimeString().slice(0, 5)));
-  return (slots ?? []).filter((s) => !bookedTimes.has(s.start_time.slice(0, 5)));
+  return { revenue, bookingCount, avgTicket, repeatPct, clientCount: uniqueClients.size };
 });

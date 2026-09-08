@@ -5,6 +5,7 @@ import { useParams, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import LangSwitch from './LangSwitch';
+import AuthMenu from './AuthMenu';
 import styles from './SiteHeader.module.css';
 
 const LEFT = [
@@ -73,6 +74,7 @@ export default function SiteHeader() {
           <div className={styles.right}>
             <nav className={styles.navSide}>{RIGHT.map(navLink)}</nav>
             <div className={styles.actions}>
+              <AuthMenu />
               <LangSwitch />
               <Link href={`${base}/book`} className={`btn btn-sm ${styles.bookBtn}`}>
                 {t('book')}
@@ -91,9 +93,7 @@ export default function SiteHeader() {
         <Link href={`${base}/book`} className={`btn ${styles.drawerCta}`}>
           {t('book')}
         </Link>
-        <Link href={`${base}/login`} className={styles.drawerSmall}>
-          {t('login')}
-        </Link>
+        <AuthMenu compact />
       </div>
       {open && <div className={styles.backdrop} onClick={() => setOpen(false)} />}
     </>

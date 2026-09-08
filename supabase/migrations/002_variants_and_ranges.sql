@@ -1,36 +1,35 @@
--- The Gel Bar — Supabase schema (v2: variant pricing + range availability)
--- Run this in the Supabase SQL editor for a fresh project.
--- For an EXISTING project, run supabase/migrations/002_variants_and_ranges.sql
--- instead — it upgrades in place.
+-- ============================================================
+-- The Gel Bar — migration 002
+-- Variant pricing (4 services × 3 variants), quantity add-ons,
+-- range-based availability, and admin-editable catalog.
 --
--- Fresh reset (safe only if you don't mind losing data):
---   drop schema public cascade;
---   create schema public;
---   grant all on schema public to postgres, anon, authenticated, service_role;
+-- Safe to run more than once. Existing bookings referencing the OLD
+-- flat service list are removed (there is no live booking history yet);
+-- everything else — profiles, auth users, loyalty points — is kept.
+-- ============================================================
 
-create type booking_status as enum (
-  'pending', 'confirmed', 'needs_reschedule', 'declined', 'cancelled', 'done'
-);
+begin;
 
-create type variant_kind as enum ('color', 'simple', 'complex');
+-- ---------- 1. clear out the old booking/catalog model ----------
+drop table if exists booking_images cascade;
+drop table if exists booking_addons cascade;
+delete from bookings;
+drop table if exists bookings cascade;
+drop table if exists design_options cascade;
+drop table if exists services cascade;
+drop table if exists availability_slots cascade;
 
-create table profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
-  role text not null default 'client' check (role in ('client', 'owner')),
-  name text,
-  email text,
-  phone text,
-  loyalty_points int not null default 0,
-  admin_private_notes text,
-  created_at timestamptz not null default now()
-);
+do $$ begin
+  create type variant_kind as enum ('color', 'simple', 'complex');
+exception when duplicate_object then null; end $$;
 
--- ---------------------------------------------------------------------
--- Catalog: 4 main services, each with 3 pickable variants.
--- Price AND duration live on the variant, so the owner can edit every
--- service/variant combination from the admin panel — nothing about the
--- catalog is hardcoded in the app.
--- ---------------------------------------------------------------------
+do $$ begin
+  create type booking_status as enum (
+    'pending', 'confirmed', 'needs_reschedule', 'declined', 'cancelled', 'done'
+  );
+exception when duplicate_object then null; end $$;
+
+-- ---------- 2. catalog ----------
 create table services (
   id text primary key,
   name_en text not null,
@@ -49,15 +48,12 @@ create table service_variants (
   name_ar text not null,
   price_egp int not null,
   duration_minutes int not null,
-  -- simple/complex designs need reference photos from the client
   requires_inspo boolean not null default false,
   sort_order int not null default 0,
   is_active boolean not null default true,
   unique (service_id, kind)
 );
 
--- Optional extras, multi-select. `is_quantity` ones (nail fixing) let the
--- client pick how many.
 create table addons (
   id text primary key,
   name_en text not null,
@@ -72,9 +68,7 @@ create table addons (
   is_active boolean not null default true
 );
 
--- ---------------------------------------------------------------------
--- Bookings
--- ---------------------------------------------------------------------
+-- ---------- 3. bookings ----------
 create table bookings (
   id uuid primary key default gen_random_uuid(),
   client_id uuid not null references profiles(id) on delete cascade,
@@ -83,13 +77,11 @@ create table bookings (
   status booking_status not null default 'pending',
   scheduled_start timestamptz not null,
   scheduled_end timestamptz not null,
-  -- price/duration snapshots, so later catalog edits never rewrite history
   total_price_egp int not null,
   total_minutes int not null,
   is_loyalty_free boolean not null default false,
   was_service_completed boolean,
   health_notes text default '',
-  -- owner-side tier correction (client said "simple", it was "complex")
   tier_change_note text,
   tier_changed_at timestamptz,
   google_event_id text,
@@ -112,12 +104,7 @@ create table booking_images (
   created_at timestamptz not null default now()
 );
 
--- ---------------------------------------------------------------------
--- Availability: the owner sets FREE RANGES per day ("1pm–6pm").
--- Bookable start times are computed from those ranges minus existing
--- bookings, using the selected service duration — see
--- lib/availability.ts.
--- ---------------------------------------------------------------------
+-- ---------- 4. availability as free ranges ----------
 create table availability_ranges (
   id uuid primary key default gen_random_uuid(),
   date date not null,
@@ -128,30 +115,26 @@ create table availability_ranges (
   check (end_time > start_time)
 );
 
-create table blocked_days (
-  date date primary key
-);
+create table if not exists blocked_days (date date primary key);
 
-create table app_settings (
+-- ---------- 5. settings ----------
+create table if not exists app_settings (
   id int primary key default 1 check (id = 1),
-  loyalty_enabled boolean not null default false,
-  -- granularity of the generated start times inside a free range
-  slot_step_minutes int not null default 30,
-  -- notification recipient for owner-side emails
-  owner_email text not null default 'thegelbar.eg@gmail.com'
+  loyalty_enabled boolean not null default false
 );
+alter table app_settings add column if not exists slot_step_minutes int not null default 30;
+alter table app_settings add column if not exists owner_email text not null default 'thegelbar.eg@gmail.com';
 insert into app_settings (id) values (1) on conflict (id) do nothing;
 
-create index bookings_client_id_idx on bookings(client_id);
-create index bookings_scheduled_start_idx on bookings(scheduled_start);
-create index bookings_status_idx on bookings(status);
-create index availability_ranges_date_idx on availability_ranges(date);
-create index service_variants_service_idx on service_variants(service_id);
-create index booking_addons_booking_idx on booking_addons(booking_id);
+-- ---------- 6. indexes ----------
+create index if not exists bookings_client_id_idx on bookings(client_id);
+create index if not exists bookings_scheduled_start_idx on bookings(scheduled_start);
+create index if not exists bookings_status_idx on bookings(status);
+create index if not exists availability_ranges_date_idx on availability_ranges(date);
+create index if not exists service_variants_service_idx on service_variants(service_id);
+create index if not exists booking_addons_booking_idx on booking_addons(booking_id);
 
--- ---------------------------------------------------------------------
--- Grants (coarser than RLS; Postgres checks these first)
--- ---------------------------------------------------------------------
+-- ---------- 7. grants ----------
 grant usage on schema public to anon, authenticated;
 grant select, insert, update on public.profiles to authenticated;
 grant select, insert, update on public.bookings to authenticated;
@@ -170,32 +153,14 @@ grant update on public.app_settings to authenticated;
 grant select on public.blocked_days to anon, authenticated;
 grant insert, update, delete on public.blocked_days to authenticated;
 
--- ---------------------------------------------------------------------
--- RLS
--- ---------------------------------------------------------------------
-create or replace function public.is_owner()
-returns boolean
-language sql
-security definer
-set search_path = public
-stable
-as $$
-  select exists (select 1 from profiles where id = auth.uid() and role = 'owner');
-$$;
-
-alter table profiles enable row level security;
+-- ---------- 8. RLS ----------
 alter table bookings enable row level security;
 alter table booking_addons enable row level security;
 alter table booking_images enable row level security;
-alter table app_settings enable row level security;
 alter table availability_ranges enable row level security;
-alter table blocked_days enable row level security;
 alter table services enable row level security;
 alter table service_variants enable row level security;
 alter table addons enable row level security;
-
-create policy "profiles: self read/write" on profiles for all using (auth.uid() = id);
-create policy "profiles: owner reads all" on profiles for select using (public.is_owner());
 
 create policy "bookings: client sees own" on bookings for select using (auth.uid() = client_id);
 create policy "bookings: client creates own" on bookings for insert with check (auth.uid() = client_id);
@@ -203,33 +168,19 @@ create policy "bookings: client updates own" on bookings for update using (auth.
 create policy "bookings: owner manages all" on bookings for all using (public.is_owner());
 
 create policy "booking_addons: follow parent" on booking_addons for all using (
-  exists (
-    select 1 from bookings b
-    where b.id = booking_addons.booking_id
-      and (b.client_id = auth.uid() or public.is_owner())
-  )
+  exists (select 1 from bookings b where b.id = booking_addons.booking_id
+          and (b.client_id = auth.uid() or public.is_owner()))
 );
 
 create policy "booking_images: follow parent" on booking_images for all using (
-  exists (
-    select 1 from bookings b
-    where b.id = booking_images.booking_id
-      and (b.client_id = auth.uid() or public.is_owner())
-  )
+  exists (select 1 from bookings b where b.id = booking_images.booking_id
+          and (b.client_id = auth.uid() or public.is_owner()))
 );
-
-create policy "app_settings: anyone reads" on app_settings for select using (true);
-create policy "app_settings: owner updates" on app_settings for update using (public.is_owner());
 
 create policy "availability_ranges: anyone reads" on availability_ranges for select using (true);
 create policy "availability_ranges: owner writes" on availability_ranges for insert with check (public.is_owner());
 create policy "availability_ranges: owner updates" on availability_ranges for update using (public.is_owner());
 create policy "availability_ranges: owner deletes" on availability_ranges for delete using (public.is_owner());
-
-create policy "blocked_days: anyone reads" on blocked_days for select using (true);
-create policy "blocked_days: owner writes" on blocked_days for insert with check (public.is_owner());
-create policy "blocked_days: owner updates" on blocked_days for update using (public.is_owner());
-create policy "blocked_days: owner deletes" on blocked_days for delete using (public.is_owner());
 
 create policy "services: anyone reads" on services for select using (true);
 create policy "services: owner writes" on services for all using (public.is_owner());
@@ -240,29 +191,24 @@ create policy "service_variants: owner writes" on service_variants for all using
 create policy "addons: anyone reads" on addons for select using (true);
 create policy "addons: owner writes" on addons for all using (public.is_owner());
 
--- ---------------------------------------------------------------------
--- Seed catalog (owner can edit every field of this from the admin panel)
--- ---------------------------------------------------------------------
+-- ---------- 9. seed the catalog ----------
 insert into services (id, name_en, name_ar, description_en, description_ar, sort_order) values
-  ('gel-manicure',     'Gel Manicure',     'مانيكير جل',        '', '', 1),
-  ('hard-gel-overlay', 'Hard Gel Overlay', 'هارد جل أوفرلاي',   '', '', 2),
-  ('hard-gel-new-set', 'Hard Gel New Set', 'طقم هارد جل جديد',  '', '', 3),
-  ('false-nails',      'False Nails',      'أظافر صناعية',      '', '', 4)
+  ('gel-manicure',     'Gel Manicure',     'مانيكير جل',       '', '', 1),
+  ('hard-gel-overlay', 'Hard Gel Overlay', 'هارد جل أوفرلاي',  '', '', 2),
+  ('hard-gel-new-set', 'Hard Gel New Set', 'طقم هارد جل جديد', '', '', 3),
+  ('false-nails',      'False Nails',      'أظافر صناعية',     '', '', 4)
 on conflict (id) do nothing;
 
 insert into service_variants (id, service_id, kind, name_en, name_ar, price_egp, duration_minutes, requires_inspo, sort_order) values
   ('gel-manicure-color',       'gel-manicure',     'color',   'Color',          'لون',          650,  60, false, 1),
   ('gel-manicure-simple',      'gel-manicure',     'simple',  'Simple design',  'تصميم بسيط',   800,  60, true,  2),
   ('gel-manicure-complex',     'gel-manicure',     'complex', 'Complex design', 'تصميم معقد',  1000,  60, true,  3),
-
   ('hard-gel-overlay-color',   'hard-gel-overlay', 'color',   'Color',          'لون',          850,  60, false, 1),
   ('hard-gel-overlay-simple',  'hard-gel-overlay', 'simple',  'Simple design',  'تصميم بسيط',  1000,  60, true,  2),
   ('hard-gel-overlay-complex', 'hard-gel-overlay', 'complex', 'Complex design', 'تصميم معقد',  1200,  60, true,  3),
-
   ('hard-gel-new-set-color',   'hard-gel-new-set', 'color',   'Color',          'لون',         1200,  60, false, 1),
   ('hard-gel-new-set-simple',  'hard-gel-new-set', 'simple',  'Simple design',  'تصميم بسيط',  1350,  60, true,  2),
   ('hard-gel-new-set-complex', 'hard-gel-new-set', 'complex', 'Complex design', 'تصميم معقد',  1500,  60, true,  3),
-
   ('false-nails-color',        'false-nails',      'color',   'Color',          'لون',          550,  60, false, 1),
   ('false-nails-simple',       'false-nails',      'simple',  'Simple design',  'تصميم بسيط',   700,  60, true,  2),
   ('false-nails-complex',      'false-nails',      'complex', 'Complex design', 'تصميم معقد',   850,  60, true,  3)
@@ -273,48 +219,4 @@ insert into addons (id, name_en, name_ar, description_en, description_ar, price_
   ('nail-fix', 'Fixing nails', 'إصلاح الأظافر', 'Repair per broken nail.',            'إصلاح لكل ظفر مكسور.',       50, 0, true,  10, 2)
 on conflict (id) do nothing;
 
--- ---------------------------------------------------------------------
--- Auto-create a profile row for every new auth user (Google SSO included)
--- ---------------------------------------------------------------------
-create or replace function public.handle_new_user()
-returns trigger as $$
-begin
-  insert into public.profiles (id, name, email, role)
-  values (
-    new.id,
-    coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', new.email),
-    new.email,
-    'client'
-  )
-  on conflict (id) do nothing;
-  return new;
-end;
-$$ language plpgsql security definer set search_path = public;
-
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
-
--- ---------------------------------------------------------------------
--- Storage bucket for inspo photos
--- ---------------------------------------------------------------------
-insert into storage.buckets (id, name, public)
-values ('inspo-images', 'inspo-images', false)
-on conflict (id) do nothing;
-
-create policy "inspo-images: clients upload their own"
-  on storage.objects for insert
-  with check (
-    bucket_id = 'inspo-images'
-    and (storage.foldername(name))[1] = auth.uid()::text
-  );
-
-create policy "inspo-images: clients read their own, owner reads all"
-  on storage.objects for select
-  using (
-    bucket_id = 'inspo-images'
-    and (
-      (storage.foldername(name))[1] = auth.uid()::text
-      or exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'owner')
-    )
-  );
+commit;

@@ -1,0 +1,47 @@
+.slotSection {
+  margin-top: 2rem;
+}
+
+.slotLabel {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.slot {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  padding: 0.8rem 1.2rem;
+  min-height: 46px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.slot:hover {
+  border-color: var(--gold);
+}
+
+.slotActive {
+  background: var(--deep);
+  border-color: var(--deep);
+  color: #fff;
+}
+
+.empty {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.82rem;
+  color: var(--sub);
+  line-height: 1.7;
+  padding: 1rem 1.2rem;
+  border-inline-start: 2px solid var(--gold);
+  background: var(--bg-alt);
+}

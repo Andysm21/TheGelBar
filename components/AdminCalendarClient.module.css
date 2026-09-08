@@ -1,0 +1,278 @@
+.layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (min-width: 1000px) {
+  .layout {
+    grid-template-columns: 1fr 360px;
+  }
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.68rem;
+  color: var(--sub);
+}
+
+.legendOpen,
+.legendBlocked {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  vertical-align: middle;
+}
+
+.legendOpen {
+  background: var(--bg-alt);
+  border: 1px solid var(--gold);
+}
+
+.legendBlocked {
+  background: #eee;
+  border: 1px solid var(--border);
+}
+
+/* ---------- side panel ---------- */
+.panel {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 1.6rem;
+  position: sticky;
+  top: 100px;
+}
+
+.placeholder {
+  text-align: center;
+  padding: 2rem 0.5rem;
+}
+
+.placeholderTitle {
+  font-size: 1.4rem;
+  color: var(--deep);
+  margin: 0.7rem 0 0.8rem;
+}
+
+.placeholderText {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.78rem;
+  line-height: 1.8;
+  color: var(--sub);
+}
+
+.panelHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding-bottom: 1.2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.panelDate {
+  font-size: 1.2rem;
+  color: var(--deep);
+  margin-top: 0.5rem;
+}
+
+.freeTotal {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-top: 0.5rem;
+}
+
+.blockBtn {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.blockBtn:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+.blockedNote {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.78rem;
+  line-height: 1.7;
+  color: var(--sub);
+  background: var(--bg-alt);
+  border-inline-start: 2px solid var(--danger);
+  padding: 0.9rem 1rem;
+  margin-top: 1.2rem;
+}
+
+.groupLabel {
+  display: block;
+  margin: 1.8rem 0 0.9rem;
+}
+
+.empty {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.76rem;
+  color: var(--sub);
+}
+
+.error {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.76rem;
+  color: var(--danger);
+  margin-top: 1rem;
+}
+
+/* ---------- ranges ---------- */
+.rangeList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rangeRow {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+}
+
+.rangeTime {
+  font-family: var(--font-display, Georgia), serif;
+  font-size: 1rem;
+  color: var(--deep);
+  flex: 1;
+}
+
+.rangeLen {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.64rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.removeBtn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--sub);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.removeBtn:hover {
+  color: var(--danger);
+}
+
+/* ---------- add window ---------- */
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.preset {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.5rem 0.8rem;
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--sub);
+  cursor: pointer;
+}
+
+.preset:hover {
+  border-color: var(--gold);
+  color: var(--deep);
+}
+
+.timeRow {
+  display: flex;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.timeField {
+  flex: 1;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+
+.timeField input {
+  margin-top: 0.4rem;
+}
+
+.repeat {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--sub);
+  margin-bottom: 1.2rem;
+}
+
+.repeat input {
+  width: auto;
+  min-height: auto;
+}
+
+/* ---------- bookings on the day ---------- */
+.bookingList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bookingRow {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--border);
+  transition: border-color 0.2s ease;
+}
+
+.bookingRow:hover {
+  border-color: var(--gold);
+}
+
+.bookingTime {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--deep);
+  white-space: nowrap;
+}
+
+.bookingName {
+  flex: 1;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.76rem;
+  color: var(--sub);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
