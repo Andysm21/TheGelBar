@@ -83,7 +83,10 @@ export default function AuthMenu({ compact = false }: { compact?: boolean }) {
         <span className={styles.avatar} aria-hidden="true">
           {name.charAt(0).toUpperCase()}
         </span>
-        <span className={styles.hi}>Hello, {name}</span>
+        <span className={styles.hi}>
+          <span className={styles.hiPrefix}>Hello, </span>
+          {name}
+        </span>
         <span className={styles.caret} aria-hidden="true">
           ▾
         </span>

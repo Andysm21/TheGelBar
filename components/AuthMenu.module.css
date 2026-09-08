@@ -20,6 +20,7 @@
 
 .wrap {
   position: relative;
+  min-width: 0;
 }
 
 .trigger {
@@ -55,6 +56,39 @@
   text-transform: uppercase;
   color: var(--deep);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* The bar already carries nav on both sides, the language pill and the
+     CTA, so the greeting is the part that gives way: avatar only on a
+     small laptop, then the name, then the full "Hello, ". The dropdown
+     always holds bookings, account and log out. */
+  display: none;
+  max-width: 7rem;
+}
+
+@media (min-width: 1440px) {
+  .hi {
+    display: inline-block;
+    vertical-align: middle;
+  }
+}
+
+@media (min-width: 1680px) {
+  .hi {
+    max-width: 10rem;
+  }
+}
+
+/* "Hello," is the first thing dropped — the name alone still reads as a
+   greeting next to the avatar. */
+.hiPrefix {
+  display: none;
+}
+
+@media (min-width: 1680px) {
+  .hiPrefix {
+    display: inline;
+  }
 }
 
 .caret {
