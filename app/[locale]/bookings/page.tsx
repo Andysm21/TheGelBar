@@ -17,6 +17,8 @@ export default async function BookingsPage({ params }: { params: Promise<{ local
   const t = await getTranslations('booking');
   const session = await getSessionProfile();
   if (!session) redirect(`/${locale}/login`);
+  // The owner's appointments live in the admin queue, not here.
+  if (session.profile.role === 'owner') redirect(`/${locale}/admin/bookings`);
 
   const allBookings = await getClientBookings(session.user.id);
   const upcoming = allBookings.filter((b: any) => ['pending', 'confirmed', 'needs_reschedule'].includes(b.status));

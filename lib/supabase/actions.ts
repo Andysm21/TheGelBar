@@ -38,6 +38,21 @@ async function requireUser() {
   return { supabase, user };
 }
 
+/**
+ * A booking always belongs to a client. The owner runs the calendar, so
+ * letting her book against her own availability would silently consume a
+ * slot and generate confirmation email to herself — refuse it here, in
+ * the one place every booking path goes through.
+ */
+async function requireClient() {
+  const { supabase, user } = await requireUser();
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  if (profile?.role === 'owner') {
+    throw new Error('The salon account manages the calendar and cannot make bookings. Use a client account to book.');
+  }
+  return { supabase, user };
+}
+
 async function requireOwner() {
   const { supabase, user } = await requireUser();
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
@@ -144,7 +159,7 @@ export interface CreateBookingInput {
 }
 
 export async function createBooking(input: CreateBookingInput) {
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireClient();
 
   const limit = rateLimit(`create-booking:${user.id}`, 6, 10 * 60 * 1000);
   if (!limit.ok) throw new Error(`Too many booking attempts. Try again in ${Math.ceil(limit.retryAfterSeconds / 60)} min.`);
@@ -250,7 +265,7 @@ export async function createBooking(input: CreateBookingInput) {
 }
 
 export async function cancelBooking(bookingId: string) {
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireClient();
   const booking = await getBookingById(bookingId);
   if (booking.client_id !== user.id) throw new Error('Not your booking.');
 
@@ -266,7 +281,7 @@ export async function cancelBooking(bookingId: string) {
 }
 
 export async function requestReschedule(bookingId: string, newDate: string, newTime: string) {
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireClient();
   const booking = await getBookingById(bookingId);
   if (booking.client_id !== user.id) throw new Error('Not your booking.');
 

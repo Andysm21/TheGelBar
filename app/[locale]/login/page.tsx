@@ -13,6 +13,7 @@ export default function LoginPage() {
   const next = searchParams.get('next') || '/dashboard';
 
   const oauthError = searchParams.get('error') === 'oauth';
+  const timedOut = searchParams.get('timeout') === '1';
 
   async function signInWithGoogle() {
     const supabase = createClient();
@@ -37,6 +38,10 @@ export default function LoginPage() {
           <p className="eyebrow" style={{ display: 'block', textAlign: 'center', marginBottom: '1.4rem' }}>
             Client sign in
           </p>
+
+          {timedOut && (
+            <p className={styles.notice}>You were signed out after a period of inactivity. Please sign in again.</p>
+          )}
 
           {oauthError && <p className={styles.error}>Google sign-in didn't go through — try again.</p>}
 
