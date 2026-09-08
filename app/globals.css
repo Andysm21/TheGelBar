@@ -34,11 +34,40 @@ html,
 body {
   background: var(--bg);
   color: var(--text);
+  /* clip, not hidden: `hidden` on <html> silently kills position:sticky
+     in some browsers, `clip` doesn't. Set on both so nothing can create
+     a sideways scrollbar. */
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 body {
   font-family: Georgia, 'Times New Roman', serif;
-  overflow-x: hidden;
+}
+
+/* Nothing may exceed the viewport width. Long words/URLs wrap instead of
+   pushing the layout wide. */
+* {
+  min-width: 0;
+}
+
+img,
+video,
+iframe,
+table {
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3,
+p,
+span,
+a,
+li,
+dd,
+dt {
+  overflow-wrap: break-word;
 }
 
 h1,

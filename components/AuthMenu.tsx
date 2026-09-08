@@ -26,8 +26,11 @@ export default function AuthMenu({ compact = false }: { compact?: boolean }) {
         return;
       }
       const meta = user.user_metadata ?? {};
-      const full = meta.full_name || meta.name || user.email || '';
-      setName(String(full).split(' ')[0] || 'there');
+      const full = meta.full_name || meta.name || '';
+      // Fall back to the local part of the email, not the whole address —
+      // "Hello, thegelbar.eg@gmail.com" overflows the header.
+      const label = full ? String(full).split(' ')[0] : String(user.email ?? '').split('@')[0];
+      setName(label || 'there');
     };
 
     supabase.auth.getUser().then(({ data }) => {

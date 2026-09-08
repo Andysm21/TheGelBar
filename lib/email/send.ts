@@ -1,10 +1,21 @@
-/**
- * Resend delivery. Deliberately fail-soft: if RESEND_API_KEY isn't set
- * (local dev, or before the domain is verified) this logs and returns
- * instead of throwing — an email problem must never break a booking.
- */
+import nodemailer from 'nodemailer';
 
-const RESEND_ENDPOINT = 'https://api.resend.com/emails';
+/**
+ * Email delivery.
+ *
+ * Primary path is Gmail SMTP, because the studio wants mail to come FROM
+ * (and land in) thegelbar.eg@gmail.com — an API service like Resend can
+ * only send from a domain you own and verify, never from a gmail.com
+ * address, so SMTP is the only way to satisfy that.
+ *
+ * Requires a Google **App Password** (not the account password):
+ *   GMAIL_USER=thegelbar.eg@gmail.com
+ *   GMAIL_APP_PASSWORD=xxxxxxxxxxxxxxxx
+ *
+ * Deliberately fail-soft: with no credentials configured this logs and
+ * returns instead of throwing, so an email problem can never break a
+ * booking.
+ */
 
 export interface SendArgs {
   to: string;
@@ -13,36 +24,46 @@ export interface SendArgs {
   replyTo?: string;
 }
 
-export async function sendEmail({ to, subject, html, replyTo }: SendArgs): Promise<{ ok: boolean; skipped?: boolean }> {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM || 'The Gel Bar <onboarding@resend.dev>';
+type Transporter = ReturnType<typeof nodemailer.createTransport>;
 
-  if (!apiKey) {
-    console.warn(`[email] RESEND_API_KEY not set — skipped "${subject}" to ${to}`);
-    return { ok: false, skipped: true };
-  }
+let transporter: Transporter | null = null;
+
+function getTransporter() {
+  if (transporter) return transporter;
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+  if (!user || !pass) return null;
+
+  transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user, pass },
+  });
+  return transporter;
+}
+
+export function ownerAddress() {
+  return process.env.GMAIL_USER || 'thegelbar.eg@gmail.com';
+}
+
+export async function sendEmail({ to, subject, html, replyTo }: SendArgs): Promise<{ ok: boolean; skipped?: boolean }> {
   if (!to) {
     console.warn(`[email] no recipient for "${subject}"`);
     return { ok: false, skipped: true };
   }
 
-  try {
-    const res = await fetch(RESEND_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ from, to: [to], subject, html, ...(replyTo ? { reply_to: replyTo } : {}) }),
-    });
+  const tx = getTransporter();
+  if (!tx) {
+    console.warn(`[email] GMAIL_USER / GMAIL_APP_PASSWORD not set — skipped "${subject}" to ${to}`);
+    return { ok: false, skipped: true };
+  }
 
-    if (!res.ok) {
-      console.error(`[email] Resend rejected "${subject}" (${res.status}): ${await res.text()}`);
-      return { ok: false };
-    }
+  const from = `The Gel Bar <${ownerAddress()}>`;
+
+  try {
+    await tx.sendMail({ from, to, subject, html, replyTo });
     return { ok: true };
   } catch (err) {
-    console.error(`[email] send failed for "${subject}"`, err);
+    console.error(`[email] send failed for "${subject}" → ${to}`, err);
     return { ok: false };
   }
 }

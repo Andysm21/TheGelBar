@@ -230,6 +230,17 @@ export const getAllClients = cache(async () => {
   return data ?? [];
 });
 
+export const getClientProfile = cache(async (clientId: string) => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, name, email, phone, loyalty_points, admin_private_notes, created_at')
+    .eq('id', clientId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+});
+
 export const getClientHistory = cache(async (clientId: string) => {
   const supabase = await createClient();
   const { data, error } = await supabase

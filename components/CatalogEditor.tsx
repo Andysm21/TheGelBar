@@ -160,15 +160,15 @@ export default function CatalogEditor({
             <tbody>
               {s.service_variants.map((v) => (
                 <tr key={v.id}>
-                  <td className={styles.variantName}>{v.name_en}</td>
-                  <td>
+                  <td className={styles.variantName} data-label="Option">{v.name_en}</td>
+                  <td data-label="Price">
                     <NumberCell
                       value={v.price_egp}
                       suffix="EGP"
                       onSave={(n) => run(`${v.name_en} price saved`, () => updateVariant(v.id, { price_egp: n }))}
                     />
                   </td>
-                  <td>
+                  <td data-label="Duration">
                     <NumberCell
                       value={v.duration_minutes}
                       suffix="min"
@@ -176,14 +176,14 @@ export default function CatalogEditor({
                       onSave={(n) => run(`${v.name_en} duration saved`, () => updateVariant(v.id, { duration_minutes: n }))}
                     />
                   </td>
-                  <td>
+                  <td data-label="Inspo required">
                     <input
                       type="checkbox"
                       defaultChecked={v.requires_inspo}
                       onChange={(e) => run('Inspo rule saved', () => updateVariant(v.id, { requires_inspo: e.target.checked }))}
                     />
                   </td>
-                  <td>
+                  <td data-label="Live on site">
                     <input
                       type="checkbox"
                       defaultChecked={v.is_active}
@@ -217,25 +217,25 @@ export default function CatalogEditor({
           <tbody>
             {addons.map((a) => (
               <tr key={a.id}>
-                <td className={styles.variantName}>
+                <td className={styles.variantName} data-label="Add-on">
                   {a.name_en}
                   {a.is_quantity && <span className={styles.qtyTag}>per unit</span>}
                 </td>
-                <td>
+                <td data-label="Price">
                   <NumberCell
                     value={a.price_egp}
                     suffix="EGP"
                     onSave={(n) => run(`${a.name_en} price saved`, () => updateAddon(a.id, { price_egp: n }))}
                   />
                 </td>
-                <td>
+                <td data-label="Duration">
                   <NumberCell
                     value={a.duration_minutes}
                     suffix="min"
                     onSave={(n) => run(`${a.name_en} duration saved`, () => updateAddon(a.id, { duration_minutes: n }))}
                   />
                 </td>
-                <td>
+                <td data-label="Max qty">
                   {a.is_quantity ? (
                     <NumberCell
                       value={a.max_quantity}
@@ -247,7 +247,7 @@ export default function CatalogEditor({
                     <span className={styles.dash}>—</span>
                   )}
                 </td>
-                <td>
+                <td data-label="Live on site">
                   <input
                     type="checkbox"
                     defaultChecked={a.is_active}

@@ -164,6 +164,68 @@
   color: var(--sub);
 }
 
+/* ---------- table → stacked cards on phones ---------- */
+@media (max-width: 700px) {
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tr {
+    border: 1px solid var(--border);
+    padding: 0.9rem 1rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .table tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .table td {
+    border-bottom: none;
+    padding: 0.4rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  /* the label comes from data-label on each <td> */
+  .table td::before {
+    content: attr(data-label);
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--sub);
+    flex: 0 0 auto;
+  }
+
+  /* name row reads as the card heading, so no label above it */
+  .table td.variantName {
+    display: block;
+    padding-bottom: 0.7rem;
+    margin-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 1.05rem;
+  }
+
+  .table td.variantName::before {
+    display: none;
+  }
+
+  .numberInput {
+    width: 92px;
+  }
+}
+
 /* ---------- settings ---------- */
 .settingsGrid {
   display: grid;

@@ -14,6 +14,7 @@ import {
 } from './cached-queries';
 import { rateLimit } from '../rate-limit';
 import { computeOpenStarts, toMinutes } from '../availability';
+import { sendEmail, ownerAddress } from '../email/send';
 import {
   notifyBookingRequested,
   notifyBookingConfirmed,
@@ -547,4 +548,31 @@ export async function refreshCatalogCache() {
   revalidatePath('/[locale]/admin/services', 'page');
   revalidatePath('/[locale]/services', 'page');
   revalidatePath('/[locale]/book', 'page');
+}
+
+/** Sends a real email to the owner address so delivery can be verified. */
+export async function sendTestEmail() {
+  await requireOwner();
+  const to = ownerAddress();
+  const res = await sendEmail({
+    to,
+    subject: 'The Gel Bar — test email',
+    html: `<!doctype html><html><body style="margin:0;background:#f7f1e8;padding:32px 12px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fff;border:1px solid #e3d5bd;">
+          <tr><td style="background:#2e2015;padding:28px;text-align:center;">
+            <div style="font-family:Georgia,serif;font-size:24px;color:#fff;">The Gel Bar</div>
+          </td></tr>
+          <tr><td style="padding:32px;font-family:Georgia,serif;font-size:15px;line-height:1.7;color:#2e2015;">
+            Email delivery is working. Booking, confirmation, reschedule, cancellation and price-change
+            emails will all be sent from this address.
+          </td></tr>
+        </table>
+      </td></tr></table>
+    </body></html>`,
+  });
+
+  if (res.skipped) throw new Error('GMAIL_USER / GMAIL_APP_PASSWORD are not set in the environment.');
+  if (!res.ok) throw new Error('Gmail rejected the message — check the app password.');
+  return { ok: true, to };
 }

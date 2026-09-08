@@ -7,6 +7,7 @@ import type { Metadata, Viewport } from 'next';
 import SiteChromeGate from '@/components/SiteChromeGate';
 import SiteFooter from '@/components/SiteFooter';
 import SplashLoader from '@/components/SplashLoader';
+import ScrollToTop from '@/components/ScrollToTop';
 
 // Editorial serif for headings — matches the "new-inspo" design
 // direction (thebestnailsmiami.com). Self-hosted via next/font, so no
@@ -48,6 +49,7 @@ export default async function LocaleLayout({
     <html lang={locale} dir={dir} className={playfair.variable}>
       <body>
         <NextIntlClientProvider messages={messages}>
+          <ScrollToTop />
           <SplashLoader />
           <SiteChromeGate footer={<SiteFooter locale={locale} />}>{children}</SiteChromeGate>
         </NextIntlClientProvider>

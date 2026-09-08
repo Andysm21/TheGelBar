@@ -67,7 +67,14 @@
   letter-spacing: 0.06em;
   color: var(--deep);
   line-height: 1.1;
+  white-space: nowrap;
   transition: font-size 0.3s ease;
+}
+
+@media (max-width: 480px) {
+  .wordmark {
+    font-size: 1.15rem;
+  }
 }
 
 .scrolled .wordmark {
@@ -133,6 +140,18 @@
   display: flex;
   align-items: center;
   gap: 0.8rem;
+}
+
+/* On mobile only the language switch stays in the bar; the greeting and
+   log out live in the drawer so nothing overflows the header. */
+.actions > *:first-child {
+  display: none;
+}
+
+@media (min-width: 1080px) {
+  .actions > *:first-child {
+    display: flex;
+  }
 }
 
 .bookBtn {

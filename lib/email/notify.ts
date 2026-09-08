@@ -1,4 +1,4 @@
-import { sendEmail, siteUrl } from './send';
+import { sendEmail, siteUrl, ownerAddress } from './send';
 import * as tpl from './templates';
 import type { BookingEmailData } from './templates';
 
@@ -50,13 +50,14 @@ export function toEmailData(b: BookingRecord): BookingEmailData & { clientEmail:
 
 /* ---------------- dispatchers ---------------- */
 
-export async function notifyBookingRequested(b: BookingRecord, ownerEmail: string) {
+export async function notifyBookingRequested(b: BookingRecord, ownerEmail?: string) {
+  const owner = ownerEmail || ownerAddress();
   const d = toEmailData(b);
   const client = tpl.clientBookingRequested(d);
-  const owner = tpl.ownerNewBooking(d);
+  const ownerMsg = tpl.ownerNewBooking(d);
   await Promise.allSettled([
     sendEmail({ to: d.clientEmail, ...client }),
-    sendEmail({ to: ownerEmail, ...owner, replyTo: d.clientEmail || undefined }),
+    sendEmail({ to: owner, ...ownerMsg, replyTo: d.clientEmail || undefined }),
   ]);
 }
 
@@ -70,17 +71,17 @@ export async function notifyBookingDeclined(b: BookingRecord, reason?: string) {
   await sendEmail({ to: d.clientEmail, ...tpl.clientBookingDeclined(d, reason) });
 }
 
-export async function notifyBookingCancelled(b: BookingRecord, ownerEmail: string, by: 'client' | 'owner') {
+export async function notifyBookingCancelled(b: BookingRecord, ownerEmail: string | undefined, by: 'client' | 'owner') {
   const d = toEmailData(b);
   const jobs = [sendEmail({ to: d.clientEmail, ...tpl.clientBookingCancelled(d) })];
-  if (by === 'client') jobs.push(sendEmail({ to: ownerEmail, ...tpl.ownerBookingCancelled(d) }));
+  if (by === 'client') jobs.push(sendEmail({ to: ownerEmail || ownerAddress(), ...tpl.ownerBookingCancelled(d) }));
   await Promise.allSettled(jobs);
 }
 
-export async function notifyBookingRescheduled(b: BookingRecord, ownerEmail: string, by: 'client' | 'owner') {
+export async function notifyBookingRescheduled(b: BookingRecord, ownerEmail: string | undefined, by: 'client' | 'owner') {
   const d = toEmailData(b);
   const jobs = [sendEmail({ to: d.clientEmail, ...tpl.clientBookingRescheduled(d, by) })];
-  if (by === 'client') jobs.push(sendEmail({ to: ownerEmail, ...tpl.ownerBookingRescheduled(d) }));
+  if (by === 'client') jobs.push(sendEmail({ to: ownerEmail || ownerAddress(), ...tpl.ownerBookingRescheduled(d) }));
   await Promise.allSettled(jobs);
 }
 
