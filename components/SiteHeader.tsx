@@ -45,17 +45,6 @@ export default function SiteHeader() {
 
   return (
     <>
-      <div className={styles.announce} aria-hidden="true">
-        <div className={styles.marquee}>
-          {Array.from({ length: 2 }).map((_, i) => (
-            <span key={i} className={styles.marqueeTrack}>
-              By appointment only &nbsp;·&nbsp; Mohandeseen, Cairo &nbsp;·&nbsp; Hand-painted nail art &nbsp;·&nbsp; One client at a
-              time &nbsp;·&nbsp; @thegelbar.eg &nbsp;·&nbsp;
-            </span>
-          ))}
-        </div>
-      </div>
-
       <header className={`${styles.header} ${scrolled ? styles.scrolled : ''}`}>
         <div className={styles.inner}>
           <button className={styles.burger} onClick={() => setOpen((v) => !v)} aria-label="Menu" aria-expanded={open}>

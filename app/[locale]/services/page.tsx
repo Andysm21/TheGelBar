@@ -2,7 +2,6 @@ import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { getServiceCatalog, getAddons } from '@/lib/supabase/cached-queries';
 import ServicesGrid from '@/components/ServicesGrid';
-import MarqueeBand from '@/components/MarqueeBand';
 import Reveal from '@/components/Reveal';
 import styles from './services.module.css';
 
@@ -25,7 +24,6 @@ export default async function ServicesPage({ params }: { params: Promise<{ local
         <ServicesGrid services={services as any} locale={locale} bookHref={`/${locale}/book`} />
       </div>
 
-      <MarqueeBand items={['Hand-painted detail', 'Gel & hard gel', 'Design add-ons available']} />
 
       <section className={styles.addons}>
         <Reveal className={styles.addonsHead}>

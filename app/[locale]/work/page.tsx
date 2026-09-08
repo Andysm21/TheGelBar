@@ -1,7 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import Reveal from '@/components/Reveal';
-import MarqueeBand from '@/components/MarqueeBand';
 import styles from './work.module.css';
 
 const GALLERY_IMAGES = Array.from({ length: 10 }, (_, i) => `/gallery/work-${i + 1}.jpg`);
@@ -32,7 +31,6 @@ export default async function OurWorkPage({ params }: { params: Promise<{ locale
         ))}
       </div>
 
-      <MarqueeBand items={['@thegelbar.eg', 'New sets weekly', 'Bring your own inspo']} tone="dark" />
 
       <section className={styles.cta}>
         <Reveal>

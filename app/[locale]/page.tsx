@@ -2,7 +2,6 @@ import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import NailProcess from '@/components/NailProcess/NailProcess';
 import HeroVideo from '@/components/HeroVideo';
-import MarqueeBand from '@/components/MarqueeBand';
 import Reveal from '@/components/Reveal';
 import { getServiceCatalog } from '@/lib/supabase/cached-queries';
 import styles from './page.module.css';
@@ -60,7 +59,6 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
         </div>
       </section>
 
-      <MarqueeBand items={['Hand-painted nail art', 'Gel & hard gel', 'By appointment only', 'Mohandeseen · Cairo']} />
 
       {/* ---------- ABOUT ---------- */}
       <section className={styles.about}>
