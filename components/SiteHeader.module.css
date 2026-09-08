@@ -1,7 +1,7 @@
 /* ---- announcement marquee ---- */
 .announce {
   background: var(--deep);
-  color: #f2e8d6;
+  color: #f7dbe6;
   height: 34px;
   display: flex;
   align-items: center;
@@ -36,7 +36,7 @@
   position: sticky;
   top: 0;
   z-index: 55;
-  background: rgba(247, 241, 232, 0.92);
+  background: rgba(255, 241, 246, 0.92);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid transparent;
   transition: padding 0.3s ease, border-color 0.3s ease, background 0.3s ease;
@@ -230,7 +230,7 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(43, 33, 23, 0.4);
+  background: rgba(62, 20, 39, 0.45);
   z-index: 110;
 }
 

@@ -37,7 +37,7 @@
 .veil {
   position: absolute;
   inset: 0;
-  background: rgba(43, 33, 23, 0.34);
+  background: rgba(62, 20, 39, 0.34);
   color: #fff;
   display: flex;
   align-items: center;
@@ -107,7 +107,7 @@
   width: 36px;
   height: 36px;
   border: none;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 241, 246, 0.94);
   color: var(--deep);
   font-size: 1.3rem;
   line-height: 1;

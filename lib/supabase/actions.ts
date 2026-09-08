@@ -557,13 +557,13 @@ export async function sendTestEmail() {
   const res = await sendEmail({
     to,
     subject: 'The Gel Bar — test email',
-    html: `<!doctype html><html><body style="margin:0;background:#f7f1e8;padding:32px 12px;">
+    html: `<!doctype html><html><body style="margin:0;background:#f1b7cd;padding:32px 12px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fff;border:1px solid #e3d5bd;">
-          <tr><td style="background:#2e2015;padding:28px;text-align:center;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fff1f6;border:1px solid #dfa9c0;">
+          <tr><td style="background:#3e1427;padding:28px;text-align:center;">
             <div style="font-family:Georgia,serif;font-size:24px;color:#fff;">The Gel Bar</div>
           </td></tr>
-          <tr><td style="padding:32px;font-family:Georgia,serif;font-size:15px;line-height:1.7;color:#2e2015;">
+          <tr><td style="padding:32px;font-family:Georgia,serif;font-size:15px;line-height:1.7;color:#3e1427;">
             Email delivery is working. Booking, confirmation, reschedule, cancellation and price-change
             emails will all be sent from this address.
           </td></tr>

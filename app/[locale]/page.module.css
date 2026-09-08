@@ -30,7 +30,7 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(180deg, rgba(30, 22, 14, 0.42), rgba(30, 22, 14, 0.28) 45%, rgba(247, 241, 232, 0.9));
+  background: linear-gradient(180deg, rgba(62, 20, 39, 0.45), rgba(62, 20, 39, 0.28) 45%, rgba(241, 183, 205, 0.92));
 }
 
 .heroInner {
@@ -40,7 +40,7 @@
 }
 
 .heroEyebrow {
-  color: #f0e2c4 !important;
+  color: #f7dbe6 !important;
   display: block;
   margin-bottom: 1.4rem;
   animation: fadeUp 0.8s cubic-bezier(0.22, 0.8, 0.3, 1) both;
@@ -59,7 +59,7 @@
   font-size: 0.76rem;
   letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: #ece0cc;
+  color: #f0cbdb;
   margin-top: 1.4rem;
   animation: fadeUp 0.9s cubic-bezier(0.22, 0.8, 0.3, 1) 0.22s both;
 }

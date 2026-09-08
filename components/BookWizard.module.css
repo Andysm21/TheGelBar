@@ -123,7 +123,7 @@
 
 .serviceCard:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 30px rgba(43, 33, 23, 0.1);
+  box-shadow: 0 14px 30px rgba(62, 20, 39, 0.12);
 }
 
 .serviceCardActive {
