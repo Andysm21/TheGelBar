@@ -410,9 +410,19 @@ export async function changeBookingVariant(bookingId: string, newVariantId: stri
   revalidateBookingViews();
 }
 
-export async function markBookingPaid(bookingId: string, wasCompleted: boolean) {
+export interface MarkPaidInput {
+  wasCompleted: boolean;
+  /** What the client actually handed over. */
+  amountPaid: number;
+  /** Why that differs from the quoted price. Required when it does. */
+  paymentNote?: string;
+}
+
+export async function markBookingPaid(bookingId: string, input: MarkPaidInput) {
   const { supabase } = await requireOwner();
   const booking = await getBookingById(bookingId);
+
+  if (booking.status === 'done') throw new Error('This appointment is already closed.');
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -423,15 +433,29 @@ export async function markBookingPaid(bookingId: string, wasCompleted: boolean) 
   const settings = await getAppSettings();
   const points = profile?.loyalty_points ?? 0;
   const isFree = settings.loyalty_enabled && isFreeLoyaltySession(points);
-  const finalPrice = isFree ? 0 : wasCompleted ? booking.total_price_egp : 0;
 
+  // What the system says is owed, before any adjustment Mariam made.
+  const expected = isFree ? 0 : input.wasCompleted ? booking.total_price_egp : 0;
+
+  const amountPaid = Math.round(Number(input.amountPaid));
+  if (!Number.isFinite(amountPaid) || amountPaid < 0) throw new Error('Enter a valid amount.');
+
+  const note = (input.paymentNote ?? '').trim();
+  if (amountPaid !== expected && !note) {
+    throw new Error(`That is different from the ${expected} EGP the system expected — add a short reason.`);
+  }
+
+  // total_price_egp stays the quote. amount_paid_egp is the truth about
+  // money, so a discount is visible later instead of erasing the quote.
   const { error } = await supabase
     .from('bookings')
     .update({
       status: 'done',
-      was_service_completed: wasCompleted,
-      total_price_egp: finalPrice,
+      was_service_completed: input.wasCompleted,
       is_loyalty_free: isFree,
+      amount_paid_egp: amountPaid,
+      payment_note: note || null,
+      paid_at: new Date().toISOString(),
     })
     .eq('id', bookingId);
   if (error) throw error;

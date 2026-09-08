@@ -75,7 +75,28 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
                 <dt>Total</dt>
                 <dd className={styles.total}>{booking.total_price_egp} EGP</dd>
               </div>
+              {booking.amount_paid_egp !== null && booking.amount_paid_egp !== undefined && (
+                <div>
+                  <dt>Collected</dt>
+                  <dd className={styles.total}>
+                    {booking.amount_paid_egp} EGP
+                    {booking.amount_paid_egp !== booking.total_price_egp && (
+                      <span className={styles.adjusted}>
+                        {' '}
+                        ({booking.amount_paid_egp < booking.total_price_egp ? '−' : '+'}
+                        {Math.abs(booking.total_price_egp - booking.amount_paid_egp)})
+                      </span>
+                    )}
+                  </dd>
+                </div>
+              )}
             </dl>
+
+            {booking.payment_note && (
+              <p className={styles.tierNote}>
+                <strong>Payment note:</strong> {booking.payment_note}
+              </p>
+            )}
 
             {booking.tier_change_note && (
               <p className={styles.tierNote}>
@@ -130,6 +151,7 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
                 variants={variants}
                 durationMinutes={booking.total_minutes}
                 currentLabel={whenLabel}
+                expectedTotal={booking.total_price_egp}
               />
             </div>
           </section>

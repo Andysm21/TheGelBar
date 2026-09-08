@@ -30,6 +30,7 @@ export default function BookingDetailActions({
   variants,
   durationMinutes,
   currentLabel,
+  expectedTotal,
 }: {
   bookingId: string;
   status: string;
@@ -40,6 +41,8 @@ export default function BookingDetailActions({
   variants: Variant[];
   durationMinutes: number;
   currentLabel: string;
+  /** What the system says is owed — the starting point for the amount box. */
+  expectedTotal: number;
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState('');
@@ -47,12 +50,23 @@ export default function BookingDetailActions({
   const [declineMode, setDeclineMode] = useState(false);
   const [reason, setReason] = useState('');
 
+  const [payMode, setPayMode] = useState(false);
+  const [wasCompleted, setWasCompleted] = useState(true);
+  const [amountPaid, setAmountPaid] = useState(String(expectedTotal));
+  const [paymentNote, setPaymentNote] = useState('');
+
   const [tierMode, setTierMode] = useState(false);
   const [newVariantId, setNewVariantId] = useState(currentVariantId);
   const [note, setNote] = useState('');
 
   const newVariant = variants.find((v) => v.id === newVariantId);
   const newTotal = (newVariant?.price_egp ?? 0) + addonTotal;
+
+  // Only ask for a reason when the money actually differs from the quote.
+  const paidNumber = Number(amountPaid);
+  const differs = Number.isFinite(paidNumber) && paidNumber !== expectedTotal;
+  const diffAmount = Math.abs(paidNumber - expectedTotal);
+  const diffLabel = paidNumber < expectedTotal ? `${diffAmount} EGP less` : `${diffAmount} EGP more`;
 
   function run(fn: () => Promise<void>, after?: () => void) {
     setError('');
@@ -102,9 +116,9 @@ export default function BookingDetailActions({
         </div>
       )}
 
-      {status === 'confirmed' && (
+      {status === 'confirmed' && !payMode && (
         <div className={styles.row}>
-          <button className="btn btn-solid" disabled={pending} onClick={() => run(() => markBookingPaid(bookingId, true))}>
+          <button className="btn btn-solid" disabled={pending} onClick={() => setPayMode(true)}>
             Mark done &amp; paid
           </button>
           <button className="btn btn-ghost" disabled={pending} onClick={() => setShowReschedule(true)}>
@@ -113,6 +127,67 @@ export default function BookingDetailActions({
           <button className={`btn ${styles.danger}`} disabled={pending} onClick={() => run(() => ownerCancelBooking(bookingId))}>
             Cancel
           </button>
+        </div>
+      )}
+
+      {payMode && (
+        <div className={styles.block}>
+          <p className="eyebrow" style={{ display: 'block', marginBottom: '.8rem' }}>
+            Close this appointment
+          </p>
+
+          <label className={styles.check}>
+            <input type="checkbox" checked={wasCompleted} onChange={(e) => setWasCompleted(e.target.checked)} />
+            The service was carried out
+          </label>
+
+          <label>Amount collected</label>
+          <div className={styles.amountRow}>
+            <input
+              type="number"
+              min={0}
+              inputMode="numeric"
+              value={amountPaid}
+              onChange={(e) => setAmountPaid(e.target.value)}
+              className={styles.amountInput}
+            />
+            <span className={styles.amountSuffix}>EGP</span>
+          </div>
+
+          <p className={styles.expected}>
+            System price: <strong>{expectedTotal} EGP</strong>
+            {differs && <span className={styles.diff}> · {diffLabel}</span>}
+          </p>
+
+          {differs && (
+            <>
+              <label>Reason for the difference</label>
+              <textarea
+                value={paymentNote}
+                onChange={(e) => setPaymentNote(e.target.value)}
+                placeholder="Gave a 100 EGP discount — she waited while I finished the previous client."
+              />
+            </>
+          )}
+
+          <div className={styles.row}>
+            <button
+              className="btn btn-solid"
+              disabled={pending || (differs && !paymentNote.trim())}
+              onClick={() =>
+                run(
+                  () => markBookingPaid(bookingId, { wasCompleted, amountPaid: Number(amountPaid), paymentNote }),
+                  () => setPayMode(false)
+                )
+              }
+            >
+              {pending && <NailLoader size="mini" />}
+              {pending ? 'Saving…' : 'Save & close'}
+            </button>
+            <button className="btn btn-ghost" onClick={() => setPayMode(false)}>
+              Back
+            </button>
+          </div>
         </div>
       )}
 

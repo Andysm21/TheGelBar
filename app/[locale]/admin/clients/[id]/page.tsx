@@ -13,7 +13,8 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
   const bookings = await getClientBookings(id);
   const done = bookings.filter((b: any) => b.status === 'done');
   const upcoming = bookings.filter((b: any) => ['pending', 'confirmed', 'needs_reschedule'].includes(b.status));
-  const spent = done.reduce((sum: number, b: any) => sum + b.total_price_egp, 0);
+  // What she actually collected, not what was quoted.
+  const spent = done.reduce((sum: number, b: any) => sum + (b.amount_paid_egp ?? b.total_price_egp), 0);
 
   return (
     <AdminShell
@@ -77,7 +78,7 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
                         {b.status}
                       </span>
                     </span>
-                    <span className={styles.hPrice}>{b.total_price_egp} EGP</span>
+                    <span className={styles.hPrice}>{b.amount_paid_egp ?? b.total_price_egp} EGP</span>
                   </Link>
                 </li>
               ))}

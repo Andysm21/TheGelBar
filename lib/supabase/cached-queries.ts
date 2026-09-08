@@ -14,6 +14,7 @@ import { createPublicClient } from './public';
 const BOOKING_SELECT = `
   id, status, scheduled_start, scheduled_end, total_price_egp, total_minutes,
   is_loyalty_free, health_notes, service_id, variant_id, client_id,
+  amount_paid_egp, payment_note, paid_at,
   tier_change_note, tier_changed_at, created_at,
   services ( name_en, name_ar ),
   service_variants ( id, name_en, name_ar, kind, price_egp, duration_minutes, requires_inspo ),
@@ -245,7 +246,7 @@ export const getClientHistory = cache(async (clientId: string) => {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('bookings')
-    .select(`id, status, scheduled_start, total_price_egp, services ( name_en )`)
+    .select(`id, status, scheduled_start, total_price_egp, amount_paid_egp, services ( name_en )`)
     .eq('client_id', clientId)
     .eq('status', 'done')
     .order('scheduled_start', { ascending: false });
@@ -257,11 +258,14 @@ export const getAnalyticsSummary = cache(async () => {
   const supabase = await createClient();
   const { data: done, error } = await supabase
     .from('bookings')
-    .select('total_price_egp, client_id, scheduled_start')
+    .select('total_price_egp, amount_paid_egp, client_id, scheduled_start')
     .eq('status', 'done');
   if (error) throw error;
 
-  const revenue = done.reduce((sum: number, b: any) => sum + b.total_price_egp, 0);
+  // Revenue is money actually collected. Rows closed before payment
+  // recording existed have no amount, so they fall back to the quote.
+  const collected = (b: any) => (b.amount_paid_egp ?? b.total_price_egp) as number;
+  const revenue = done.reduce((sum: number, b: any) => sum + collected(b), 0);
   const bookingCount = done.length;
   const avgTicket = bookingCount > 0 ? Math.round(revenue / bookingCount) : 0;
   const uniqueClients = new Set(done.map((b: any) => b.client_id));

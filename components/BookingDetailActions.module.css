@@ -118,3 +118,52 @@
   font-size: 1.2rem;
   color: var(--deep);
 }
+
+/* ---- close-out / payment ---- */
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 0.82rem;
+  color: var(--deep);
+  margin-bottom: 1.2rem;
+}
+
+.check input {
+  width: auto;
+  min-height: auto;
+}
+
+.amountRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.amountInput {
+  width: 140px;
+  font-size: 1.1rem;
+  text-align: end;
+}
+
+.amountSuffix {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+
+.expected {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.74rem;
+  color: var(--sub);
+  margin: 0.7rem 0 1.1rem;
+}
+
+.diff {
+  color: var(--gold);
+  font-weight: 700;
+}

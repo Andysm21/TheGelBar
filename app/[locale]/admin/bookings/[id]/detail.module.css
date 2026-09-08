@@ -141,3 +141,9 @@
   color: var(--sub);
   margin-top: 0.8rem;
 }
+
+.adjusted {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.72rem;
+  color: var(--gold);
+}
