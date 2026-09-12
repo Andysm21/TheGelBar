@@ -12,6 +12,8 @@ interface Variant {
   duration_minutes: number;
   requires_inspo: boolean;
   is_active: boolean;
+  is_quantity: boolean;
+  max_quantity: number;
 }
 interface Service {
   id: string;
@@ -154,13 +156,17 @@ export default function CatalogEditor({
                 <th>Price</th>
                 <th>Duration</th>
                 <th>Inspo</th>
+                <th>Max qty</th>
                 <th>Live</th>
               </tr>
             </thead>
             <tbody>
               {s.service_variants.map((v) => (
                 <tr key={v.id}>
-                  <td className={styles.variantName} data-label="Option">{v.name_en}</td>
+                  <td className={styles.variantName} data-label="Option">
+                    {v.name_en}
+                    {v.is_quantity && <span className={styles.qtyTag}>per unit</span>}
+                  </td>
                   <td data-label="Price">
                     <NumberCell
                       value={v.price_egp}
@@ -183,6 +189,18 @@ export default function CatalogEditor({
                       onChange={(e) => run('Inspo rule saved', () => updateVariant(v.id, { requires_inspo: e.target.checked }))}
                     />
                   </td>
+                  <td data-label="Max qty">
+                    {v.is_quantity ? (
+                      <NumberCell
+                        value={v.max_quantity}
+                        suffix="max"
+                        min={1}
+                        onSave={(n) => run('Max quantity saved', () => updateVariant(v.id, { max_quantity: n }))}
+                      />
+                    ) : (
+                      <span className={styles.dash}>—</span>
+                    )}
+                  </td>
                   <td data-label="Live on site">
                     <input
                       type="checkbox"
@@ -197,11 +215,12 @@ export default function CatalogEditor({
         </section>
       ))}
 
+      {addons.length > 0 && (
       <section className={styles.service}>
         <header className={styles.serviceHead}>
           <div>
             <p className="eyebrow">Extras</p>
-            <h3 className={styles.sectionTitle}>Add-ons</h3>
+            <h3 className={styles.sectionTitle}>Add-ons (legacy)</h3>
           </div>
         </header>
         <table className={styles.table}>
@@ -259,6 +278,7 @@ export default function CatalogEditor({
           </tbody>
         </table>
       </section>
+      )}
 
       <section className={styles.service}>
         <header className={styles.serviceHead}>

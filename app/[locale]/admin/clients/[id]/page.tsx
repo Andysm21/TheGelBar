@@ -73,6 +73,7 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
                     <span className={styles.hMain}>
                       <span className={styles.hService}>
                         {b.services?.name_en} — {b.service_variants?.name_en}
+                        {(b.variant_quantity ?? 1) > 1 ? ` ×${b.variant_quantity}` : ''}
                       </span>
                       <span className={`badge badge-${b.status === 'done' ? 'done' : b.status === 'pending' ? 'pending' : 'confirmed'}`}>
                         {b.status}

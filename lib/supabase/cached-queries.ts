@@ -13,11 +13,11 @@ import { createPublicClient } from './public';
 
 const BOOKING_SELECT = `
   id, status, scheduled_start, scheduled_end, total_price_egp, total_minutes,
-  is_loyalty_free, health_notes, service_id, variant_id, client_id,
+  is_loyalty_free, health_notes, service_id, variant_id, client_id, variant_quantity,
   amount_paid_egp, payment_note, paid_at,
   tier_change_note, tier_changed_at, created_at,
   services ( name_en, name_ar ),
-  service_variants ( id, name_en, name_ar, kind, price_egp, duration_minutes, requires_inspo ),
+  service_variants ( id, name_en, name_ar, kind, price_egp, duration_minutes, requires_inspo, is_quantity ),
   booking_addons ( id, quantity, unit_price_egp, unit_duration_minutes, addons ( id, name_en, name_ar ) ),
   booking_images ( id, storage_path )
 `;
@@ -32,7 +32,7 @@ export const getServiceCatalog = cache(
         .from('services')
         .select(
           `id, name_en, name_ar, description_en, description_ar, sort_order,
-           service_variants ( id, kind, name_en, name_ar, price_egp, duration_minutes, requires_inspo, sort_order, is_active )`
+           service_variants ( id, kind, name_en, name_ar, price_egp, duration_minutes, requires_inspo, sort_order, is_active, is_quantity, max_quantity )`
         )
         .eq('is_active', true)
         .order('sort_order');
@@ -92,10 +92,12 @@ export const getCatalogForAdmin = cache(async () => {
       .from('services')
       .select(
         `id, name_en, name_ar, description_en, description_ar, sort_order, is_active,
-         service_variants ( id, kind, name_en, name_ar, price_egp, duration_minutes, requires_inspo, sort_order, is_active )`
+         service_variants ( id, kind, name_en, name_ar, price_egp, duration_minutes, requires_inspo, sort_order, is_active, is_quantity, max_quantity )`
       )
       .order('sort_order'),
-    supabase.from('addons').select('*').order('sort_order'),
+    // Legacy extras. Retired ones stay in the DB for old bookings but are
+    // not offered any more, so the editor does not list them.
+    supabase.from('addons').select('*').eq('is_active', true).order('sort_order'),
   ]);
   if (services.error) throw services.error;
   if (addons.error) throw addons.error;

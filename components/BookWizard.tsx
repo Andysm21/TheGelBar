@@ -11,20 +11,21 @@ import styles from './BookWizard.module.css';
 
 const STEPS = [
   { key: 'service', label: 'Service' },
-  { key: 'options', label: 'Options' },
   { key: 'slot', label: 'Date & time' },
-  { key: 'details', label: 'Details' },
+  { key: 'details', label: 'Confirm' },
 ] as const;
 type StepKey = (typeof STEPS)[number]['key'];
 
 interface Variant {
   id: string;
-  kind: 'color' | 'simple' | 'complex';
+  kind: string;
   name_en: string;
   name_ar: string;
   price_egp: number;
   duration_minutes: number;
   requires_inspo: boolean;
+  is_quantity: boolean;
+  max_quantity: number;
 }
 interface Service {
   id: string;
@@ -34,23 +35,13 @@ interface Service {
   description_ar: string;
   service_variants: Variant[];
 }
-interface Addon {
-  id: string;
-  name_en: string;
-  name_ar: string;
-  description_en: string;
-  description_ar: string;
-  price_egp: number;
-  duration_minutes: number;
-  is_quantity: boolean;
-  max_quantity: number;
-}
 
 const SERVICE_IMAGES: Record<string, string> = {
   'gel-manicure': '/gallery/work-4.jpg',
   'hard-gel-overlay': '/gallery/work-6.jpg',
   'hard-gel-new-set': '/gallery/work-8.jpg',
   'false-nails': '/gallery/work-2.jpg',
+  'add-ons': '/gallery/work-3.jpg',
 };
 
 function formatDuration(mins: number) {
@@ -66,14 +57,13 @@ export default function BookWizard({ locale }: { locale: string }) {
   const isAr = locale === 'ar';
 
   const [services, setServices] = useState<Service[]>([]);
-  const [addons, setAddons] = useState<Addon[]>([]);
   const [slotStep, setSlotStep] = useState(30);
   const [loaded, setLoaded] = useState(false);
 
   const [step, setStep] = useState<StepKey>('service');
   const [serviceId, setServiceId] = useState('');
   const [variantId, setVariantId] = useState('');
-  const [addonQty, setAddonQty] = useState<Record<string, number>>({});
+  const [quantity, setQuantity] = useState(1);
   const [date, setDate] = useState<string | null>(null);
   const [time, setTime] = useState<string | null>(null);
   const [inspoPaths, setInspoPaths] = useState<string[]>([]);
@@ -84,9 +74,8 @@ export default function BookWizard({ locale }: { locale: string }) {
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    fetchCatalog().then(({ services, addons, settings }) => {
+    fetchCatalog().then(({ services, settings }) => {
       setServices(services as Service[]);
-      setAddons(addons as Addon[]);
       setSlotStep((settings as any)?.slot_step_minutes ?? 30);
       setLoaded(true);
     });
@@ -95,23 +84,25 @@ export default function BookWizard({ locale }: { locale: string }) {
   const service = services.find((s) => s.id === serviceId);
   const variant = service?.service_variants.find((v) => v.id === variantId);
 
-  const { totalPrice, totalMinutes, pickedAddons } = useMemo(() => {
-    let price = variant?.price_egp ?? 0;
-    let minutes = variant?.duration_minutes ?? 0;
-    const picked: { addon: Addon; qty: number }[] = [];
-    for (const a of addons) {
-      const qty = addonQty[a.id] ?? 0;
-      if (qty > 0) {
-        price += a.price_egp * qty;
-        minutes += a.duration_minutes * qty;
-        picked.push({ addon: a, qty });
-      }
-    }
-    return { totalPrice: price, totalMinutes: minutes, pickedAddons: picked };
-  }, [variant, addons, addonQty]);
+  const { totalPrice, totalMinutes } = useMemo(() => {
+    const units = variant?.is_quantity ? quantity : 1;
+    return {
+      totalPrice: (variant?.price_egp ?? 0) * units,
+      totalMinutes: (variant?.duration_minutes ?? 0) * units,
+    };
+  }, [variant, quantity]);
 
   const needsInspo = variant?.requires_inspo ?? false;
   const canSubmit = !!variant && !!date && !!time && (!needsInspo || inspoPaths.length > 0);
+
+  /** Picking a different option invalidates a slot chosen for the old length. */
+  function pickVariant(s: Service, v: Variant) {
+    setServiceId(s.id);
+    setVariantId(v.id);
+    setQuantity(1);
+    setDate(null);
+    setTime(null);
+  }
 
   async function submit() {
     if (!canSubmit || !date || !time) return;
@@ -121,7 +112,7 @@ export default function BookWizard({ locale }: { locale: string }) {
       await createBooking({
         serviceId,
         variantId,
-        addons: pickedAddons.map((p) => ({ addonId: p.addon.id, quantity: p.qty })),
+        quantity: variant?.is_quantity ? quantity : 1,
         date,
         time,
         healthNotes: notes,
@@ -153,6 +144,7 @@ export default function BookWizard({ locale }: { locale: string }) {
           <span className="badge badge-pending">{t('pending')}</span>
           <h3 className={styles.doneService}>
             {isAr ? service?.name_ar : service?.name_en} — {isAr ? variant?.name_ar : variant?.name_en}
+            {variant?.is_quantity ? ` ×${quantity}` : ''}
           </h3>
           <p className={styles.subtle}>
             {date} · {time && formatTime12h(time)} · {formatDuration(totalMinutes)} · {totalPrice} EGP
@@ -181,139 +173,107 @@ export default function BookWizard({ locale }: { locale: string }) {
 
       <div className={styles.layout}>
         <div className={styles.main}>
-          {/* ---------------- STEP 1: service ---------------- */}
+          {/* ---------------- STEP 1: service, expanding to its options ---------------- */}
           {step === 'service' && (
             <section>
               <div className={styles.head}>
-                <p className="eyebrow">Step 1 of 4</p>
+                <p className="eyebrow">Step 1 of 3</p>
                 <h1 className={styles.title}>Choose your service</h1>
+                <p className={styles.subtle}>Open a service, then pick one option under it.</p>
               </div>
 
-              <div className={styles.serviceGrid}>
+              <div className={styles.accordion}>
                 {services.map((s) => {
-                  const active = serviceId === s.id;
+                  const open = serviceId === s.id;
                   const from = Math.min(...s.service_variants.map((v) => v.price_egp));
                   return (
-                    <button
-                      key={s.id}
-                      type="button"
-                      className={`${styles.serviceCard} ${active ? styles.serviceCardActive : ''}`}
-                      onClick={() => {
-                        setServiceId(s.id);
-                        setVariantId('');
-                        setDate(null);
-                        setTime(null);
-                      }}
-                    >
-                      <span className={styles.serviceImg}>
-                        <img src={SERVICE_IMAGES[s.id] ?? '/gallery/work-1.jpg'} alt="" loading="lazy" />
-                      </span>
-                      <span className={styles.serviceBody}>
-                        <span className={styles.serviceName}>{isAr ? s.name_ar : s.name_en}</span>
-                        {(isAr ? s.description_ar : s.description_en) && (
-                          <span className={styles.serviceDesc}>{isAr ? s.description_ar : s.description_en}</span>
-                        )}
-                        <span className={styles.serviceFrom}>from {from} EGP</span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className={styles.actions}>
-                <button className={`btn btn-solid ${styles.grow}`} disabled={!serviceId} onClick={() => setStep('options')}>
-                  Continue →
-                </button>
-              </div>
-            </section>
-          )}
-
-          {/* ---------------- STEP 2: variant + addons ---------------- */}
-          {step === 'options' && service && (
-            <section>
-              <div className={styles.head}>
-                <p className="eyebrow">Step 2 of 4</p>
-                <h1 className={styles.title}>{isAr ? service.name_ar : service.name_en}</h1>
-                <p className={styles.subtle}>Pick one finish — required.</p>
-              </div>
-
-              <div className={styles.options}>
-                {service.service_variants.map((v) => {
-                  const active = variantId === v.id;
-                  return (
-                    <button
-                      key={v.id}
-                      type="button"
-                      className={`${styles.option} ${active ? styles.optionActive : ''}`}
-                      onClick={() => setVariantId(v.id)}
-                    >
-                      <span className={styles.radio} aria-hidden="true" />
-                      <span className={styles.optionMain}>
-                        <span className={styles.optionName}>{isAr ? v.name_ar : v.name_en}</span>
-                        <span className={styles.optionMeta}>
-                          {formatDuration(v.duration_minutes)}
-                          {v.requires_inspo ? ' · inspo photo required' : ''}
-                        </span>
-                      </span>
-                      <span className={styles.optionPrice}>{v.price_egp} EGP</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <p className={`eyebrow ${styles.groupLabel}`}>Add-ons — optional</p>
-              <div className={styles.options}>
-                {addons.map((a) => {
-                  const qty = addonQty[a.id] ?? 0;
-                  const active = qty > 0;
-                  return (
-                    <div key={a.id} className={`${styles.option} ${active ? styles.optionActive : ''}`}>
+                    <div key={s.id} className={`${styles.accItem} ${open ? styles.accItemOpen : ''}`}>
                       <button
                         type="button"
-                        className={styles.checkbox}
-                        aria-pressed={active}
-                        onClick={() => setAddonQty((prev) => ({ ...prev, [a.id]: active ? 0 : 1 }))}
+                        className={styles.accHead}
+                        aria-expanded={open}
+                        onClick={() => {
+                          if (open) {
+                            setServiceId('');
+                          } else {
+                            setServiceId(s.id);
+                            setVariantId('');
+                            setQuantity(1);
+                            setDate(null);
+                            setTime(null);
+                          }
+                        }}
                       >
-                        {active ? '✓' : ''}
+                        <span className={styles.accThumb}>
+                          <img src={SERVICE_IMAGES[s.id] ?? '/gallery/work-1.jpg'} alt="" loading="lazy" />
+                        </span>
+                        <span className={styles.accInfo}>
+                          <span className={styles.accName}>{isAr ? s.name_ar : s.name_en}</span>
+                          {(isAr ? s.description_ar : s.description_en) && (
+                            <span className={styles.accDesc}>{isAr ? s.description_ar : s.description_en}</span>
+                          )}
+                          <span className={styles.accFrom}>from {from} EGP</span>
+                        </span>
+                        <span className={styles.accChevron} aria-hidden="true" />
                       </button>
-                      <span className={styles.optionMain}>
-                        <span className={styles.optionName}>{isAr ? a.name_ar : a.name_en}</span>
-                        <span className={styles.optionMeta}>
-                          {a.price_egp} EGP{a.is_quantity ? ' each' : ''}
-                          {a.duration_minutes > 0 ? ` · +${formatDuration(a.duration_minutes)}` : ''}
-                        </span>
-                      </span>
 
-                      {a.is_quantity && active ? (
-                        <span className={styles.stepper}>
-                          <button
-                            type="button"
-                            onClick={() => setAddonQty((p) => ({ ...p, [a.id]: Math.max(1, qty - 1) }))}
-                            aria-label="Fewer"
-                          >
-                            −
-                          </button>
-                          <span>{qty}</span>
-                          <button
-                            type="button"
-                            onClick={() => setAddonQty((p) => ({ ...p, [a.id]: Math.min(a.max_quantity, qty + 1) }))}
-                            aria-label="More"
-                          >
-                            +
-                          </button>
-                        </span>
-                      ) : (
-                        <span className={styles.optionPrice}>{active ? `${a.price_egp * qty} EGP` : ''}</span>
-                      )}
+                      <div className={styles.accPanel}>
+                        <div className={styles.accPanelInner}>
+                          <p className={`eyebrow ${styles.groupLabel}`}>Choose one — required</p>
+                          <div className={styles.options}>
+                            {s.service_variants.map((v) => {
+                              const active = variantId === v.id;
+                              return (
+                                <button
+                                  key={v.id}
+                                  type="button"
+                                  className={`${styles.option} ${active ? styles.optionActive : ''}`}
+                                  onClick={() => pickVariant(s, v)}
+                                >
+                                  <span className={styles.radio} aria-hidden="true" />
+                                  <span className={styles.optionMain}>
+                                    <span className={styles.optionName}>{isAr ? v.name_ar : v.name_en}</span>
+                                    <span className={styles.optionMeta}>
+                                      {formatDuration(v.duration_minutes)}
+                                      {v.is_quantity ? ' each' : ''}
+                                      {v.requires_inspo ? ' · inspo photo required' : ''}
+                                    </span>
+                                  </span>
+                                  <span className={styles.optionPrice}>
+                                    {v.price_egp} EGP{v.is_quantity ? ' each' : ''}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {variant?.is_quantity && variantId.startsWith(s.id) && (
+                            <div className={styles.qtyRow}>
+                              <span className={styles.qtyLabel}>How many?</span>
+                              <span className={styles.stepper}>
+                                <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))} aria-label="Fewer">
+                                  −
+                                </button>
+                                <span>{quantity}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setQuantity((q) => Math.min(variant.max_quantity, q + 1))}
+                                  aria-label="More"
+                                >
+                                  +
+                                </button>
+                              </span>
+                              <span className={styles.qtyTotal}>{totalPrice} EGP</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   );
                 })}
               </div>
 
               <div className={styles.actions}>
-                <button className="btn btn-ghost" onClick={() => setStep('service')}>
-                  ← Back
-                </button>
                 <button className={`btn btn-solid ${styles.grow}`} disabled={!variantId} onClick={() => setStep('slot')}>
                   Continue →
                 </button>
@@ -321,11 +281,11 @@ export default function BookWizard({ locale }: { locale: string }) {
             </section>
           )}
 
-          {/* ---------------- STEP 3: date + time ---------------- */}
+          {/* ---------------- STEP 2: date + time ---------------- */}
           {step === 'slot' && variant && (
             <section>
               <div className={styles.head}>
-                <p className="eyebrow">Step 3 of 4</p>
+                <p className="eyebrow">Step 2 of 3</p>
                 <h1 className={styles.title}>Pick a time</h1>
                 <p className={styles.subtle}>
                   Showing slots that fit {formatDuration(totalMinutes)} — the full length of your booking.
@@ -344,7 +304,7 @@ export default function BookWizard({ locale }: { locale: string }) {
               />
 
               <div className={styles.actions}>
-                <button className="btn btn-ghost" onClick={() => setStep('options')}>
+                <button className="btn btn-ghost" onClick={() => setStep('service')}>
                   ← Back
                 </button>
                 <button className={`btn btn-solid ${styles.grow}`} disabled={!date || !time} onClick={() => setStep('details')}>
@@ -354,12 +314,12 @@ export default function BookWizard({ locale }: { locale: string }) {
             </section>
           )}
 
-          {/* ---------------- STEP 4: inspo + notes ---------------- */}
+          {/* ---------------- STEP 3: confirm ---------------- */}
           {step === 'details' && variant && (
             <section>
               <div className={styles.head}>
-                <p className="eyebrow">Step 4 of 4</p>
-                <h1 className={styles.title}>Last details</h1>
+                <p className="eyebrow">Step 3 of 3</p>
+                <h1 className={styles.title}>Confirm your booking</h1>
               </div>
 
               {needsInspo && (
@@ -426,20 +386,13 @@ export default function BookWizard({ locale }: { locale: string }) {
 
           {variant && (
             <div className={styles.sumRow}>
-              <span className={styles.sumLabel}>Finish</span>
-              <span className={styles.sumValue}>{isAr ? variant.name_ar : variant.name_en}</span>
-            </div>
-          )}
-
-          {pickedAddons.map(({ addon, qty }) => (
-            <div key={addon.id} className={styles.sumRow}>
-              <span className={styles.sumLabel}>{isAr ? addon.name_ar : addon.name_en}</span>
+              <span className={styles.sumLabel}>Option</span>
               <span className={styles.sumValue}>
-                {qty > 1 ? `×${qty} · ` : ''}
-                {addon.price_egp * qty} EGP
+                {isAr ? variant.name_ar : variant.name_en}
+                {variant.is_quantity ? ` ×${quantity}` : ''}
               </span>
             </div>
-          ))}
+          )}
 
           {date && time && (
             <div className={styles.sumRow}>

@@ -60,6 +60,7 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
                 <dt>Service</dt>
                 <dd>
                   {booking.services?.name_en} — {booking.service_variants?.name_en}
+                  {(booking.variant_quantity ?? 1) > 1 ? ` ×${booking.variant_quantity}` : ''}
                 </dd>
               </div>
               {(booking.booking_addons ?? []).map((a: any) => (

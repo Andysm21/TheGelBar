@@ -58,6 +58,7 @@ export default async function BookingsPage({ params }: { params: Promise<{ local
                   <h3 className={styles.service}>
                     {b.services?.name_en ?? 'Service'}
                     {b.service_variants?.name_en ? ` — ${b.service_variants.name_en}` : ''}
+                    {(b.variant_quantity ?? 1) > 1 ? ` ×${b.variant_quantity}` : ''}
                   </h3>
                   {(b.booking_addons ?? []).length > 0 && (
                     <p className={styles.design}>
@@ -106,6 +107,7 @@ export default async function BookingsPage({ params }: { params: Promise<{ local
                 <h3 className={styles.service}>
                   {b.services?.name_en ?? 'Service'}
                   {b.service_variants?.name_en ? ` — ${b.service_variants.name_en}` : ''}
+                    {(b.variant_quantity ?? 1) > 1 ? ` ×${b.variant_quantity}` : ''}
                 </h3>
                 <p className={styles.when}>
                   {new Date(b.scheduled_start).toLocaleDateString()}

@@ -67,6 +67,7 @@ export default async function AdminBookingsPage({ params }: { params: Promise<{ 
                       <span className={styles.name}>{b.profiles?.name ?? 'Client'}</span>
                       <span className={styles.meta}>
                         {b.services?.name_en} · {b.service_variants?.name_en}
+                        {(b.variant_quantity ?? 1) > 1 ? ` ×${b.variant_quantity}` : ''}
                         {(b.booking_addons ?? []).length > 0 &&
                           ` · +${(b.booking_addons ?? []).length} add-on${b.booking_addons.length === 1 ? '' : 's'}`}
                       </span>

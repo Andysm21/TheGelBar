@@ -13,6 +13,7 @@ export interface BookingRecord {
   profiles?: { name?: string | null; email?: string | null } | null;
   services?: { name_en?: string | null } | null;
   service_variants?: { name_en?: string | null } | null;
+  variant_quantity?: number | null;
   booking_addons?: { quantity: number; unit_price_egp: number; addons?: { name_en?: string | null } | null }[] | null;
   booking_images?: { id: string }[] | null;
 }
@@ -31,7 +32,9 @@ export function toEmailData(b: BookingRecord): BookingEmailData & { clientEmail:
     clientName: b.profiles?.name?.split(' ')[0] || 'there',
     clientEmail: b.profiles?.email || '',
     serviceName: b.services?.name_en || 'Service',
-    variantName: b.service_variants?.name_en || '',
+    variantName:
+      (b.service_variants?.name_en || '') +
+      ((b.variant_quantity ?? 1) > 1 ? ` ×${b.variant_quantity}` : ''),
     addons: (b.booking_addons ?? []).map((a) => ({
       name: a.addons?.name_en || 'Add-on',
       quantity: a.quantity,

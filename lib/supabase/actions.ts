@@ -151,7 +151,10 @@ export async function fetchOpenStarts(date: string, durationMinutes: number, exc
 export interface CreateBookingInput {
   serviceId: string;
   variantId: string;
-  addons: { addonId: string; quantity: number }[];
+  /** Only meaningful for per-unit options like nail repairs. */
+  quantity?: number;
+  /** Legacy extras. Nothing sends these any more — add-ons are a service now. */
+  addons?: { addonId: string; quantity: number }[];
   date: string; // YYYY-MM-DD
   time: string; // HH:mm
   healthNotes: string;
@@ -177,7 +180,7 @@ export async function createBooking(input: CreateBookingInput) {
   // Price and duration always come from the DB, never from the client.
   const { data: variant, error: variantError } = await supabase
     .from('service_variants')
-    .select('id, service_id, name_en, price_egp, duration_minutes, requires_inspo')
+    .select('id, service_id, name_en, price_egp, duration_minutes, requires_inspo, is_quantity, max_quantity')
     .eq('id', input.variantId)
     .single();
   if (variantError || !variant) throw new Error('That service option is no longer available.');
@@ -187,11 +190,16 @@ export async function createBooking(input: CreateBookingInput) {
     throw new Error('Please upload at least one inspiration photo for this design.');
   }
 
-  let totalPrice = variant.price_egp;
-  let totalMinutes = variant.duration_minutes;
+  // Per-unit options (nail repairs) multiply out; everything else is one.
+  const quantity = variant.is_quantity
+    ? Math.min(Math.max(1, Math.round(input.quantity ?? 1)), variant.max_quantity)
+    : 1;
+
+  let totalPrice = variant.price_egp * quantity;
+  let totalMinutes = variant.duration_minutes * quantity;
   const addonRows: { addon_id: string; quantity: number; unit_price_egp: number; unit_duration_minutes: number }[] = [];
 
-  if (input.addons.length > 0) {
+  if (input.addons && input.addons.length > 0) {
     const { data: addonDefs, error: addonError } = await supabase
       .from('addons')
       .select('id, price_egp, duration_minutes, is_quantity, max_quantity')
@@ -231,6 +239,7 @@ export async function createBooking(input: CreateBookingInput) {
       client_id: user.id,
       service_id: input.serviceId,
       variant_id: variant.id,
+      variant_quantity: quantity,
       status: 'pending',
       scheduled_start: start.toISOString(),
       scheduled_end: end.toISOString(),
@@ -381,9 +390,11 @@ export async function changeBookingVariant(bookingId: string, newVariantId: stri
     0
   );
 
+  // Keep however many units the client booked (nail repairs are per nail).
+  const qty = Math.max(1, booking.variant_quantity ?? 1);
   const oldPrice = booking.total_price_egp;
-  const newPrice = variant.price_egp + addonPrice;
-  const newMinutes = variant.duration_minutes + addonMinutes;
+  const newPrice = variant.price_egp * qty + addonPrice;
+  const newMinutes = variant.duration_minutes * qty + addonMinutes;
   const newEnd = new Date(new Date(booking.scheduled_start).getTime() + newMinutes * 60_000);
 
   const { error } = await supabase
@@ -526,7 +537,15 @@ export async function updateService(
 
 export async function updateVariant(
   id: string,
-  fields: { name_en?: string; name_ar?: string; price_egp?: number; duration_minutes?: number; requires_inspo?: boolean; is_active?: boolean }
+  fields: {
+    name_en?: string;
+    name_ar?: string;
+    price_egp?: number;
+    duration_minutes?: number;
+    requires_inspo?: boolean;
+    is_active?: boolean;
+    max_quantity?: number;
+  }
 ) {
   const { supabase } = await requireOwner();
   if (fields.price_egp !== undefined && (!Number.isFinite(fields.price_egp) || fields.price_egp < 0)) {

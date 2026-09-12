@@ -10,6 +10,7 @@ interface Variant {
   name_en: string;
   name_ar: string;
   price_egp: number;
+  is_quantity?: boolean;
   duration_minutes: number;
   requires_inspo: boolean;
 }
@@ -109,7 +110,9 @@ export default function ServicesGrid({
                         {v.requires_inspo ? ' · inspo photo required' : ''}
                       </span>
                     </span>
-                    <span className={styles.variantPrice}>{v.price_egp} EGP</span>
+                    <span className={styles.variantPrice}>
+                      {v.price_egp} EGP{v.is_quantity ? ' each' : ''}
+                    </span>
                   </li>
                 ))}
               </ul>
