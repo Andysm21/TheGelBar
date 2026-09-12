@@ -26,7 +26,19 @@ export default function SiteHeader() {
   const base = `/${locale}`;
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    // Two thresholds on purpose. Collapsing the header makes it shorter, the
+    // page reflows upward, and scrollY drops — with a single threshold that
+    // lands you back under it, which re-expands, which reflows again: the
+    // header flickers while you scroll slowly through that one point. The gap
+    // between COLLAPSE_AT and EXPAND_AT has to be wider than the height the
+    // header loses when it collapses.
+    const COLLAPSE_AT = 90;
+    const EXPAND_AT = 20;
+
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled((was) => (was ? y > EXPAND_AT : y > COLLAPSE_AT));
+    };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
