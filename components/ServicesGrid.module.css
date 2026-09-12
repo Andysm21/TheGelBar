@@ -1,97 +1,118 @@
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1.2rem;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 3.5rem 2.5rem;
 }
 
 .card {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: 0 8px 22px rgba(217, 102, 150, 0.1);
+  background: transparent;
+  border: none;
   text-align: start;
   padding: 0;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.card:hover,
-.card:focus-visible {
-  transform: translateY(-3px);
-  box-shadow: 0 14px 30px rgba(217, 102, 150, 0.18);
+  display: block;
+  width: 100%;
 }
 
 .imgWrap {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 4 / 5;
   overflow: hidden;
+  margin-bottom: 1.3rem;
+  position: relative;
 }
 
 .imgWrap img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.7s cubic-bezier(0.22, 0.8, 0.3, 1);
 }
 
-.body {
-  padding: 1rem 1.1rem 1.2rem;
+.card:hover .imgWrap img,
+.card:focus-visible .imgWrap img {
+  transform: scale(1.07);
 }
 
-.body h3 {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text);
+/* hover veil with a "details" hint, like the reference galleries */
+.veil {
+  position: absolute;
+  inset: 0;
+  background: rgba(62, 20, 39, 0.34);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.card:hover .veil,
+.card:focus-visible .veil {
+  opacity: 1;
+}
+
+.cardEyebrow {
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.cardTitle {
+  font-size: 1.25rem;
+  color: var(--deep);
+  margin-bottom: 0.6rem;
 }
 
 .price {
-  font-family: Arial, sans-serif;
-  color: var(--deep);
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--gold);
   font-weight: 700;
-  font-size: 0.95rem;
-  margin-top: 0.4rem;
+  letter-spacing: 0.14em;
+  font-size: 0.74rem;
 }
 
+/* ---------- modal ---------- */
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(30, 10, 18, 0.45);
-  backdrop-filter: blur(2px);
+  background: rgba(30, 20, 12, 0.55);
+  backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1.25rem;
   z-index: 300;
-  animation: fadeIn 0.18s ease;
+  animation: fadeIn 0.2s ease;
 }
 
 .modal {
-  background: #fff;
-  border-radius: 22px;
-  overflow: hidden;
-  max-width: 420px;
+  background: var(--bg);
+  max-width: 460px;
   width: 100%;
-  max-height: 85vh;
+  max-height: 88vh;
   overflow-y: auto;
   position: relative;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
-  animation: popIn 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.4);
+  animation: popIn 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.15);
 }
 
 .close {
   position: absolute;
-  top: 0.7rem;
-  inset-inline-end: 0.7rem;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
+  top: 0.8rem;
+  inset-inline-end: 0.8rem;
+  width: 36px;
+  height: 36px;
   border: none;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 241, 246, 0.94);
   color: var(--deep);
   font-size: 1.3rem;
   line-height: 1;
   cursor: pointer;
   z-index: 2;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .modalImgWrap {
@@ -106,28 +127,37 @@
 }
 
 .modalBody {
-  padding: 1.4rem 1.4rem 1.6rem;
+  padding: 1.8rem;
 }
 
 .modalBody h3 {
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   color: var(--deep);
-  font-weight: 600;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.9rem;
 }
 
-.modalBody p {
-  font-size: 0.85rem;
+.modalDesc {
+  font-size: 0.88rem;
   color: var(--sub);
-  line-height: 1.7;
+  line-height: 1.85;
+}
+
+.modalMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1.3rem;
+  border-top: 1px solid var(--border);
 }
 
 .modalPrice {
-  font-family: Arial, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   color: var(--deep);
   font-weight: 700;
-  font-size: 1.1rem;
-  margin-top: 1rem;
+  letter-spacing: 0.08em;
+  font-size: 1.05rem;
 }
 
 @keyframes fadeIn {
@@ -136,6 +166,46 @@
 }
 
 @keyframes popIn {
-  from { opacity: 0; transform: scale(0.92) translateY(10px); }
+  from { opacity: 0; transform: scale(0.94) translateY(14px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.variantList {
+  list-style: none;
+  margin: 1.6rem 0;
+}
+
+.variantRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.95rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.variantName {
+  display: block;
+  font-family: var(--font-display, Georgia), serif;
+  font-size: 1.02rem;
+  color: var(--deep);
+}
+
+.variantMeta {
+  display: block;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sub);
+  margin-top: 0.3rem;
+}
+
+.variantPrice {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+  white-space: nowrap;
 }

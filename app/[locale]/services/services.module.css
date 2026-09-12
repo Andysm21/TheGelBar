@@ -1,72 +1,97 @@
-.wrap {
-  max-width: 900px;
+.page {
+  position: relative;
+}
+
+.head {
+  max-width: 640px;
   margin: 0 auto;
-  padding: 5rem 1.5rem 4rem;
+  padding: 5rem 1.5rem 3.5rem;
+  text-align: center;
 }
 
 .title {
-  font-size: 1.8rem;
-  text-align: center;
+  font-size: clamp(2.2rem, 6vw, 3.4rem);
   color: var(--deep);
-  font-weight: 600;
+  margin: 0.8rem 0 1.2rem;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1.2rem;
+.sub {
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: var(--sub);
 }
 
-.card {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: 0 8px 22px rgba(217, 102, 150, 0.1);
+.gridWrap {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 1.5rem 6rem;
 }
 
-.imgWrap {
-  aspect-ratio: 4 / 3;
-  overflow: hidden;
+/* ---- add-ons price list ---- */
+.addons {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 6rem 1.5rem;
 }
 
-.imgWrap img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.body {
-  padding: 1rem 1.1rem 1.2rem;
-}
-
-.body h3 {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.price {
-  font-family: Arial, sans-serif;
-  color: var(--deep);
-  font-weight: 700;
-  font-size: 0.95rem;
-  margin-top: 0.4rem;
-}
-
-.bookBtn {
-  display: block;
-  max-width: 320px;
-  margin: 3rem auto 0;
-  padding: 1.1rem;
+.addonsHead {
   text-align: center;
-  font-family: Arial, sans-serif;
+  margin-bottom: 3rem;
+}
+
+.addonsTitle {
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  color: var(--deep);
+  margin: 0.7rem 0 1rem;
+}
+
+.addonList {
+  list-style: none;
+}
+
+.addonRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.addonName {
+  font-family: var(--font-display, Georgia), serif;
+  font-size: 1.1rem;
+  color: var(--deep);
+}
+
+.addonDots {
+  flex: 1;
+  border-bottom: 1px dotted var(--border);
+  transform: translateY(-4px);
+}
+
+.addonPrice {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.12em;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  background: linear-gradient(120deg, var(--pink), var(--deep));
+  color: var(--gold);
+}
+
+/* ---- closing CTA ---- */
+.cta {
+  background: var(--deep);
   color: #fff;
-  border-radius: 50px;
-  box-shadow: 0 15px 32px rgba(217, 102, 150, 0.32);
+  text-align: center;
+  padding: 6rem 1.5rem;
+}
+
+.ctaEyebrow {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.ctaTitle {
+  font-size: clamp(1.9rem, 5vw, 2.8rem);
+  color: #fff;
+  margin-bottom: 2.4rem;
 }

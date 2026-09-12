@@ -89,7 +89,7 @@ export default function Calendar({ year, month, selectedDate, onSelectDate, onMo
         {cells.map((cell, i) => {
           if (cell.muted) {
             return (
-              <div key={i} style={{ aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e3d3da' }}>
+              <div key={i} style={{ aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--border)' }}>
                 {cell.day > 0 ? cell.day : ''}
               </div>
             );
@@ -100,20 +100,20 @@ export default function Calendar({ year, month, selectedDate, onSelectDate, onMo
           const isBlocked = info?.blocked;
           const clickable = ownerMode || (!isFull && !isBlocked);
 
-          let bg = '#fff';
+          let bg = 'var(--surface)';
           let color = 'var(--text)';
           let cursor = clickable ? 'pointer' : 'not-allowed';
           if (isSelected) {
             bg = 'var(--pink)';
             color = '#fff';
           } else if (isBlocked) {
-            bg = '#f3f3f3';
-            color = '#ccc';
+            bg = '#f6e2ea';
+            color = '#c294a8';
           } else if (isFull) {
-            bg = '#f3f3f3';
-            color = '#ccc';
+            bg = '#f6e2ea';
+            color = '#c294a8';
           } else if (info?.openCount !== undefined) {
-            bg = '#fff0f5';
+            bg = '#ffe5ee';
           }
 
           return (

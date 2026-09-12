@@ -1,0 +1,119 @@
+.page {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 6rem;
+}
+
+.head {
+  margin-bottom: 3rem;
+}
+
+.title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  color: var(--deep);
+  margin-top: 0.7rem;
+}
+
+.sub {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.8rem;
+  color: var(--sub);
+  margin-top: 0.8rem;
+}
+
+.empty {
+  border: 1px dashed var(--border);
+  padding: 3.5rem 2rem;
+  text-align: center;
+}
+
+.emptyTitle {
+  font-size: 1.4rem;
+  color: var(--deep);
+  margin-bottom: 0.8rem;
+}
+
+.emptyText {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.82rem;
+  color: var(--sub);
+  margin-bottom: 1.8rem;
+}
+
+.item {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 1.8rem;
+  margin-bottom: 1.2rem;
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .item {
+    grid-template-columns: 1fr auto;
+    align-items: start;
+  }
+}
+
+.itemTop {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.ref {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  color: var(--sub);
+}
+
+.service {
+  font-size: 1.35rem;
+  color: var(--deep);
+}
+
+.design {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.74rem;
+  color: var(--gold);
+  margin-top: 0.35rem;
+  letter-spacing: 0.06em;
+}
+
+.when {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.8rem;
+  color: var(--sub);
+  margin-top: 0.9rem;
+  line-height: 1.7;
+}
+
+.price {
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--deep);
+}
+
+.locked {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.7rem;
+  color: var(--sub);
+  line-height: 1.6;
+  max-width: 200px;
+}
+
+.notice {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: var(--sub);
+  border-inline-start: 2px solid var(--gold);
+  padding: 0.5rem 0.8rem;
+  background: var(--bg-alt);
+  margin-top: 0.7rem;
+}

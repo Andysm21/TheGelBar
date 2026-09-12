@@ -1,0 +1,169 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.row {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.wide {
+  width: 100%;
+}
+
+.block {
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+  padding: 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.block textarea {
+  min-height: 76px;
+  font-size: 0.82rem;
+}
+
+.error {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.78rem;
+  color: var(--danger);
+}
+
+.danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.danger:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+.linkBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: start;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.74rem;
+  color: var(--gold);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.variantPicker {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.variantBtn {
+  flex: 1;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: start;
+}
+
+.variantBtn span {
+  font-family: var(--font-display, Georgia), serif;
+  font-size: 0.98rem;
+  color: var(--deep);
+}
+
+.variantBtn em {
+  font-style: normal;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--sub);
+}
+
+.variantActive {
+  border-color: var(--gold);
+  box-shadow: inset 0 0 0 1px var(--gold);
+}
+
+.variantActive em {
+  color: var(--gold);
+}
+
+.priceCompare {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.74rem;
+  color: var(--sub);
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.newPrice {
+  font-family: var(--font-display, Georgia), serif;
+  font-size: 1.2rem;
+  color: var(--deep);
+}
+
+/* ---- close-out / payment ---- */
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 0.82rem;
+  color: var(--deep);
+  margin-bottom: 1.2rem;
+}
+
+.check input {
+  width: auto;
+  min-height: auto;
+}
+
+.amountRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.amountInput {
+  width: 140px;
+  font-size: 1.1rem;
+  text-align: end;
+}
+
+.amountSuffix {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+
+.expected {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.74rem;
+  color: var(--sub);
+  margin: 0.7rem 0 1.1rem;
+}
+
+.diff {
+  color: var(--gold);
+  font-weight: 700;
+}

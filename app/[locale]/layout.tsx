@@ -1,11 +1,19 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
+import { Playfair_Display } from 'next/font/google';
 import { locales } from '@/i18n';
 import { notFound } from 'next/navigation';
 import type { Metadata, Viewport } from 'next';
-import LangSwitch from '@/components/LangSwitch';
-import SiteNavGate from '@/components/SiteNavGate';
+import SiteChromeGate from '@/components/SiteChromeGate';
+import SiteFooter from '@/components/SiteFooter';
 import SplashLoader from '@/components/SplashLoader';
+import ScrollToTop from '@/components/ScrollToTop';
+import SessionTimeout from '@/components/SessionTimeout';
+
+// Editorial serif for headings — matches the "new-inspo" design
+// direction (thebestnailsmiami.com). Self-hosted via next/font, so no
+// external request/CSP concern.
+const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
 
 // Not using generateStaticParams here: several routes (admin/*, book,
 // dashboard) need to render dynamically anyway (auth-gated or
@@ -39,14 +47,13 @@ export default async function LocaleLayout({
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
 
   return (
-    <html lang={locale} dir={dir}>
+    <html lang={locale} dir={dir} className={playfair.variable}>
       <body>
         <NextIntlClientProvider messages={messages}>
+          <ScrollToTop />
+          <SessionTimeout />
           <SplashLoader />
-          <div style={{ position: 'fixed', top: 12, insetInlineEnd: 12, zIndex: 200 }}>
-            <LangSwitch />
-          </div>
-          <SiteNavGate>{children}</SiteNavGate>
+          <SiteChromeGate footer={<SiteFooter locale={locale} />}>{children}</SiteChromeGate>
         </NextIntlClientProvider>
       </body>
     </html>

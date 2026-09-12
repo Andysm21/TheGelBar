@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { adminSignIn } from '@/lib/supabase/actions';
 import NailLoader from '@/components/NailLoader/NailLoader';
 
@@ -11,6 +11,7 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const timedOut = useSearchParams().get('timeout') === '1';
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -47,6 +48,24 @@ export default function AdminLoginPage() {
         <p className="sans" style={{ fontSize: '.78rem', color: 'var(--sub)', marginTop: '.4rem' }}>
           Admin sign in
         </p>
+        {timedOut && (
+          <p
+            className="sans"
+            style={{
+              fontSize: '.72rem',
+              lineHeight: 1.6,
+              color: 'var(--deep)',
+              background: 'var(--bg-alt)',
+              border: '1px solid var(--border)',
+              borderInlineStart: '3px solid var(--gold)',
+              padding: '.8rem 1rem',
+              marginTop: '1.2rem',
+              textAlign: 'start',
+            }}
+          >
+            Signed out after a period of inactivity. Please sign in again.
+          </p>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="card">

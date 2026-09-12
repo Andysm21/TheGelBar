@@ -2,22 +2,37 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import Calendar, { DayAvailability } from '@/components/Calendar/Calendar';
-import { fetchMonthAvailability, fetchBookingsForDate, addAvailabilitySlot, removeAvailabilitySlot, setDayBlocked } from '@/lib/supabase/actions';
+import {
+  fetchMonthAvailability,
+  fetchBookingsForDate,
+  addAvailabilityRange,
+  removeAvailabilityRange,
+  setDayBlocked,
+  bulkAddRanges,
+} from '@/lib/supabase/actions';
+import { formatTime12h, toMinutes, totalRangeMinutes } from '@/lib/availability';
+import styles from './AdminCalendarClient.module.css';
 
-const COMMON_TIMES = ['09:00', '10:00', '11:15', '12:30', '14:30', '15:45', '17:00', '18:15'];
-
-function to12h(t: string) {
-  const [h, m] = t.split(':').map(Number);
-  const period = h >= 12 ? 'PM' : 'AM';
-  const hour = h % 12 === 0 ? 12 : h % 12;
-  return `${hour}:${String(m).padStart(2, '0')} ${period}`;
+interface Range {
+  id: string;
+  date: string;
+  start_time: string;
+  end_time: string;
 }
 
-interface DayBooking {
-  id: string;
-  status: string;
-  scheduled_start: string;
-  profiles: { name: string | null } | null;
+const PRESETS = [
+  { label: 'Morning', start: '10:00', end: '14:00' },
+  { label: 'Afternoon', start: '13:00', end: '18:00' },
+  { label: 'Evening', start: '16:00', end: '21:00' },
+  { label: 'Full day', start: '10:00', end: '20:00' },
+];
+
+function hoursLabel(mins: number) {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h && m) return `${h}h ${m}m free`;
+  if (h) return `${h}h free`;
+  return `${m}m free`;
 }
 
 export default function AdminCalendarClient() {
@@ -26,207 +41,255 @@ export default function AdminCalendarClient() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
   const [availability, setAvailability] = useState<DayAvailability[]>([]);
-  const [daySlots, setDaySlots] = useState<{ start_time: string }[]>([]);
-  const [dayBlockedFlag, setDayBlockedFlag] = useState(false);
-  const [dayBookings, setDayBookings] = useState<DayBooking[]>([]);
-  const [customTime, setCustomTime] = useState('');
-  const [actionError, setActionError] = useState('');
+  const [allRanges, setAllRanges] = useState<Range[]>([]);
+  const [blockedDates, setBlockedDates] = useState<string[]>([]);
+  const [dayBookings, setDayBookings] = useState<any[]>([]);
+
+  const [startTime, setStartTime] = useState('13:00');
+  const [endTime, setEndTime] = useState('18:00');
+  const [error, setError] = useState('');
+  const [applyWeekly, setApplyWeekly] = useState(false);
 
   function loadMonth() {
-    return fetchMonthAvailability(year, month).then(({ slots, blockedDates }) => {
-      const blockedSet = new Set(blockedDates);
-      const openCounts = new Map<string, number>();
-      for (const row of slots) openCounts.set(row.date, (openCounts.get(row.date) ?? 0) + 1);
-      const dates = new Set([...openCounts.keys(), ...blockedSet]);
-      setAvailability([...dates].map((date) => ({ date, openCount: blockedSet.has(date) ? undefined : openCounts.get(date), blocked: blockedSet.has(date) })));
-      return { slots, blockedDates };
+    return fetchMonthAvailability(year, month).then(({ ranges, blockedDates, bookings }) => {
+      setAllRanges(ranges as Range[]);
+      setBlockedDates(blockedDates as string[]);
+
+      const byDate = new Map<string, Range[]>();
+      for (const r of ranges as Range[]) {
+        const list = byDate.get(r.date) ?? [];
+        list.push(r);
+        byDate.set(r.date, list);
+      }
+      const bookedCount = new Map<string, number>();
+      for (const b of bookings as any[]) {
+        const d = new Date(b.scheduled_start);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        bookedCount.set(key, (bookedCount.get(key) ?? 0) + 1);
+      }
+
+      const blocked = new Set(blockedDates as string[]);
+      const days: DayAvailability[] = [];
+      for (const [date, list] of byDate) {
+        if (blocked.has(date)) continue;
+        days.push({ date, openCount: Math.round(totalRangeMinutes(list) / 60) });
+      }
+      for (const date of blocked) days.push({ date, blocked: true });
+      for (const [date, count] of bookedCount) {
+        if (!byDate.has(date) && !blocked.has(date)) days.push({ date, openCount: count, full: true });
+      }
+      setAvailability(days);
     });
   }
 
-  // Refreshes the currently selected day's own slot list/blocked flag —
-  // separate from loadMonth() so a mutation on the selected day shows up
-  // immediately instead of only after re-selecting the date (the
-  // reported "added a slot but nothing changed" bug).
   function loadDay(date: string) {
-    fetchMonthAvailability(year, month).then(({ slots, blockedDates }) => {
-      setDaySlots(slots.filter((r) => r.date === date).map((r) => ({ start_time: r.start_time })));
-      setDayBlockedFlag(blockedDates.includes(date));
-    });
     fetchBookingsForDate(date).then(setDayBookings);
   }
 
   useEffect(() => {
     loadMonth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [year, month]);
 
   useEffect(() => {
-    if (!selectedDate) return;
-    loadDay(selectedDate);
+    if (selectedDate) loadDay(selectedDate);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate, year, month]);
+  }, [selectedDate]);
 
-  const dayBlocked = dayBlockedFlag;
-  const openSlots = daySlots.map((s) => s.start_time.slice(0, 5));
-  const bookingsOnDay = dayBookings;
-  const bookedTimes = new Set(bookingsOnDay.map((b) => new Date(b.scheduled_start).toTimeString().slice(0, 5)));
+  const dayRanges = allRanges.filter((r) => r.date === selectedDate).sort((a, b) => a.start_time.localeCompare(b.start_time));
+  const dayBlocked = selectedDate ? blockedDates.includes(selectedDate) : false;
+  const dayFreeMinutes = totalRangeMinutes(dayRanges);
 
   function act(fn: () => Promise<void>) {
-    setActionError('');
+    setError('');
     startTransition(async () => {
       try {
         await fn();
-        loadMonth();
+        await loadMonth();
         if (selectedDate) loadDay(selectedDate);
-        // Not calling router.refresh() here on purpose: the Server
-        // Action already revalidates this page's own data via
-        // revalidatePath, and router.refresh() doesn't return a promise
-        // — if the re-render it triggers throws, nothing can catch it,
-        // which is what was crashing the whole page on "block day".
       } catch (e) {
-        setActionError(e instanceof Error ? e.message : 'Something went wrong — try again.');
+        setError(e instanceof Error ? e.message : 'Something went wrong — try again.');
       }
     });
   }
 
+  /** Same weekday, rest of the visible month. */
+  function sameWeekdayDates(from: string) {
+    const base = new Date(`${from}T00:00:00`);
+    const out: string[] = [];
+    const d = new Date(base);
+    while (d.getMonth() === month) {
+      out.push(
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      );
+      d.setDate(d.getDate() + 7);
+    }
+    return out;
+  }
+
+  function addRange() {
+    if (!selectedDate) return;
+    if (toMinutes(endTime) <= toMinutes(startTime)) {
+      setError('End time must be after the start time.');
+      return;
+    }
+    const dates = applyWeekly ? sameWeekdayDates(selectedDate) : [selectedDate];
+    act(() => (dates.length > 1 ? bulkAddRanges(dates, startTime, endTime) : addAvailabilityRange(selectedDate, startTime, endTime)));
+  }
+
   return (
-    <>
-      <Calendar
-        year={year}
-        month={month}
-        selectedDate={selectedDate}
-        onSelectDate={setSelectedDate}
-        onMonthChange={(y, m) => {
-          setYear(y);
-          setMonth(m);
-        }}
-        availability={availability}
-        ownerMode
-      />
+    <div className={styles.layout}>
+      <div>
+        <Calendar
+          year={year}
+          month={month}
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+          onMonthChange={(y, m) => {
+            setYear(y);
+            setMonth(m);
+          }}
+          availability={availability}
+          ownerMode
+        />
+        <p className={styles.legend}>
+          <span className={styles.legendOpen} /> hours free &nbsp;&nbsp;
+          <span className={styles.legendBlocked} /> blocked day
+        </p>
+      </div>
 
-      {selectedDate && (
-        <div className="card" style={{ marginTop: '1.25rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.9rem', flexWrap: 'wrap', gap: '.6rem' }}>
-            <p className="sans" style={{ fontSize: '.8rem', fontWeight: 700 }}>
-              {selectedDate}
+      <aside className={styles.panel}>
+        {!selectedDate ? (
+          <div className={styles.placeholder}>
+            <p className="eyebrow">Availability</p>
+            <h3 className={styles.placeholderTitle}>Pick a day</h3>
+            <p className={styles.placeholderText}>
+              Set the hours you're free — for example 1:00 PM to 6:00 PM. Clients then see every start time that fits
+              their service inside that window.
             </p>
-            <button
-              className="btn btn-ghost"
-              style={{ fontSize: '.68rem', padding: '.5rem .9rem' }}
-              disabled={pending}
-              onClick={() => act(() => setDayBlocked(selectedDate, !dayBlocked))}
-            >
-              {pending ? 'Saving…' : dayBlocked ? 'Unblock day' : 'Block whole day'}
-            </button>
           </div>
-
-          {actionError && (
-            <p className="sans" style={{ fontSize: '.75rem', color: 'var(--danger)', marginBottom: '.9rem' }}>
-              {actionError}
-            </p>
-          )}
-
-          {!dayBlocked && (
-            <>
-              <p className="sans" style={{ fontSize: '.68rem', textTransform: 'uppercase', color: 'var(--sub)', marginBottom: '.6rem' }}>
-                Open slots
-              </p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem', marginBottom: '1rem' }}>
-                {openSlots.length === 0 && (
-                  <span className="sans" style={{ fontSize: '.75rem', color: 'var(--sub)' }}>
-                    No slots added yet.
-                  </span>
+        ) : (
+          <>
+            <div className={styles.panelHead}>
+              <div>
+                <p className="eyebrow">Selected day</p>
+                <h3 className={styles.panelDate}>
+                  {new Date(`${selectedDate}T00:00:00`).toLocaleDateString('en-GB', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                  })}
+                </h3>
+                {!dayBlocked && dayRanges.length > 0 && (
+                  <p className={styles.freeTotal}>{hoursLabel(dayFreeMinutes)}</p>
                 )}
-                {openSlots.map((time) => {
-                  const isBooked = bookedTimes.has(time);
-                  return (
-                    <span
-                      key={time}
-                      className="sans"
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '.4rem',
-                        fontSize: '.75rem',
-                        padding: '.4rem .5rem .4rem .8rem',
-                        borderRadius: 20,
-                        border: '1px solid var(--border)',
-                        background: isBooked ? '#fff0f5' : '#fff',
-                      }}
-                    >
-                      {to12h(time)}
-                      {isBooked ? (
-                        <span style={{ color: 'var(--sub)', fontSize: '.65rem' }}>booked</span>
-                      ) : (
+              </div>
+              <button
+                className={`btn btn-sm ${dayBlocked ? '' : styles.blockBtn}`}
+                disabled={pending}
+                onClick={() => act(() => setDayBlocked(selectedDate, !dayBlocked))}
+              >
+                {pending ? 'Saving…' : dayBlocked ? 'Unblock' : 'Block day'}
+              </button>
+            </div>
+
+            {error && <p className={styles.error}>{error}</p>}
+
+            {dayBlocked ? (
+              <p className={styles.blockedNote}>
+                This whole day is blocked — no one can book it, whatever hours are set.
+              </p>
+            ) : (
+              <>
+                <p className={`eyebrow ${styles.groupLabel}`}>Free hours</p>
+                {dayRanges.length === 0 ? (
+                  <p className={styles.empty}>No hours set yet — add a window below.</p>
+                ) : (
+                  <ul className={styles.rangeList}>
+                    {dayRanges.map((r) => (
+                      <li key={r.id} className={styles.rangeRow}>
+                        <span className={styles.rangeTime}>
+                          {formatTime12h(r.start_time)} – {formatTime12h(r.end_time)}
+                        </span>
+                        <span className={styles.rangeLen}>
+                          {hoursLabel(toMinutes(r.end_time) - toMinutes(r.start_time))}
+                        </span>
                         <button
-                          onClick={() => act(() => removeAvailabilitySlot(selectedDate, time))}
-                          aria-label={`Remove ${time}`}
-                          style={{ background: 'none', border: 'none', color: 'var(--sub)', cursor: 'pointer', fontSize: '.85rem', lineHeight: 1, padding: 0 }}
+                          className={styles.removeBtn}
+                          disabled={pending}
+                          onClick={() => act(() => removeAvailabilityRange(r.id))}
+                          aria-label="Remove this window"
                         >
                           ×
                         </button>
-                      )}
-                    </span>
-                  );
-                })}
-              </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
 
-              <p className="sans" style={{ fontSize: '.68rem', textTransform: 'uppercase', color: 'var(--sub)', marginBottom: '.6rem' }}>
-                Add a slot
-              </p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem', marginBottom: '.9rem' }}>
-                {COMMON_TIMES.filter((t) => !openSlots.includes(t)).map((time) => (
-                  <button
-                    key={time}
-                    disabled={pending}
-                    onClick={() => act(() => addAvailabilitySlot(selectedDate, time))}
-                    className="sans"
-                    style={{ fontSize: '.72rem', padding: '.45rem .8rem', minHeight: 40, borderRadius: 20, border: '1px dashed var(--border)', background: '#fff', color: 'var(--deep)' }}
-                  >
-                    + {to12h(time)}
-                  </button>
-                ))}
-              </div>
+                <p className={`eyebrow ${styles.groupLabel}`}>Add a window</p>
+                <div className={styles.presets}>
+                  {PRESETS.map((p) => (
+                    <button
+                      key={p.label}
+                      className={styles.preset}
+                      onClick={() => {
+                        setStartTime(p.start);
+                        setEndTime(p.end);
+                      }}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
 
-              <div style={{ display: 'flex', gap: '.6rem' }}>
-                <input type="time" value={customTime} onChange={(e) => setCustomTime(e.target.value)} style={{ flex: 1 }} />
-                <button
-                  className="btn btn-primary btn-sm"
-                  style={{ fontSize: '.7rem', padding: '.6rem 1.1rem' }}
-                  disabled={pending || !customTime}
-                  onClick={() => {
-                    act(() => addAvailabilitySlot(selectedDate, customTime));
-                    setCustomTime('');
-                  }}
-                >
-                  Add
+                <div className={styles.timeRow}>
+                  <label className={styles.timeField}>
+                    From
+                    <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                  </label>
+                  <label className={styles.timeField}>
+                    To
+                    <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+                  </label>
+                </div>
+
+                <label className={styles.repeat}>
+                  <input type="checkbox" checked={applyWeekly} onChange={(e) => setApplyWeekly(e.target.checked)} />
+                  Repeat every week this month
+                </label>
+
+                <button className="btn btn-solid btn-block" disabled={pending} onClick={addRange}>
+                  {pending ? 'Saving…' : 'Add these hours'}
                 </button>
-              </div>
-            </>
-          )}
+              </>
+            )}
 
-          {bookingsOnDay.length > 0 && (
-            <>
-              <p className="sans" style={{ fontSize: '.68rem', textTransform: 'uppercase', color: 'var(--sub)', margin: '1.2rem 0 .6rem' }}>
-                Bookings this day
-              </p>
-              {bookingsOnDay.map((b) => (
-                <a
-                  key={b.id}
-                  href={`admin/bookings/${b.id}`}
-                  className="sans"
-                  style={{ display: 'flex', justifyContent: 'space-between', padding: '.6rem 0', borderBottom: '1px solid #f6eef1', fontSize: '.8rem' }}
-                >
-                  <span>
-                    {new Date(b.scheduled_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {b.profiles?.name}
-                  </span>
-                  <span className={`badge ${b.status === 'pending' ? 'badge-pending' : 'badge-confirmed'}`}>{b.status}</span>
-                </a>
-              ))}
-            </>
-          )}
-        </div>
-      )}
-    </>
+            <p className={`eyebrow ${styles.groupLabel}`}>Booked this day</p>
+            {dayBookings.length === 0 ? (
+              <p className={styles.empty}>Nothing booked.</p>
+            ) : (
+              <ul className={styles.bookingList}>
+                {dayBookings.map((b: any) => (
+                  <li key={b.id}>
+                    <a href={`admin/bookings/${b.id}`} className={styles.bookingRow}>
+                      <span className={styles.bookingTime}>
+                        {new Date(b.scheduled_start).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                        {' – '}
+                        {new Date(b.scheduled_end).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      <span className={styles.bookingName}>{b.profiles?.name ?? 'Client'}</span>
+                      <span className={`badge badge-${b.status === 'pending' ? 'pending' : 'confirmed'}`}>{b.status}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+      </aside>
+    </div>
   );
 }

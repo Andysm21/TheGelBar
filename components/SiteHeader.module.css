@@ -1,0 +1,253 @@
+/* ---- header ---- */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 55;
+  background: rgba(255, 241, 246, 0.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid transparent;
+  transition: padding 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+  padding: 1.5rem 0;
+}
+
+.scrolled {
+  padding: 0.7rem 0;
+  border-bottom-color: var(--border);
+}
+
+.inner {
+  /* wider than the page shell: the bar carries nav on both sides plus the
+     greeting, language pill and CTA, which do not fit inside --maxw on a
+     laptop without colliding with the centred wordmark. */
+  max-width: 1600px;
+  margin: 0 auto;
+  padding-inline: 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1.5rem;
+  position: relative;
+}
+
+.wordmark {
+  grid-column: 2;
+  text-align: center;
+  font-family: var(--font-display, Georgia), serif;
+  font-size: 1.5rem;
+  letter-spacing: 0.06em;
+  color: var(--deep);
+  line-height: 1.1;
+  white-space: nowrap;
+  transition: font-size 0.3s ease;
+}
+
+@media (max-width: 480px) {
+  .wordmark {
+    font-size: 1.15rem;
+  }
+}
+
+/* between the desktop switch-on and full width there is less room around
+   the centre, so the wordmark steps down rather than crowding the nav. */
+@media (min-width: 1080px) and (max-width: 1279px) {
+  .wordmark {
+    font-size: 1.28rem;
+  }
+}
+
+.scrolled .wordmark {
+  font-size: 1.2rem;
+}
+
+.wordmarkSub {
+  display: block;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.52rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--sub);
+  margin-top: 0.3rem;
+}
+
+.scrolled .wordmarkSub {
+  display: none;
+}
+
+.navSide {
+  display: none;
+  gap: 1.1rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+@media (min-width: 1280px) {
+  .navSide {
+    gap: 1.8rem;
+  }
+}
+
+.navLeft {
+  grid-column: 1;
+  justify-content: flex-start;
+}
+
+.right {
+  grid-column: 3;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  min-width: 0;
+}
+
+@media (min-width: 1280px) {
+  .right {
+    gap: 1.6rem;
+  }
+}
+
+.navLink {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--sub);
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding-bottom: 3px;
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.navLink:hover {
+  color: var(--deep);
+}
+
+.active {
+  color: var(--deep);
+  border-bottom-color: var(--gold);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-shrink: 0;
+}
+
+.actions > * {
+  flex-shrink: 0;
+}
+
+/* On mobile the greeting and log out live in the drawer instead, so
+   nothing overflows the bar. */
+.actions > *:first-child {
+  display: none;
+}
+
+@media (min-width: 1080px) {
+  .actions > *:first-child {
+    display: flex;
+  }
+}
+
+@media (min-width: 1280px) {
+  .actions {
+    gap: 0.8rem;
+  }
+}
+
+.bookBtn {
+  display: none;
+}
+
+/* ---- mobile burger ---- */
+.burger {
+  grid-column: 1;
+  justify-self: start;
+  width: 40px;
+  height: 34px;
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.burger span {
+  width: 22px;
+  height: 1.5px;
+  background: var(--deep);
+}
+
+/* ---- mobile drawer ---- */
+.drawer {
+  position: fixed;
+  top: 0;
+  inset-inline-start: 0;
+  width: min(78vw, 320px);
+  height: 100dvh;
+  background: var(--bg);
+  border-inline-end: 1px solid var(--border);
+  z-index: 120;
+  padding: 5rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transform: translateX(-105%);
+  transition: transform 0.32s cubic-bezier(0.22, 0.8, 0.3, 1);
+}
+
+[dir='rtl'] .drawer {
+  transform: translateX(105%);
+}
+
+.drawerOpen {
+  transform: translateX(0) !important;
+}
+
+.drawerLink {
+  font-family: var(--font-display, Georgia), serif;
+  font-size: 1.5rem;
+  color: var(--deep);
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.drawerCta {
+  margin-top: 1.5rem;
+}
+
+.drawerSmall {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.66rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--sub);
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(62, 20, 39, 0.45);
+  z-index: 110;
+}
+
+@media (min-width: 1080px) {
+  .burger,
+  .drawer,
+  .backdrop {
+    display: none;
+  }
+  .navSide {
+    display: flex;
+  }
+  .bookBtn {
+    display: inline-flex;
+  }
+}

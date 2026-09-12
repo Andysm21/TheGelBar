@@ -1,164 +1,268 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { setBookingStatus, markBookingPaid, ownerReschedule } from '@/lib/supabase/actions';
+import {
+  setBookingStatus,
+  ownerCancelBooking,
+  ownerReschedule,
+  changeBookingVariant,
+  markBookingPaid,
+} from '@/lib/supabase/actions';
+import RescheduleModal from './RescheduleModal';
+import NailLoader from './NailLoader/NailLoader';
+import styles from './BookingDetailActions.module.css';
 
-interface Props {
-  bookingId: string;
-  status: string;
-  hasService: boolean;
-  hasDesign: boolean;
-  serviceLabel: string;
-  designLabel: string | null;
-  servicePriceEgp: number;
-  designPriceEgp: number;
-  isFree: boolean;
-  nextPoints: number;
+interface Variant {
+  id: string;
+  name_en: string;
+  kind: string;
+  price_egp: number;
+  duration_minutes: number;
 }
 
 export default function BookingDetailActions({
   bookingId,
   status,
-  hasService,
-  hasDesign,
-  serviceLabel,
-  designLabel,
-  servicePriceEgp,
-  designPriceEgp,
-  isFree,
-  nextPoints,
-}: Props) {
-  const router = useRouter();
+  currentVariantId,
+  currentVariantName,
+  currentPrice,
+  addonTotal,
+  variants,
+  durationMinutes,
+  currentLabel,
+  expectedTotal,
+}: {
+  bookingId: string;
+  status: string;
+  currentVariantId: string;
+  currentVariantName: string;
+  currentPrice: number;
+  addonTotal: number;
+  variants: Variant[];
+  durationMinutes: number;
+  currentLabel: string;
+  /** What the system says is owed — the starting point for the amount box. */
+  expectedTotal: number;
+}) {
   const [pending, startTransition] = useTransition();
-  const [serviceDone, setServiceDone] = useState(true);
-  const [designDone, setDesignDone] = useState(hasDesign);
   const [error, setError] = useState('');
-  const [rescheduleOpen, setRescheduleOpen] = useState(false);
-  const [newDate, setNewDate] = useState('');
-  const [newTime, setNewTime] = useState('');
+  const [showReschedule, setShowReschedule] = useState(false);
+  const [declineMode, setDeclineMode] = useState(false);
+  const [reason, setReason] = useState('');
 
-  const originalPrice = (serviceDone ? servicePriceEgp : 0) + (designDone && hasDesign ? designPriceEgp : 0);
-  const finalPrice = isFree ? 0 : originalPrice;
+  const [payMode, setPayMode] = useState(false);
+  const [wasCompleted, setWasCompleted] = useState(true);
+  const [amountPaid, setAmountPaid] = useState(String(expectedTotal));
+  const [paymentNote, setPaymentNote] = useState('');
 
-  function act(fn: () => Promise<void>) {
+  const [tierMode, setTierMode] = useState(false);
+  const [newVariantId, setNewVariantId] = useState(currentVariantId);
+  const [note, setNote] = useState('');
+
+  const newVariant = variants.find((v) => v.id === newVariantId);
+  const newTotal = (newVariant?.price_egp ?? 0) + addonTotal;
+
+  // Only ask for a reason when the money actually differs from the quote.
+  const paidNumber = Number(amountPaid);
+  const differs = Number.isFinite(paidNumber) && paidNumber !== expectedTotal;
+  const diffAmount = Math.abs(paidNumber - expectedTotal);
+  const diffLabel = paidNumber < expectedTotal ? `${diffAmount} EGP less` : `${diffAmount} EGP more`;
+
+  function run(fn: () => Promise<void>, after?: () => void) {
     setError('');
     startTransition(async () => {
       try {
         await fn();
-        router.refresh();
+        after?.();
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Something went wrong.');
       }
     });
   }
 
-  if (status === 'pending') {
-    return (
-      <div className="card">
-        {error && (
-          <p className="sans" style={{ fontSize: '.75rem', color: 'var(--danger)', marginBottom: '.8rem' }}>
-            {error}
-          </p>
-        )}
-        <div style={{ display: 'flex', gap: '.7rem' }}>
-          <button className="btn btn-primary" style={{ flex: 1 }} disabled={pending} onClick={() => act(() => setBookingStatus(bookingId, 'confirmed'))}>
-            ✓ Approve booking
+  return (
+    <div className={styles.wrap}>
+      {error && <p className={styles.error}>{error}</p>}
+
+      {/* ---- primary status actions ---- */}
+      {status === 'pending' && !declineMode && (
+        <div className={styles.row}>
+          <button className="btn btn-solid" disabled={pending} onClick={() => run(() => setBookingStatus(bookingId, 'confirmed'))}>
+            {pending && <NailLoader size="mini" />}
+            Confirm booking
           </button>
-          <button className="btn btn-ghost" style={{ flex: 1, color: 'var(--danger)' }} disabled={pending} onClick={() => act(() => setBookingStatus(bookingId, 'declined'))}>
-            ✕ Decline
+          <button className="btn btn-ghost" disabled={pending} onClick={() => setDeclineMode(true)}>
+            Decline
           </button>
         </div>
-      </div>
-    );
-  }
+      )}
 
-  if (status === 'confirmed') {
-    return (
-      <div className="card">
-        <p className="sans" style={{ fontSize: '.72rem', color: 'var(--sub)', marginBottom: '.9rem' }}>
-          Confirm what was actually done — price recalculates automatically.
-        </p>
+      {declineMode && (
+        <div className={styles.block}>
+          <label>Reason (included in the email)</label>
+          <textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Fully booked that day…" />
+          <div className={styles.row}>
+            <button
+              className={`btn ${styles.danger}`}
+              disabled={pending}
+              onClick={() => run(() => setBookingStatus(bookingId, 'declined', reason), () => setDeclineMode(false))}
+            >
+              {pending ? 'Sending…' : 'Decline & email client'}
+            </button>
+            <button className="btn btn-ghost" onClick={() => setDeclineMode(false)}>
+              Back
+            </button>
+          </div>
+        </div>
+      )}
 
-        <label style={{ display: 'flex', alignItems: 'center', gap: '.7rem', padding: '.6rem 0', borderBottom: '1px solid #f6eef1' }}>
-          <input type="checkbox" checked={serviceDone} onChange={(e) => setServiceDone(e.target.checked)} />
-          <span style={{ flex: 1 }}>{serviceLabel}</span>
-          <span className="sans" style={{ color: 'var(--sub)' }}>{servicePriceEgp} EGP</span>
-        </label>
-        {hasDesign && designLabel && (
-          <label style={{ display: 'flex', alignItems: 'center', gap: '.7rem', padding: '.6rem 0', borderBottom: '1px solid #f6eef1' }}>
-            <input type="checkbox" checked={designDone} onChange={(e) => setDesignDone(e.target.checked)} />
-            <span style={{ flex: 1 }}>{designLabel}</span>
-            <span className="sans" style={{ color: 'var(--sub)' }}>{designPriceEgp} EGP</span>
+      {status === 'confirmed' && !payMode && (
+        <div className={styles.row}>
+          <button className="btn btn-solid" disabled={pending} onClick={() => setPayMode(true)}>
+            Mark done &amp; paid
+          </button>
+          <button className="btn btn-ghost" disabled={pending} onClick={() => setShowReschedule(true)}>
+            Reschedule
+          </button>
+          <button className={`btn ${styles.danger}`} disabled={pending} onClick={() => run(() => ownerCancelBooking(bookingId))}>
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {payMode && (
+        <div className={styles.block}>
+          <p className="eyebrow" style={{ display: 'block', marginBottom: '.8rem' }}>
+            Close this appointment
+          </p>
+
+          <label className={styles.check}>
+            <input type="checkbox" checked={wasCompleted} onChange={(e) => setWasCompleted(e.target.checked)} />
+            The service was carried out
           </label>
-        )}
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.2rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
-          <span className="sans" style={{ fontWeight: 700 }}>Final price</span>
-          <span style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--deep)' }}>
-            {isFree ? (
-              <>
-                <span style={{ textDecoration: 'line-through', color: 'var(--sub)', fontSize: '.9rem', marginInlineEnd: '.5rem' }}>{originalPrice} EGP</span>
-                0 EGP
-              </>
-            ) : (
-              `${finalPrice} EGP`
-            )}
-          </span>
-        </div>
+          <label>Amount collected</label>
+          <div className={styles.amountRow}>
+            <input
+              type="number"
+              min={0}
+              inputMode="numeric"
+              value={amountPaid}
+              onChange={(e) => setAmountPaid(e.target.value)}
+              className={styles.amountInput}
+            />
+            <span className={styles.amountSuffix}>EGP</span>
+          </div>
 
-        {error && (
-          <p className="sans" style={{ fontSize: '.75rem', color: 'var(--danger)', marginTop: '.8rem' }}>
-            {error}
+          <p className={styles.expected}>
+            System price: <strong>{expectedTotal} EGP</strong>
+            {differs && <span className={styles.diff}> · {diffLabel}</span>}
           </p>
-        )}
 
-        <button
-          className="btn btn-primary btn-block"
-          style={{ marginTop: '1.2rem' }}
-          disabled={pending}
-          onClick={() => act(() => markBookingPaid(bookingId, serviceDone, designDone))}
-        >
-          Mark as Paid — Done
+          {differs && (
+            <>
+              <label>Reason for the difference</label>
+              <textarea
+                value={paymentNote}
+                onChange={(e) => setPaymentNote(e.target.value)}
+                placeholder="Gave a 100 EGP discount — she waited while I finished the previous client."
+              />
+            </>
+          )}
+
+          <div className={styles.row}>
+            <button
+              className="btn btn-solid"
+              disabled={pending || (differs && !paymentNote.trim())}
+              onClick={() =>
+                run(
+                  () => markBookingPaid(bookingId, { wasCompleted, amountPaid: Number(amountPaid), paymentNote }),
+                  () => setPayMode(false)
+                )
+              }
+            >
+              {pending && <NailLoader size="mini" />}
+              {pending ? 'Saving…' : 'Save & close'}
+            </button>
+            <button className="btn btn-ghost" onClick={() => setPayMode(false)}>
+              Back
+            </button>
+          </div>
+        </div>
+      )}
+
+      {status === 'pending' && !declineMode && (
+        <button className={`btn btn-ghost ${styles.wide}`} disabled={pending} onClick={() => setShowReschedule(true)}>
+          Propose a different time
         </button>
+      )}
 
-        <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
-          {!rescheduleOpen ? (
-            <button className="sans" style={{ fontSize: '.78rem', color: 'var(--deep)', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => setRescheduleOpen(true)}>
-              Can't make this slot? Propose a reschedule
+      {/* ---- design tier correction ---- */}
+      {['pending', 'confirmed'].includes(status) && (
+        <div className={styles.block}>
+          {!tierMode ? (
+            <button className={styles.linkBtn} onClick={() => setTierMode(true)}>
+              Design isn't {currentVariantName.toLowerCase()}? Adjust it &amp; email the new price →
             </button>
           ) : (
-            <div>
-              <div style={{ display: 'flex', gap: '.6rem', marginBottom: '.8rem' }}>
-                <input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} style={{ flex: 1 }} />
-                <input type="text" placeholder="e.g. 16:00" value={newTime} onChange={(e) => setNewTime(e.target.value)} style={{ flex: 1 }} />
+            <>
+              <p className="eyebrow" style={{ display: 'block', marginBottom: '.8rem' }}>
+                Reclassify design
+              </p>
+              <div className={styles.variantPicker}>
+                {variants.map((v) => (
+                  <button
+                    key={v.id}
+                    className={`${styles.variantBtn} ${newVariantId === v.id ? styles.variantActive : ''}`}
+                    onClick={() => setNewVariantId(v.id)}
+                  >
+                    <span>{v.name_en}</span>
+                    <em>{v.price_egp} EGP</em>
+                  </button>
+                ))}
               </div>
-              <button
-                className="btn btn-ghost btn-block"
-                disabled={pending || !newDate || !newTime}
-                onClick={() => act(() => ownerReschedule(bookingId, newDate, newTime))}
-              >
-                Send new time to client
-              </button>
-            </div>
+
+              <label>Message to the client</label>
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Your reference photos need more detailed hand-painting, so this is a complex design."
+              />
+
+              <div className={styles.priceCompare}>
+                <span>
+                  Was <s>{currentPrice} EGP</s>
+                </span>
+                <span className={styles.newPrice}>New total {newTotal} EGP</span>
+              </div>
+
+              <div className={styles.row}>
+                <button
+                  className="btn btn-solid"
+                  disabled={pending || newVariantId === currentVariantId}
+                  onClick={() => run(() => changeBookingVariant(bookingId, newVariantId, note), () => setTierMode(false))}
+                >
+                  {pending ? 'Sending…' : 'Update & email client'}
+                </button>
+                <button className="btn btn-ghost" onClick={() => setTierMode(false)}>
+                  Cancel
+                </button>
+              </div>
+            </>
           )}
         </div>
-      </div>
-    );
-  }
+      )}
 
-  if (status === 'done') {
-    return (
-      <div className="sans" style={{ textAlign: 'center', color: 'var(--success)', fontWeight: 700, padding: '1rem' }}>
-        ✓ Paid &amp; done — loyalty now at {nextPoints} pt{nextPoints === 1 ? '' : 's'}
-        {isFree ? ' (reset after free session)' : ''}
-      </div>
-    );
-  }
-
-  return (
-    <div className="sans" style={{ color: 'var(--sub)', fontSize: '.85rem', padding: '1rem' }}>
-      Status: {status}
+      {showReschedule && (
+        <RescheduleModal
+          bookingId={bookingId}
+          durationMinutes={durationMinutes}
+          currentLabel={currentLabel}
+          title="Move this appointment"
+          onClose={() => setShowReschedule(false)}
+          onConfirm={(date, time) => ownerReschedule(bookingId, date, time)}
+        />
+      )}
     </div>
   );
 }

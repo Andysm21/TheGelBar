@@ -7,5 +7,10 @@ export default async function BookPage({ params }: { params: Promise<{ locale: s
   const session = await getSessionProfile();
   if (!session) redirect(`/${locale}/login?next=/book`);
 
+  // The owner runs the calendar; she can't also take a slot on it. The
+  // server action refuses too — this just avoids showing a wizard that
+  // could never submit.
+  if (session.profile.role === 'owner') redirect(`/${locale}/admin/calendar`);
+
   return <BookWizard locale={locale} />;
 }

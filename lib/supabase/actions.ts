@@ -4,25 +4,77 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { headers } from 'next/headers';
 import { createClient } from './server';
 import { isFreeLoyaltySession, nextLoyaltyPoints } from '../services-catalog';
-import { getMonthAvailability, getOpenTimesForDate, getBookingsForDate, getAppSettings, getServiceCatalog, getDesignOptions } from './cached-queries';
+import {
+  getMonthAvailability,
+  getBookingsForDate,
+  getAppSettings,
+  getServiceCatalog,
+  getAddons,
+  getBookingById,
+} from './cached-queries';
 import { rateLimit } from '../rate-limit';
+import { computeOpenStarts, toMinutes } from '../availability';
+import { sendEmail, ownerAddress } from '../email/send';
+import {
+  notifyBookingRequested,
+  notifyBookingConfirmed,
+  notifyBookingDeclined,
+  notifyBookingCancelled,
+  notifyBookingRescheduled,
+  notifyTierChanged,
+} from '../email/notify';
 
 async function clientIp() {
   const h = await headers();
   return h.get('x-forwarded-for')?.split(',')[0].trim() ?? h.get('x-real-ip') ?? 'unknown';
 }
 
+async function requireUser() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not signed in.');
+  return { supabase, user };
+}
+
 /**
- * Admin sign-in, server-side, so it can be rate-limited. Supabase's own
- * auth endpoint has its own IP throttling too, but this adds a second,
- * app-level layer that also covers the "not an owner account" check.
+ * A booking always belongs to a client. The owner runs the calendar, so
+ * letting her book against her own availability would silently consume a
+ * slot and generate confirmation email to herself — refuse it here, in
+ * the one place every booking path goes through.
  */
+async function requireClient() {
+  const { supabase, user } = await requireUser();
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  if (profile?.role === 'owner') {
+    throw new Error('The salon account manages the calendar and cannot make bookings. Use a client account to book.');
+  }
+  return { supabase, user };
+}
+
+async function requireOwner() {
+  const { supabase, user } = await requireUser();
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  if (profile?.role !== 'owner') throw new Error('Not an admin account.');
+  return { supabase, user };
+}
+
+function revalidateBookingViews() {
+  revalidatePath('/[locale]/admin/bookings', 'page');
+  revalidatePath('/[locale]/admin/bookings/[id]', 'page');
+  revalidatePath('/[locale]/admin/dashboard', 'page');
+  revalidatePath('/[locale]/admin/calendar', 'page');
+  revalidatePath('/[locale]/bookings', 'page');
+  revalidatePath('/[locale]/dashboard', 'page');
+}
+
+/* ================= auth ================= */
+
 export async function adminSignIn(email: string, password: string) {
   const ip = await clientIp();
   const limit = rateLimit(`admin-login:${ip}`, 8, 10 * 60 * 1000);
-  if (!limit.ok) {
-    throw new Error(`Too many attempts. Try again in ${Math.ceil(limit.retryAfterSeconds / 60)} min.`);
-  }
+  if (!limit.ok) throw new Error(`Too many attempts. Try again in ${Math.ceil(limit.retryAfterSeconds / 60)} min.`);
 
   const supabase = await createClient();
   const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
@@ -36,18 +88,20 @@ export async function adminSignIn(email: string, password: string) {
   return { ok: true };
 }
 
-// ---------- Read passthroughs ----------
-// Client components (the booking wizard) can't import cached-queries.ts
-// directly — it pulls in next/headers, which is server-only. Server
-// Actions are callable from client components though, so these thin
-// wrappers are the bridge.
+export async function signOut() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+}
+
+/* ================= read passthroughs (client components) ================= */
+
+export async function fetchCatalog() {
+  const [services, addons, settings] = await Promise.all([getServiceCatalog(), getAddons(), getAppSettings()]);
+  return { services, addons, settings };
+}
 
 export async function fetchMonthAvailability(year: number, month: number) {
   return getMonthAvailability(year, month);
-}
-
-export async function fetchOpenTimesForDate(date: string) {
-  return getOpenTimesForDate(date);
 }
 
 export async function fetchBookingsForDate(date: string) {
@@ -55,281 +109,398 @@ export async function fetchBookingsForDate(date: string) {
   return getBookingsForDate(date);
 }
 
-export async function fetchServiceCatalog() {
-  return getServiceCatalog();
-}
-
-export async function fetchDesignOptions() {
-  return getDesignOptions();
-}
-
-async function requireUser() {
+/**
+ * Bookable start times for one day and one duration — the single source
+ * of truth used by the client booking flow AND both reschedule flows.
+ */
+export async function fetchOpenStarts(date: string, durationMinutes: number, excludeBookingId?: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not signed in.');
-  return { supabase, user };
+  const settings = await getAppSettings();
+
+  const [ranges, blocked, bookings] = await Promise.all([
+    supabase.from('availability_ranges').select('start_time, end_time').eq('date', date),
+    supabase.from('blocked_days').select('date').eq('date', date),
+    supabase
+      .from('bookings')
+      .select('id, scheduled_start, scheduled_end')
+      .gte('scheduled_start', `${date}T00:00:00`)
+      .lt('scheduled_start', `${date}T23:59:59`)
+      .in('status', ['pending', 'confirmed', 'needs_reschedule']),
+  ]);
+
+  if (blocked.data && blocked.data.length > 0) return [];
+  if (!ranges.data || ranges.data.length === 0) return [];
+
+  const busy = (bookings.data ?? [])
+    .filter((b: any) => b.id !== excludeBookingId)
+    .map((b: any) => {
+      const s = new Date(b.scheduled_start);
+      const e = new Date(b.scheduled_end);
+      return { startMin: s.getHours() * 60 + s.getMinutes(), endMin: e.getHours() * 60 + e.getMinutes() };
+    });
+
+  // Don't offer times already past for today.
+  const today = new Date().toISOString().slice(0, 10);
+  const minStart = date === today ? new Date().getHours() * 60 + new Date().getMinutes() : 0;
+
+  return computeOpenStarts(ranges.data, busy, durationMinutes, settings.slot_step_minutes ?? 30, minStart);
 }
 
-async function requireOwner() {
-  const { supabase, user } = await requireUser();
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-  if (profile?.role !== 'owner') throw new Error('Not an admin account.');
-  return { supabase, user };
-}
+/* ================= client booking ================= */
 
-// ---------- Client actions ----------
-
-export async function createBooking(input: {
+export interface CreateBookingInput {
   serviceId: string;
-  designId: string | null;
+  variantId: string;
+  /** Only meaningful for per-unit options like nail repairs. */
+  quantity?: number;
+  /** Legacy extras. Nothing sends these any more — add-ons are a service now. */
+  addons?: { addonId: string; quantity: number }[];
   date: string; // YYYY-MM-DD
   time: string; // HH:mm
   healthNotes: string;
-}) {
-  const { supabase, user } = await requireUser();
+  inspoPaths: string[];
+}
 
-  const limit = rateLimit(`create-booking:${user.id}`, 5, 10 * 60 * 1000);
-  if (!limit.ok) {
-    throw new Error(`Too many booking attempts. Try again in ${Math.ceil(limit.retryAfterSeconds / 60)} min.`);
-  }
+export async function createBooking(input: CreateBookingInput) {
+  const { supabase, user } = await requireClient();
 
-  const { data: existing, error: existingError } = await supabase
+  const limit = rateLimit(`create-booking:${user.id}`, 6, 10 * 60 * 1000);
+  if (!limit.ok) throw new Error(`Too many booking attempts. Try again in ${Math.ceil(limit.retryAfterSeconds / 60)} min.`);
+
+  const { data: existing } = await supabase
     .from('bookings')
     .select('id')
     .eq('client_id', user.id)
     .in('status', ['pending', 'confirmed', 'needs_reschedule'])
     .limit(1);
-  if (existingError) throw existingError;
   if (existing && existing.length > 0) {
     throw new Error('You already have an active booking. Cancel or finish it before booking another slot.');
   }
 
-  const { data: service, error: serviceError } = await supabase
-    .from('services')
-    .select('base_price_egp, base_minutes')
-    .eq('id', input.serviceId)
+  // Price and duration always come from the DB, never from the client.
+  const { data: variant, error: variantError } = await supabase
+    .from('service_variants')
+    .select('id, service_id, name_en, price_egp, duration_minutes, requires_inspo, is_quantity, max_quantity')
+    .eq('id', input.variantId)
     .single();
-  if (serviceError || !service) throw new Error('Unknown service.');
+  if (variantError || !variant) throw new Error('That service option is no longer available.');
+  if (variant.service_id !== input.serviceId) throw new Error('Service and option do not match.');
 
-  let designPriceEgp = 0;
-  if (input.designId) {
-    const { data: design, error: designError } = await supabase
-      .from('design_options')
-      .select('price_egp')
-      .eq('id', input.designId)
-      .single();
-    if (designError || !design) throw new Error('Unknown design option.');
-    designPriceEgp = design.price_egp;
+  if (variant.requires_inspo && input.inspoPaths.length === 0) {
+    throw new Error('Please upload at least one inspiration photo for this design.');
   }
 
-  const { data: blockedRows, error: blockedError } = await supabase.from('blocked_days').select('date').eq('date', input.date);
-  if (blockedError) throw blockedError;
-  if (blockedRows && blockedRows.length > 0) throw new Error('That day is not available.');
+  // Per-unit options (nail repairs) multiply out; everything else is one.
+  const quantity = variant.is_quantity
+    ? Math.min(Math.max(1, Math.round(input.quantity ?? 1)), variant.max_quantity)
+    : 1;
+
+  let totalPrice = variant.price_egp * quantity;
+  let totalMinutes = variant.duration_minutes * quantity;
+  const addonRows: { addon_id: string; quantity: number; unit_price_egp: number; unit_duration_minutes: number }[] = [];
+
+  if (input.addons && input.addons.length > 0) {
+    const { data: addonDefs, error: addonError } = await supabase
+      .from('addons')
+      .select('id, price_egp, duration_minutes, is_quantity, max_quantity')
+      .in(
+        'id',
+        input.addons.map((a) => a.addonId)
+      );
+    if (addonError) throw addonError;
+
+    for (const picked of input.addons) {
+      const def = (addonDefs ?? []).find((d: any) => d.id === picked.addonId);
+      if (!def) continue;
+      const qty = def.is_quantity ? Math.min(Math.max(1, picked.quantity), def.max_quantity) : 1;
+      totalPrice += def.price_egp * qty;
+      totalMinutes += def.duration_minutes * qty;
+      addonRows.push({
+        addon_id: def.id,
+        quantity: qty,
+        unit_price_egp: def.price_egp,
+        unit_duration_minutes: def.duration_minutes,
+      });
+    }
+  }
+
+  // Re-check the slot server-side so two people can't grab the same time.
+  const open = await fetchOpenStarts(input.date, totalMinutes);
+  if (!open.includes(input.time)) {
+    throw new Error('That time was just taken. Please pick another slot.');
+  }
 
   const start = new Date(`${input.date}T${input.time}:00`);
-  const end = new Date(start.getTime() + service.base_minutes * 60_000);
-  const totalPriceEgp = service.base_price_egp + designPriceEgp;
+  const end = new Date(start.getTime() + totalMinutes * 60_000);
 
-  const { data, error } = await supabase
+  const { data: booking, error } = await supabase
     .from('bookings')
     .insert({
       client_id: user.id,
       service_id: input.serviceId,
-      design_id: input.designId,
+      variant_id: variant.id,
+      variant_quantity: quantity,
       status: 'pending',
       scheduled_start: start.toISOString(),
       scheduled_end: end.toISOString(),
-      total_price_egp: totalPriceEgp,
+      total_price_egp: totalPrice,
+      total_minutes: totalMinutes,
       health_notes: input.healthNotes,
     })
     .select('id')
     .single();
-
   if (error) throw error;
 
-  // TODO(deferred, see plan doc): generate .ics + tentative Google
-  // Calendar event here once email/calendar sync is built.
-  revalidatePath('/[locale]/admin/bookings', 'page');
-  revalidatePath('/[locale]/admin/dashboard', 'page');
-  return data;
+  if (addonRows.length > 0) {
+    const { error: addonInsertError } = await supabase
+      .from('booking_addons')
+      .insert(addonRows.map((r) => ({ ...r, booking_id: booking.id })));
+    if (addonInsertError) throw addonInsertError;
+  }
+
+  if (input.inspoPaths.length > 0) {
+    const { error: imgError } = await supabase
+      .from('booking_images')
+      .insert(input.inspoPaths.map((p) => ({ booking_id: booking.id, storage_path: p })));
+    if (imgError) throw imgError;
+  }
+
+  const settings = await getAppSettings();
+  const full = await getBookingById(booking.id);
+  await notifyBookingRequested(full, settings.owner_email);
+
+  revalidateBookingViews();
+  return booking;
 }
 
 export async function cancelBooking(bookingId: string) {
-  const { supabase, user } = await requireUser();
-  const { data: booking, error: fetchError } = await supabase
-    .from('bookings')
-    .select('scheduled_start, client_id')
-    .eq('id', bookingId)
-    .single();
-  if (fetchError) throw fetchError;
+  const { supabase, user } = await requireClient();
+  const booking = await getBookingById(bookingId);
   if (booking.client_id !== user.id) throw new Error('Not your booking.');
 
-  const hoursUntil = (new Date(booking.scheduled_start).getTime() - Date.now()) / (1000 * 60 * 60);
-  if (hoursUntil <= 24) throw new Error('Too close to the appointment to cancel — contact the salon directly.');
+  const hoursUntil = (new Date(booking.scheduled_start).getTime() - Date.now()) / 3_600_000;
+  if (hoursUntil <= 24) throw new Error('Too close to the appointment to cancel — contact the studio directly.');
 
   const { error } = await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', bookingId);
   if (error) throw error;
-  revalidatePath('/[locale]/bookings', 'page');
+
+  const settings = await getAppSettings();
+  await notifyBookingCancelled(booking, settings.owner_email, 'client');
+  revalidateBookingViews();
 }
 
 export async function requestReschedule(bookingId: string, newDate: string, newTime: string) {
-  const { supabase, user } = await requireUser();
-  const { data: booking, error: fetchError } = await supabase
-    .from('bookings')
-    .select('scheduled_start, scheduled_end, client_id, service_id')
-    .eq('id', bookingId)
-    .single();
-  if (fetchError) throw fetchError;
+  const { supabase, user } = await requireClient();
+  const booking = await getBookingById(bookingId);
   if (booking.client_id !== user.id) throw new Error('Not your booking.');
 
-  const hoursUntil = (new Date(booking.scheduled_start).getTime() - Date.now()) / (1000 * 60 * 60);
-  if (hoursUntil <= 24) throw new Error('Too close to the appointment to reschedule yourself — contact the salon directly.');
+  const hoursUntil = (new Date(booking.scheduled_start).getTime() - Date.now()) / 3_600_000;
+  if (hoursUntil <= 24) throw new Error('Too close to the appointment to reschedule yourself — contact the studio.');
 
-  const durationMs = new Date(booking.scheduled_end).getTime() - new Date(booking.scheduled_start).getTime();
+  const open = await fetchOpenStarts(newDate, booking.total_minutes, bookingId);
+  if (!open.includes(newTime)) throw new Error('That time is no longer available. Pick another slot.');
+
   const newStart = new Date(`${newDate}T${newTime}:00`);
-  const newEnd = new Date(newStart.getTime() + durationMs);
+  const newEnd = new Date(newStart.getTime() + booking.total_minutes * 60_000);
 
   const { error } = await supabase
     .from('bookings')
     .update({ scheduled_start: newStart.toISOString(), scheduled_end: newEnd.toISOString(), status: 'pending' })
     .eq('id', bookingId);
   if (error) throw error;
-  revalidatePath('/[locale]/bookings', 'page');
+
+  const settings = await getAppSettings();
+  await notifyBookingRescheduled(await getBookingById(bookingId), settings.owner_email, 'client');
+  revalidateBookingViews();
 }
 
-// ---------- Owner actions ----------
+/* ================= owner: bookings ================= */
 
-export async function setBookingStatus(bookingId: string, status: 'confirmed' | 'declined' | 'needs_reschedule') {
-  await requireOwner();
-  const supabase = await createClient();
+export async function setBookingStatus(
+  bookingId: string,
+  status: 'confirmed' | 'declined' | 'needs_reschedule',
+  reason?: string
+) {
+  const { supabase } = await requireOwner();
   const { error } = await supabase.from('bookings').update({ status }).eq('id', bookingId);
   if (error) throw error;
-  revalidatePath('/[locale]/admin/bookings', 'page');
-  revalidatePath('/[locale]/admin/bookings/[id]', 'page');
-  revalidatePath('/[locale]/admin/dashboard', 'page');
+
+  const booking = await getBookingById(bookingId);
+  const settings = await getAppSettings();
+  if (status === 'confirmed') await notifyBookingConfirmed(booking);
+  if (status === 'declined') await notifyBookingDeclined(booking, reason);
+  if (status === 'needs_reschedule') await notifyBookingRescheduled(booking, settings.owner_email, 'owner');
+
+  revalidateBookingViews();
+}
+
+export async function ownerCancelBooking(bookingId: string, reason?: string) {
+  const { supabase } = await requireOwner();
+  const { error } = await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', bookingId);
+  if (error) throw error;
+
+  await notifyBookingDeclined(await getBookingById(bookingId), reason);
+  revalidateBookingViews();
 }
 
 export async function ownerReschedule(bookingId: string, newDate: string, newTime: string) {
-  await requireOwner();
-  const supabase = await createClient();
-  const { data: booking, error: fetchError } = await supabase
-    .from('bookings')
-    .select('scheduled_start, scheduled_end')
-    .eq('id', bookingId)
-    .single();
-  if (fetchError) throw fetchError;
+  const { supabase } = await requireOwner();
+  const booking = await getBookingById(bookingId);
 
-  const durationMs = new Date(booking.scheduled_end).getTime() - new Date(booking.scheduled_start).getTime();
+  const open = await fetchOpenStarts(newDate, booking.total_minutes, bookingId);
+  if (!open.includes(newTime)) throw new Error('That time is not available in the calendar.');
+
   const newStart = new Date(`${newDate}T${newTime}:00`);
-  const newEnd = new Date(newStart.getTime() + durationMs);
+  const newEnd = new Date(newStart.getTime() + booking.total_minutes * 60_000);
 
   const { error } = await supabase
     .from('bookings')
-    .update({ scheduled_start: newStart.toISOString(), scheduled_end: newEnd.toISOString(), status: 'needs_reschedule' })
+    .update({ scheduled_start: newStart.toISOString(), scheduled_end: newEnd.toISOString() })
     .eq('id', bookingId);
   if (error) throw error;
-  revalidatePath('/[locale]/admin/bookings/[id]', 'page');
+
+  const settings = await getAppSettings();
+  await notifyBookingRescheduled(await getBookingById(bookingId), settings.owner_email, 'owner');
+  revalidateBookingViews();
 }
 
 /**
- * Close out a session: mark which parts were actually done, compute the
- * final price (applying the free-11th-session rule), mark paid, and
- * credit/reset loyalty points — all in one action so the price shown and
- * the price stored can never drift apart.
+ * Client picked "simple" but the design is actually "complex" (or the
+ * reverse). Swaps the variant, recomputes price/duration from the DB,
+ * and emails the client the new total.
  */
-export async function markBookingPaid(bookingId: string, wasServiceCompleted: boolean, wasDesignCompleted: boolean) {
+export async function changeBookingVariant(bookingId: string, newVariantId: string, note: string) {
   const { supabase } = await requireOwner();
+  const booking = await getBookingById(bookingId);
 
-  const { data: booking, error: fetchError } = await supabase
-    .from('bookings')
-    .select('client_id, service_id, design_id')
-    .eq('id', bookingId)
+  const { data: variant, error: variantError } = await supabase
+    .from('service_variants')
+    .select('id, service_id, name_en, price_egp, duration_minutes')
+    .eq('id', newVariantId)
     .single();
-  if (fetchError) throw fetchError;
+  if (variantError || !variant) throw new Error('Unknown service option.');
+  if (variant.service_id !== booking.service_id) throw new Error('That option belongs to a different service.');
 
-  const { data: profile, error: profileError } = await supabase
+  const addonPrice = (booking.booking_addons ?? []).reduce(
+    (sum: number, a: any) => sum + a.unit_price_egp * a.quantity,
+    0
+  );
+  const addonMinutes = (booking.booking_addons ?? []).reduce(
+    (sum: number, a: any) => sum + a.unit_duration_minutes * a.quantity,
+    0
+  );
+
+  // Keep however many units the client booked (nail repairs are per nail).
+  const qty = Math.max(1, booking.variant_quantity ?? 1);
+  const oldPrice = booking.total_price_egp;
+  const newPrice = variant.price_egp * qty + addonPrice;
+  const newMinutes = variant.duration_minutes * qty + addonMinutes;
+  const newEnd = new Date(new Date(booking.scheduled_start).getTime() + newMinutes * 60_000);
+
+  const { error } = await supabase
+    .from('bookings')
+    .update({
+      variant_id: variant.id,
+      total_price_egp: newPrice,
+      total_minutes: newMinutes,
+      scheduled_end: newEnd.toISOString(),
+      tier_change_note: note,
+      tier_changed_at: new Date().toISOString(),
+    })
+    .eq('id', bookingId);
+  if (error) throw error;
+
+  await notifyTierChanged(await getBookingById(bookingId), {
+    fromVariant: booking.service_variants?.name_en ?? '',
+    toVariant: variant.name_en,
+    oldPrice,
+    newPrice,
+    note,
+  });
+
+  revalidateBookingViews();
+}
+
+export interface MarkPaidInput {
+  wasCompleted: boolean;
+  /** What the client actually handed over. */
+  amountPaid: number;
+  /** Why that differs from the quoted price. Required when it does. */
+  paymentNote?: string;
+}
+
+export async function markBookingPaid(bookingId: string, input: MarkPaidInput) {
+  const { supabase } = await requireOwner();
+  const booking = await getBookingById(bookingId);
+
+  if (booking.status === 'done') throw new Error('This appointment is already closed.');
+
+  const { data: profile } = await supabase
     .from('profiles')
     .select('loyalty_points')
     .eq('id', booking.client_id)
     .single();
-  if (profileError) throw profileError;
-
-  const { data: service, error: serviceError } = await supabase
-    .from('services')
-    .select('base_price_egp')
-    .eq('id', booking.service_id)
-    .single();
-  if (serviceError) throw serviceError;
-
-  let designPriceEgp = 0;
-  if (booking.design_id) {
-    const { data: design, error: designError } = await supabase
-      .from('design_options')
-      .select('price_egp')
-      .eq('id', booking.design_id)
-      .single();
-    if (designError) throw designError;
-    designPriceEgp = design.price_egp;
-  }
 
   const settings = await getAppSettings();
-  const isFree = settings.loyalty_enabled && isFreeLoyaltySession(profile.loyalty_points);
-  const rawPrice = (wasServiceCompleted ? service.base_price_egp : 0) + (wasDesignCompleted ? designPriceEgp : 0);
-  const finalPrice = isFree ? 0 : rawPrice;
+  const points = profile?.loyalty_points ?? 0;
+  const isFree = settings.loyalty_enabled && isFreeLoyaltySession(points);
 
-  const { error: bookingUpdateError } = await supabase
+  // What the system says is owed, before any adjustment Mariam made.
+  const expected = isFree ? 0 : input.wasCompleted ? booking.total_price_egp : 0;
+
+  const amountPaid = Math.round(Number(input.amountPaid));
+  if (!Number.isFinite(amountPaid) || amountPaid < 0) throw new Error('Enter a valid amount.');
+
+  const note = (input.paymentNote ?? '').trim();
+  if (amountPaid !== expected && !note) {
+    throw new Error(`That is different from the ${expected} EGP the system expected — add a short reason.`);
+  }
+
+  // total_price_egp stays the quote. amount_paid_egp is the truth about
+  // money, so a discount is visible later instead of erasing the quote.
+  const { error } = await supabase
     .from('bookings')
     .update({
       status: 'done',
-      was_service_completed: wasServiceCompleted,
-      was_design_completed: wasDesignCompleted,
-      total_price_egp: finalPrice,
+      was_service_completed: input.wasCompleted,
       is_loyalty_free: isFree,
+      amount_paid_egp: amountPaid,
+      payment_note: note || null,
+      paid_at: new Date().toISOString(),
     })
     .eq('id', bookingId);
-  if (bookingUpdateError) throw bookingUpdateError;
+  if (error) throw error;
 
   if (settings.loyalty_enabled) {
-    const { error: loyaltyError } = await supabase
-      .from('profiles')
-      .update({ loyalty_points: nextLoyaltyPoints(profile.loyalty_points) })
-      .eq('id', booking.client_id);
-    if (loyaltyError) throw loyaltyError;
+    await supabase.from('profiles').update({ loyalty_points: nextLoyaltyPoints(points) }).eq('id', booking.client_id);
   }
 
-  revalidatePath('/[locale]/admin/bookings/[id]', 'page');
+  revalidateBookingViews();
   revalidatePath('/[locale]/admin/clients', 'page');
 }
 
-export async function addAvailabilitySlot(date: string, startTime: string) {
-  await requireOwner();
-  const supabase = await createClient();
-  const { error } = await supabase.from('availability_slots').upsert(
-    { date, start_time: startTime },
-    { onConflict: 'date,start_time' }
-  );
+/* ================= owner: availability ranges ================= */
+
+export async function addAvailabilityRange(date: string, startTime: string, endTime: string) {
+  const { supabase } = await requireOwner();
+  if (toMinutes(endTime) <= toMinutes(startTime)) throw new Error('End time must be after the start time.');
+
+  const { error } = await supabase
+    .from('availability_ranges')
+    .upsert({ date, start_time: startTime, end_time: endTime }, { onConflict: 'date,start_time,end_time' });
   if (error) throw error;
   revalidatePath('/[locale]/admin/calendar', 'page');
 }
 
-export async function removeAvailabilitySlot(date: string, startTime: string) {
-  await requireOwner();
-  const supabase = await createClient();
-  const { error } = await supabase.from('availability_slots').delete().eq('date', date).eq('start_time', startTime);
+export async function removeAvailabilityRange(rangeId: string) {
+  const { supabase } = await requireOwner();
+  const { error } = await supabase.from('availability_ranges').delete().eq('id', rangeId);
   if (error) throw error;
   revalidatePath('/[locale]/admin/calendar', 'page');
 }
 
-// Blocking is a separate table (blocked_days), not a flag on slot rows —
-// a day with zero slots still needs to be blockable, which the old
-// "update every slot row for this date" approach couldn't do (it was a
-// silent no-op on empty days — the reported "block whole day does
-// nothing" bug).
 export async function setDayBlocked(date: string, blocked: boolean) {
-  await requireOwner();
-  const supabase = await createClient();
+  const { supabase } = await requireOwner();
   if (blocked) {
     const { error } = await supabase.from('blocked_days').upsert({ date }, { onConflict: 'date' });
     if (error) throw error;
@@ -340,35 +511,126 @@ export async function setDayBlocked(date: string, blocked: boolean) {
   revalidatePath('/[locale]/admin/calendar', 'page');
 }
 
+/** Apply the same range to a set of dates at once. */
+export async function bulkAddRanges(dates: string[], startTime: string, endTime: string) {
+  const { supabase } = await requireOwner();
+  if (toMinutes(endTime) <= toMinutes(startTime)) throw new Error('End time must be after the start time.');
+  const rows = dates.map((date) => ({ date, start_time: startTime, end_time: endTime }));
+  const { error } = await supabase.from('availability_ranges').upsert(rows, { onConflict: 'date,start_time,end_time' });
+  if (error) throw error;
+  revalidatePath('/[locale]/admin/calendar', 'page');
+}
+
+/* ================= owner: catalog editing ================= */
+
+export async function updateService(
+  id: string,
+  fields: { name_en?: string; name_ar?: string; description_en?: string; description_ar?: string; is_active?: boolean }
+) {
+  const { supabase } = await requireOwner();
+  const { error } = await supabase.from('services').update(fields).eq('id', id);
+  if (error) throw error;
+  revalidateTag('catalog', 'max');
+  revalidatePath('/[locale]/admin/services', 'page');
+  revalidatePath('/[locale]/services', 'page');
+}
+
+export async function updateVariant(
+  id: string,
+  fields: {
+    name_en?: string;
+    name_ar?: string;
+    price_egp?: number;
+    duration_minutes?: number;
+    requires_inspo?: boolean;
+    is_active?: boolean;
+    max_quantity?: number;
+  }
+) {
+  const { supabase } = await requireOwner();
+  if (fields.price_egp !== undefined && (!Number.isFinite(fields.price_egp) || fields.price_egp < 0)) {
+    throw new Error('Price must be 0 or more.');
+  }
+  if (fields.duration_minutes !== undefined && (!Number.isFinite(fields.duration_minutes) || fields.duration_minutes < 5)) {
+    throw new Error('Duration must be at least 5 minutes.');
+  }
+  const { error } = await supabase.from('service_variants').update(fields).eq('id', id);
+  if (error) throw error;
+  revalidateTag('catalog', 'max');
+  revalidatePath('/[locale]/admin/services', 'page');
+  revalidatePath('/[locale]/services', 'page');
+}
+
+export async function updateAddon(
+  id: string,
+  fields: { name_en?: string; name_ar?: string; price_egp?: number; duration_minutes?: number; max_quantity?: number; is_active?: boolean }
+) {
+  const { supabase } = await requireOwner();
+  const { error } = await supabase.from('addons').update(fields).eq('id', id);
+  if (error) throw error;
+  revalidateTag('catalog', 'max');
+  revalidatePath('/[locale]/admin/services', 'page');
+}
+
 export async function updateClientNotes(clientId: string, adminPrivateNotes: string) {
-  await requireOwner();
-  const supabase = await createClient();
+  const { supabase } = await requireOwner();
   const { error } = await supabase.from('profiles').update({ admin_private_notes: adminPrivateNotes }).eq('id', clientId);
   if (error) throw error;
   revalidatePath('/[locale]/admin/clients', 'page');
 }
 
-/**
- * Manual bust for the services/design-options/loyalty-flag cache
- * (unstable_cache, up to 1hr stale) — for when the owner edits data
- * directly in Supabase and doesn't want to wait.
- */
-export async function refreshServicesCache() {
-  await requireOwner();
-  revalidateTag('services', 'max');
-  revalidateTag('app-settings', 'minutes');
-  revalidatePath('/[locale]/admin/services', 'page');
-  revalidatePath('/[locale]/services', 'page');
-  revalidatePath('/[locale]/book', 'page');
-  revalidatePath('/[locale]/dashboard', 'page');
-}
-
 export async function setLoyaltyEnabled(enabled: boolean) {
-  await requireOwner();
-  const supabase = await createClient();
+  const { supabase } = await requireOwner();
   const { error } = await supabase.from('app_settings').update({ loyalty_enabled: enabled }).eq('id', 1);
   if (error) throw error;
   revalidateTag('app-settings', 'minutes');
   revalidatePath('/[locale]/admin/services', 'page');
   revalidatePath('/[locale]/dashboard', 'page');
+}
+
+export async function updateSettings(fields: { slot_step_minutes?: number; owner_email?: string }) {
+  const { supabase } = await requireOwner();
+  if (fields.slot_step_minutes !== undefined && ![15, 30, 60].includes(fields.slot_step_minutes)) {
+    throw new Error('Slot step must be 15, 30 or 60 minutes.');
+  }
+  const { error } = await supabase.from('app_settings').update(fields).eq('id', 1);
+  if (error) throw error;
+  revalidateTag('app-settings', 'minutes');
+  revalidatePath('/[locale]/admin/services', 'page');
+}
+
+export async function refreshCatalogCache() {
+  await requireOwner();
+  revalidateTag('catalog', 'max');
+  revalidateTag('app-settings', 'minutes');
+  revalidatePath('/[locale]/admin/services', 'page');
+  revalidatePath('/[locale]/services', 'page');
+  revalidatePath('/[locale]/book', 'page');
+}
+
+/** Sends a real email to the owner address so delivery can be verified. */
+export async function sendTestEmail() {
+  await requireOwner();
+  const to = ownerAddress();
+  const res = await sendEmail({
+    to,
+    subject: 'The Gel Bar — test email',
+    html: `<!doctype html><html><body style="margin:0;background:#f1b7cd;padding:32px 12px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fff1f6;border:1px solid #dfa9c0;">
+          <tr><td style="background:#3e1427;padding:28px;text-align:center;">
+            <div style="font-family:Georgia,serif;font-size:24px;color:#fff;">The Gel Bar</div>
+          </td></tr>
+          <tr><td style="padding:32px;font-family:Georgia,serif;font-size:15px;line-height:1.7;color:#3e1427;">
+            Email delivery is working. Booking, confirmation, reschedule, cancellation and price-change
+            emails will all be sent from this address.
+          </td></tr>
+        </table>
+      </td></tr></table>
+    </body></html>`,
+  });
+
+  if (res.skipped) throw new Error('GMAIL_USER / GMAIL_APP_PASSWORD are not set in the environment.');
+  if (!res.ok) throw new Error('Gmail rejected the message — check the app password.');
+  return { ok: true, to };
 }
