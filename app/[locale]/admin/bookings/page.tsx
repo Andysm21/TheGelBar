@@ -58,9 +58,9 @@ export default async function AdminBookingsPage({ params }: { params: Promise<{ 
                   <Link href={`/${locale}/admin/bookings/${b.id}`} className={styles.row}>
                     <span className={styles.when}>
                       <strong>
-                        {new Date(b.scheduled_start).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                        {new Date(b.scheduled_start).toLocaleDateString('en-GB', { timeZone: 'Africa/Cairo', day: 'numeric', month: 'short' })}
                       </strong>
-                      {new Date(b.scheduled_start).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(b.scheduled_start).toLocaleTimeString('en-GB', { timeZone: 'Africa/Cairo', hour: '2-digit', minute: '2-digit' })}
                     </span>
 
                     <span className={styles.main}>

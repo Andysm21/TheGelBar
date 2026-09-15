@@ -29,11 +29,11 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
 
   const start = new Date(booking.scheduled_start);
   const end = new Date(booking.scheduled_end);
-  const whenLabel = `${start.toLocaleDateString('en-GB', {
+  const whenLabel = `${start.toLocaleDateString('en-GB', { timeZone: 'Africa/Cairo',
     weekday: 'long',
     day: 'numeric',
     month: 'long',
-  })} · ${start.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+  })} · ${start.toLocaleTimeString('en-GB', { timeZone: 'Africa/Cairo', hour: '2-digit', minute: '2-digit' })}`;
 
   return (
     <AdminShell
@@ -51,7 +51,7 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
             <p className="eyebrow">Appointment</p>
             <h2 className={styles.when}>{whenLabel}</h2>
             <p className={styles.until}>
-              until {end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} ·{' '}
+              until {end.toLocaleTimeString('en-GB', { timeZone: 'Africa/Cairo', hour: '2-digit', minute: '2-digit' })} ·{' '}
               {formatDuration(booking.total_minutes)}
             </p>
 

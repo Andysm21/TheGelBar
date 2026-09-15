@@ -6,6 +6,7 @@ import NailLoader from '@/components/NailLoader/NailLoader';
 import { fetchMonthAvailability, fetchOpenStarts } from '@/lib/supabase/actions';
 import { computeOpenStarts, formatTime12h } from '@/lib/availability';
 import styles from './SlotPicker.module.css';
+import { cairoDate, cairoMinutes } from '@/lib/time';
 
 /**
  * The one calendar + time-slot picker used everywhere a time gets chosen:
@@ -52,16 +53,16 @@ export default function SlotPicker({
       const busyByDate = new Map<string, { startMin: number; endMin: number }[]>();
       for (const b of bookings as any[]) {
         if (excludeBookingId && b.id === excludeBookingId) continue;
-        const s = new Date(b.scheduled_start);
-        const e = new Date(b.scheduled_end);
-        const key = `${s.getFullYear()}-${String(s.getMonth() + 1).padStart(2, '0')}-${String(s.getDate()).padStart(2, '0')}`;
+        // Cairo date and minutes, whatever timezone this browser is in.
+        const key = cairoDate(b.scheduled_start);
         const list = busyByDate.get(key) ?? [];
-        list.push({ startMin: s.getHours() * 60 + s.getMinutes(), endMin: e.getHours() * 60 + e.getMinutes() });
+        list.push({ startMin: cairoMinutes(b.scheduled_start), endMin: cairoMinutes(b.scheduled_end) });
         busyByDate.set(key, list);
       }
 
-      const todayStr = new Date().toISOString().slice(0, 10);
-      const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
+      const now = new Date();
+      const todayStr = cairoDate(now);
+      const nowMin = cairoMinutes(now);
       const blocked = new Set(blockedDates as string[]);
 
       const days: DayAvailability[] = [];

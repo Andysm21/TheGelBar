@@ -2,6 +2,7 @@ import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import { createClient } from './server';
 import { createPublicClient } from './public';
+import { cairoDayBounds, cairoDate } from '../time';
 
 // Read layer. Rules:
 // 1. Select only the columns a page renders.
@@ -125,8 +126,8 @@ export const getMonthAvailability = cache(async (year: number, month: number) =>
     supabase
       .from('bookings')
       .select('id, scheduled_start, scheduled_end')
-      .gte('scheduled_start', `${start}T00:00:00`)
-      .lte('scheduled_start', `${end}T23:59:59`)
+      .gte('scheduled_start', cairoDayBounds(start).startIso)
+      .lt('scheduled_start', cairoDayBounds(end).endIso)
       .in('status', ['pending', 'confirmed', 'needs_reschedule']),
   ]);
   if (ranges.error) throw ranges.error;
@@ -177,11 +178,12 @@ export const getAllBookingsForOwner = cache(async () => {
 
 export const getBookingsForDate = cache(async (date: string) => {
   const supabase = await createClient();
+  const day = cairoDayBounds(date);
   const { data, error } = await supabase
     .from('bookings')
     .select(`${BOOKING_SELECT}, profiles ( name, email )`)
-    .gte('scheduled_start', `${date}T00:00:00`)
-    .lt('scheduled_start', `${date}T23:59:59`)
+    .gte('scheduled_start', day.startIso)
+    .lt('scheduled_start', day.endIso)
     .order('scheduled_start', { ascending: true });
   if (error) throw error;
   return (data ?? []) as any[];
@@ -200,12 +202,12 @@ export const getBookingById = cache(async (id: string) => {
 
 export const getTodayBookings = cache(async () => {
   const supabase = await createClient();
-  const today = new Date().toISOString().slice(0, 10);
+  const day = cairoDayBounds(cairoDate(new Date()));
   const { data, error } = await supabase
     .from('bookings')
     .select(`${BOOKING_SELECT}, profiles ( name, email )`)
-    .gte('scheduled_start', `${today}T00:00:00`)
-    .lt('scheduled_start', `${today}T23:59:59`)
+    .gte('scheduled_start', day.startIso)
+    .lt('scheduled_start', day.endIso)
     .order('scheduled_start', { ascending: true });
   if (error) throw error;
   return (data ?? []) as any[];

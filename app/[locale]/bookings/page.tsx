@@ -69,7 +69,7 @@ export default async function BookingsPage({ params }: { params: Promise<{ local
                   )}
                   {b.tier_change_note && <p className={styles.notice}>{b.tier_change_note}</p>}
                   <p className={styles.when}>
-                    {new Date(b.scheduled_start).toLocaleString()}
+                    {new Date(b.scheduled_start).toLocaleString('en-GB', { timeZone: 'Africa/Cairo', dateStyle: 'medium', timeStyle: 'short' })}
                     <br />
                     <span className={styles.price}>{b.total_price_egp} EGP</span>
                   </p>
@@ -78,7 +78,7 @@ export default async function BookingsPage({ params }: { params: Promise<{ local
                   <BookingActions
                     bookingId={b.id}
                     durationMinutes={b.total_minutes}
-                    currentLabel={new Date(b.scheduled_start).toLocaleString()}
+                    currentLabel={new Date(b.scheduled_start).toLocaleString('en-GB', { timeZone: 'Africa/Cairo', dateStyle: 'medium', timeStyle: 'short' })}
                   />
                 ) : (
                   <p className={styles.locked}>Within 24h — contact the studio directly to change this booking.</p>
@@ -110,7 +110,7 @@ export default async function BookingsPage({ params }: { params: Promise<{ local
                     {(b.variant_quantity ?? 1) > 1 ? ` ×${b.variant_quantity}` : ''}
                 </h3>
                 <p className={styles.when}>
-                  {new Date(b.scheduled_start).toLocaleDateString()}
+                  {new Date(b.scheduled_start).toLocaleDateString('en-GB', { timeZone: 'Africa/Cairo' })}
                   <br />
                   <span className={styles.price}>{b.total_price_egp} EGP</span>
                 </p>

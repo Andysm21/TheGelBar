@@ -3,9 +3,10 @@ import AdminShell from '@/components/AdminShell';
 import { getTodayBookings, getPendingBookingsForOwner, getAnalyticsSummary, getMonthAvailability } from '@/lib/supabase/cached-queries';
 import { totalRangeMinutes } from '@/lib/availability';
 import styles from './dashboard.module.css';
+import { cairoDate, cairoMinutes } from '@/lib/time';
 
 function timeLabel(iso: string) {
-  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  return new Date(iso).toLocaleTimeString('en-GB', { timeZone: 'Africa/Cairo', hour: '2-digit', minute: '2-digit' });
 }
 
 export default async function AdminDashboardPage({ params }: { params: Promise<{ locale: string }> }) {
@@ -19,17 +20,18 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
     getMonthAvailability(now.getFullYear(), now.getMonth()),
   ]);
 
-  const todayStr = now.toISOString().slice(0, 10);
+  const todayStr = cairoDate(now);
   const todayRanges = (month.ranges as any[]).filter((r) => r.date === todayStr);
   const freeToday = Math.round(totalRangeMinutes(todayRanges) / 60);
   const upcomingRanges = (month.ranges as any[]).filter((r) => r.date >= todayStr).length;
 
-  const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 18 ? 'Good afternoon' : 'Good evening';
+  const hour = Math.floor(cairoMinutes(now) / 60);
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
   return (
     <AdminShell
       title={`${greeting}, Mariam`}
-      subtitle={now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+      subtitle={now.toLocaleDateString('en-GB', { timeZone: 'Africa/Cairo', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
       actions={
         <Link href={`/${locale}/admin/calendar`} className="btn btn-sm btn-solid">
           Set my hours
@@ -89,7 +91,7 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
                     </span>
                     <span className={styles.rowRight}>
                       <span className={styles.rowWhen}>
-                        {new Date(b.scheduled_start).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                        {new Date(b.scheduled_start).toLocaleDateString('en-GB', { timeZone: 'Africa/Cairo', day: 'numeric', month: 'short' })}
                         {' · '}
                         {timeLabel(b.scheduled_start)}
                       </span>

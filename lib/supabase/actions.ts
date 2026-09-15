@@ -14,6 +14,7 @@ import {
 } from './cached-queries';
 import { rateLimit } from '../rate-limit';
 import { computeOpenStarts, toMinutes } from '../availability';
+import { cairoToInstant, cairoDate, cairoMinutes, cairoDayBounds } from '../time';
 import { sendEmail, ownerAddress } from '../email/send';
 import {
   notifyBookingRequested,
@@ -117,14 +118,15 @@ export async function fetchOpenStarts(date: string, durationMinutes: number, exc
   const supabase = await createClient();
   const settings = await getAppSettings();
 
+  const day = cairoDayBounds(date);
   const [ranges, blocked, bookings] = await Promise.all([
     supabase.from('availability_ranges').select('start_time, end_time').eq('date', date),
     supabase.from('blocked_days').select('date').eq('date', date),
     supabase
       .from('bookings')
       .select('id, scheduled_start, scheduled_end')
-      .gte('scheduled_start', `${date}T00:00:00`)
-      .lt('scheduled_start', `${date}T23:59:59`)
+      .gte('scheduled_start', day.startIso)
+      .lt('scheduled_start', day.endIso)
       .in('status', ['pending', 'confirmed', 'needs_reschedule']),
   ]);
 
@@ -133,15 +135,12 @@ export async function fetchOpenStarts(date: string, durationMinutes: number, exc
 
   const busy = (bookings.data ?? [])
     .filter((b: any) => b.id !== excludeBookingId)
-    .map((b: any) => {
-      const s = new Date(b.scheduled_start);
-      const e = new Date(b.scheduled_end);
-      return { startMin: s.getHours() * 60 + s.getMinutes(), endMin: e.getHours() * 60 + e.getMinutes() };
-    });
+    // Minutes since Cairo midnight — the same frame the availability ranges use.
+    .map((b: any) => ({ startMin: cairoMinutes(b.scheduled_start), endMin: cairoMinutes(b.scheduled_end) }));
 
-  // Don't offer times already past for today.
-  const today = new Date().toISOString().slice(0, 10);
-  const minStart = date === today ? new Date().getHours() * 60 + new Date().getMinutes() : 0;
+  // Don't offer times already past for today (today in Cairo, not on the server).
+  const now = new Date();
+  const minStart = date === cairoDate(now) ? cairoMinutes(now) : 0;
 
   return computeOpenStarts(ranges.data, busy, durationMinutes, settings.slot_step_minutes ?? 30, minStart);
 }
@@ -230,7 +229,7 @@ export async function createBooking(input: CreateBookingInput) {
     throw new Error('That time was just taken. Please pick another slot.');
   }
 
-  const start = new Date(`${input.date}T${input.time}:00`);
+  const start = cairoToInstant(input.date, input.time);
   const end = new Date(start.getTime() + totalMinutes * 60_000);
 
   const { data: booking, error } = await supabase
@@ -300,7 +299,7 @@ export async function requestReschedule(bookingId: string, newDate: string, newT
   const open = await fetchOpenStarts(newDate, booking.total_minutes, bookingId);
   if (!open.includes(newTime)) throw new Error('That time is no longer available. Pick another slot.');
 
-  const newStart = new Date(`${newDate}T${newTime}:00`);
+  const newStart = cairoToInstant(newDate, newTime);
   const newEnd = new Date(newStart.getTime() + booking.total_minutes * 60_000);
 
   const { error } = await supabase
@@ -350,7 +349,7 @@ export async function ownerReschedule(bookingId: string, newDate: string, newTim
   const open = await fetchOpenStarts(newDate, booking.total_minutes, bookingId);
   if (!open.includes(newTime)) throw new Error('That time is not available in the calendar.');
 
-  const newStart = new Date(`${newDate}T${newTime}:00`);
+  const newStart = cairoToInstant(newDate, newTime);
   const newEnd = new Date(newStart.getTime() + booking.total_minutes * 60_000);
 
   const { error } = await supabase

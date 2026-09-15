@@ -68,7 +68,7 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
                 <li key={b.id}>
                   <Link href={`/${locale}/admin/bookings/${b.id}`} className={styles.historyRow}>
                     <span className={styles.hDate}>
-                      {new Date(b.scheduled_start).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}
+                      {new Date(b.scheduled_start).toLocaleDateString('en-GB', { timeZone: 'Africa/Cairo', day: 'numeric', month: 'short', year: '2-digit' })}
                     </span>
                     <span className={styles.hMain}>
                       <span className={styles.hService}>

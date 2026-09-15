@@ -34,7 +34,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
             <div>
               <span className="badge badge-pending">{t('booking.pending')}</span>
               <h2 className={styles.nextService}>{next.services?.name_en ?? 'Service'}</h2>
-              <p className={styles.nextWhen}>{new Date(next.scheduled_start).toLocaleString()}</p>
+              <p className={styles.nextWhen}>{new Date(next.scheduled_start).toLocaleString('en-GB', { timeZone: 'Africa/Cairo', dateStyle: 'medium', timeStyle: 'short' })}</p>
             </div>
             <Link href={`/${locale}/bookings`} className="btn btn-sm">
               View

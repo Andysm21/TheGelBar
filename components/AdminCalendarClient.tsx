@@ -12,6 +12,7 @@ import {
 } from '@/lib/supabase/actions';
 import { formatTime12h, toMinutes, totalRangeMinutes } from '@/lib/availability';
 import styles from './AdminCalendarClient.module.css';
+import { cairoDate } from '@/lib/time';
 
 interface Range {
   id: string;
@@ -65,8 +66,7 @@ export default function AdminCalendarClient() {
       }
       const bookedCount = new Map<string, number>();
       for (const b of bookings as any[]) {
-        const d = new Date(b.scheduled_start);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const key = cairoDate(b.scheduled_start);
         bookedCount.set(key, (bookedCount.get(key) ?? 0) + 1);
       }
 
@@ -176,7 +176,7 @@ export default function AdminCalendarClient() {
               <div>
                 <p className="eyebrow">Selected day</p>
                 <h3 className={styles.panelDate}>
-                  {new Date(`${selectedDate}T00:00:00`).toLocaleDateString('en-GB', {
+                  {new Date(`${selectedDate}T00:00:00`).toLocaleDateString('en-GB', { timeZone: 'Africa/Cairo',
                     weekday: 'long',
                     day: 'numeric',
                     month: 'long',
@@ -276,9 +276,9 @@ export default function AdminCalendarClient() {
                   <li key={b.id}>
                     <a href={`admin/bookings/${b.id}`} className={styles.bookingRow}>
                       <span className={styles.bookingTime}>
-                        {new Date(b.scheduled_start).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(b.scheduled_start).toLocaleTimeString('en-GB', { timeZone: 'Africa/Cairo', hour: '2-digit', minute: '2-digit' })}
                         {' – '}
-                        {new Date(b.scheduled_end).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(b.scheduled_end).toLocaleTimeString('en-GB', { timeZone: 'Africa/Cairo', hour: '2-digit', minute: '2-digit' })}
                       </span>
                       <span className={styles.bookingName}>{b.profiles?.name ?? 'Client'}</span>
                       <span className={`badge badge-${b.status === 'pending' ? 'pending' : 'confirmed'}`}>{b.status}</span>
