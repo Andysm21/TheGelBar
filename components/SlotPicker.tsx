@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import Calendar, { DayAvailability } from '@/components/Calendar/Calendar';
 import NailLoader from '@/components/NailLoader/NailLoader';
 import { fetchMonthAvailability, fetchOpenStarts } from '@/lib/supabase/actions';
@@ -29,6 +30,7 @@ export default function SlotPicker({
   onSelect: (date: string | null, time: string | null) => void;
   excludeBookingId?: string;
 }) {
+  const t = useTranslations('bookFlow');
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -120,12 +122,12 @@ export default function SlotPicker({
 
       {selectedDate && (
         <div className={styles.slotSection}>
-          <p className={`eyebrow ${styles.slotLabel}`}>Available start times</p>
+          <p className={`eyebrow ${styles.slotLabel}`}>{t('startTimes')}</p>
           {loadingTimes ? (
             <NailLoader size="inline" />
           ) : times.length === 0 ? (
             <p className={styles.empty}>
-              Nothing open that fits this service on this day. Try another date.
+              {t('noTimes')}
             </p>
           ) : (
             <div className={styles.slots}>

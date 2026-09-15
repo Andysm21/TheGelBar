@@ -11,9 +11,9 @@ import { serviceImageUrl } from '@/lib/site-images';
 import styles from './BookWizard.module.css';
 
 const STEPS = [
-  { key: 'service', label: 'Service' },
-  { key: 'slot', label: 'Date & time' },
-  { key: 'details', label: 'Confirm' },
+  { key: 'service', label: 'stepService' },
+  { key: 'slot', label: 'stepSlot' },
+  { key: 'details', label: 'stepConfirm' },
 ] as const;
 type StepKey = (typeof STEPS)[number]['key'];
 
@@ -38,17 +38,20 @@ interface Service {
   service_variants: Variant[];
 }
 
-function formatDuration(mins: number) {
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  if (h && m) return `${h}h ${m}m`;
-  if (h) return `${h}h`;
-  return `${m}m`;
-}
 
 export default function BookWizard({ locale }: { locale: string }) {
   const t = useTranslations('booking');
+  const tf = useTranslations('bookFlow');
   const isAr = locale === 'ar';
+
+  const formatDuration = (mins: number) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if (h && m) return tf('hoursMinutes', { h, m });
+    if (h) return tf('hours', { h });
+    return tf('minutes', { m });
+  };
+  const money = (n: number) => `${n.toLocaleString(isAr ? 'ar-EG' : 'en-US')} ${tf('currency')}`;
 
   const [services, setServices] = useState<Service[]>([]);
   const [slotStep, setSlotStep] = useState(30);
@@ -114,7 +117,7 @@ export default function BookWizard({ locale }: { locale: string }) {
       });
       setDone(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong — try again.');
+      setError(e instanceof Error ? e.message : tf('genericError'));
     } finally {
       setSubmitting(false);
     }
@@ -123,7 +126,7 @@ export default function BookWizard({ locale }: { locale: string }) {
   if (!loaded) {
     return (
       <div className={styles.centered}>
-        <NailLoader size="full" caption="Setting up your services…" />
+        <NailLoader size="full" caption={tf('loading')} />
       </div>
     );
   }
@@ -131,9 +134,9 @@ export default function BookWizard({ locale }: { locale: string }) {
   if (done) {
     return (
       <div className={styles.centered}>
-        <p className="eyebrow">Request sent</p>
-        <h1 className={styles.doneTitle}>See you soon</h1>
-        <p className={styles.subtle}>You'll get an email the moment Mariam confirms your time.</p>
+        <p className="eyebrow">{tf('sentEyebrow')}</p>
+        <h1 className={styles.doneTitle}>{tf('sentTitle')}</h1>
+        <p className={styles.subtle}>{tf('sentBody')}</p>
         <div className={styles.doneCard}>
           <span className="badge badge-pending">{t('pending')}</span>
           <h3 className={styles.doneService}>
@@ -141,11 +144,11 @@ export default function BookWizard({ locale }: { locale: string }) {
             {variant?.is_quantity ? ` ×${quantity}` : ''}
           </h3>
           <p className={styles.subtle}>
-            {date} · {time && formatTime12h(time)} · {formatDuration(totalMinutes)} · {totalPrice} EGP
+            {date} · {time && formatTime12h(time)} · {formatDuration(totalMinutes)} · {money(totalPrice)}
           </p>
         </div>
         <a href={`/${locale}/bookings`} className="btn btn-solid">
-          View my bookings
+          {tf('viewBookings')}
         </a>
       </div>
     );
@@ -160,7 +163,7 @@ export default function BookWizard({ locale }: { locale: string }) {
         {STEPS.map((s, i) => (
           <li key={s.key} className={`${styles.railItem} ${i <= stepIndex ? styles.railDone : ''}`}>
             <span className={styles.railNum}>{i + 1}</span>
-            <span className={styles.railLabel}>{s.label}</span>
+            <span className={styles.railLabel}>{tf(s.label)}</span>
           </li>
         ))}
       </ol>
@@ -171,9 +174,9 @@ export default function BookWizard({ locale }: { locale: string }) {
           {step === 'service' && (
             <section>
               <div className={styles.head}>
-                <p className="eyebrow">Step 1 of 3</p>
-                <h1 className={styles.title}>Choose your service</h1>
-                <p className={styles.subtle}>Open a service, then pick one option under it.</p>
+                <p className="eyebrow">{tf('stepOf', { n: 1, total: 3 })}</p>
+                <h1 className={styles.title}>{tf('chooseService')}</h1>
+                <p className={styles.subtle}>{tf('chooseServiceHint')}</p>
               </div>
 
               <div className={styles.accordion}>
@@ -209,14 +212,14 @@ export default function BookWizard({ locale }: { locale: string }) {
                           {(isAr ? s.description_ar : s.description_en) && (
                             <span className={styles.accDesc}>{isAr ? s.description_ar : s.description_en}</span>
                           )}
-                          <span className={styles.accFrom}>from {from} EGP</span>
+                          <span className={styles.accFrom}>{tf('from', { price: money(from) })}</span>
                         </span>
                         <span className={styles.accChevron} aria-hidden="true" />
                       </button>
 
                       <div className={styles.accPanel}>
                         <div className={styles.accPanelInner}>
-                          <p className={`eyebrow ${styles.groupLabel}`}>Choose one — required</p>
+                          <p className={`eyebrow ${styles.groupLabel}`}>{tf('chooseOne')}</p>
                           <div className={styles.options}>
                             {s.service_variants.map((v) => {
                               const active = variantId === v.id;
@@ -232,12 +235,13 @@ export default function BookWizard({ locale }: { locale: string }) {
                                     <span className={styles.optionName}>{isAr ? v.name_ar : v.name_en}</span>
                                     <span className={styles.optionMeta}>
                                       {formatDuration(v.duration_minutes)}
-                                      {v.is_quantity ? ' each' : ''}
-                                      {v.requires_inspo ? ' · inspo photo required' : ''}
+                                      {v.is_quantity ? ` ${tf('each')}` : ''}
+                                      {v.requires_inspo ? ` · ${tf('inspoRequiredTag')}` : ''}
                                     </span>
                                   </span>
                                   <span className={styles.optionPrice}>
-                                    {v.price_egp} EGP{v.is_quantity ? ' each' : ''}
+                                    {money(v.price_egp)}
+                                    {v.is_quantity ? ` ${tf('each')}` : ''}
                                   </span>
                                 </button>
                               );
@@ -246,21 +250,21 @@ export default function BookWizard({ locale }: { locale: string }) {
 
                           {variant?.is_quantity && variantId.startsWith(s.id) && (
                             <div className={styles.qtyRow}>
-                              <span className={styles.qtyLabel}>How many?</span>
+                              <span className={styles.qtyLabel}>{tf('howMany')}</span>
                               <span className={styles.stepper}>
-                                <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))} aria-label="Fewer">
+                                <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))} aria-label={tf('fewer')}>
                                   −
                                 </button>
                                 <span>{quantity}</span>
                                 <button
                                   type="button"
                                   onClick={() => setQuantity((q) => Math.min(variant.max_quantity, q + 1))}
-                                  aria-label="More"
+                                  aria-label={tf('more')}
                                 >
                                   +
                                 </button>
                               </span>
-                              <span className={styles.qtyTotal}>{totalPrice} EGP</span>
+                              <span className={styles.qtyTotal}>{money(totalPrice)}</span>
                             </div>
                           )}
                         </div>
@@ -272,7 +276,7 @@ export default function BookWizard({ locale }: { locale: string }) {
 
               <div className={styles.actions}>
                 <button className={`btn btn-solid ${styles.grow}`} disabled={!variant} onClick={() => setStep('slot')}>
-                  Continue →
+                  {tf('continue')}
                 </button>
               </div>
             </section>
@@ -282,10 +286,10 @@ export default function BookWizard({ locale }: { locale: string }) {
           {step === 'slot' && variant && (
             <section>
               <div className={styles.head}>
-                <p className="eyebrow">Step 2 of 3</p>
-                <h1 className={styles.title}>Pick a time</h1>
+                <p className="eyebrow">{tf('stepOf', { n: 2, total: 3 })}</p>
+                <h1 className={styles.title}>{tf('pickTime')}</h1>
                 <p className={styles.subtle}>
-                  Showing slots that fit {formatDuration(totalMinutes)} — the full length of your booking.
+                  {tf('pickTimeHint', { duration: formatDuration(totalMinutes) })}
                 </p>
               </div>
 
@@ -302,10 +306,10 @@ export default function BookWizard({ locale }: { locale: string }) {
 
               <div className={styles.actions}>
                 <button className="btn btn-ghost" onClick={() => setStep('service')}>
-                  ← Back
+                  {tf('back')}
                 </button>
                 <button className={`btn btn-solid ${styles.grow}`} disabled={!date || !time} onClick={() => setStep('details')}>
-                  Continue →
+                  {tf('continue')}
                 </button>
               </div>
             </section>
@@ -315,16 +319,15 @@ export default function BookWizard({ locale }: { locale: string }) {
           {step === 'details' && variant && (
             <section>
               <div className={styles.head}>
-                <p className="eyebrow">Step 3 of 3</p>
-                <h1 className={styles.title}>Confirm your booking</h1>
+                <p className="eyebrow">{tf('stepOf', { n: 3, total: 3 })}</p>
+                <h1 className={styles.title}>{tf('confirmTitle')}</h1>
               </div>
 
               {needsInspo && (
                 <>
-                  <p className={`eyebrow ${styles.groupLabel}`}>Inspiration photos — required</p>
+                  <p className={`eyebrow ${styles.groupLabel}`}>{tf('inspoRequired')}</p>
                   <p className={styles.subtle} style={{ marginBottom: '1rem' }}>
-                    You picked a {isAr ? variant.name_ar : variant.name_en.toLowerCase()}. Share references so Mariam can
-                    price and plan it correctly.
+                    {tf('inspoRequiredHint', { option: isAr ? variant.name_ar : variant.name_en.toLowerCase() })}
                   </p>
                   <InspoUploader value={inspoPaths} onChange={setInspoPaths} required />
                 </>
@@ -332,12 +335,12 @@ export default function BookWizard({ locale }: { locale: string }) {
 
               {!needsInspo && (
                 <>
-                  <p className={`eyebrow ${styles.groupLabel}`}>Inspiration photos — optional</p>
+                  <p className={`eyebrow ${styles.groupLabel}`}>{tf('inspoOptional')}</p>
                   <InspoUploader value={inspoPaths} onChange={setInspoPaths} />
                 </>
               )}
 
-              <p className={`eyebrow ${styles.groupLabel}`}>Health / allergy notes</p>
+              <p className={`eyebrow ${styles.groupLabel}`}>{tf('notesLabel')}</p>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -346,22 +349,21 @@ export default function BookWizard({ locale }: { locale: string }) {
               />
 
               <div className={styles.notice}>
-                Designs are reviewed before confirming. If a design turns out to be more (or less) detailed than the
-                option you picked, Mariam will email you the adjusted price before your appointment.
+                {tf('reviewNotice')}
               </div>
 
               {error && <p className={styles.error}>{error}</p>}
               {needsInspo && inspoPaths.length === 0 && (
-                <p className={styles.error}>Please add at least one inspiration photo to continue.</p>
+                <p className={styles.error}>{tf('inspoMissing')}</p>
               )}
 
               <div className={styles.actions}>
                 <button className="btn btn-ghost" onClick={() => setStep('slot')}>
-                  ← Back
+                  {tf('back')}
                 </button>
                 <button className={`btn btn-solid ${styles.grow}`} disabled={!canSubmit || submitting} onClick={submit}>
                   {submitting && <NailLoader size="mini" />}
-                  {submitting ? 'Sending…' : 'Request booking →'}
+                  {submitting ? tf('sending') : tf('request')}
                 </button>
               </div>
             </section>
@@ -370,20 +372,20 @@ export default function BookWizard({ locale }: { locale: string }) {
 
         {/* ---------------- live summary ---------------- */}
         <aside className={styles.summary}>
-          <p className="eyebrow">Your booking</p>
+          <p className="eyebrow">{tf('summaryTitle')}</p>
 
           {service ? (
             <div className={styles.sumRow}>
-              <span className={styles.sumLabel}>Service</span>
+              <span className={styles.sumLabel}>{tf('summaryService')}</span>
               <span className={styles.sumValue}>{isAr ? service.name_ar : service.name_en}</span>
             </div>
           ) : (
-            <p className={styles.sumEmpty}>Nothing picked yet.</p>
+            <p className={styles.sumEmpty}>{tf('summaryEmpty')}</p>
           )}
 
           {variant && (
             <div className={styles.sumRow}>
-              <span className={styles.sumLabel}>Option</span>
+              <span className={styles.sumLabel}>{tf('summaryOption')}</span>
               <span className={styles.sumValue}>
                 {isAr ? variant.name_ar : variant.name_en}
                 {variant.is_quantity ? ` ×${quantity}` : ''}
@@ -393,7 +395,7 @@ export default function BookWizard({ locale }: { locale: string }) {
 
           {date && time && (
             <div className={styles.sumRow}>
-              <span className={styles.sumLabel}>When</span>
+              <span className={styles.sumLabel}>{tf('summaryWhen')}</span>
               <span className={styles.sumValue}>
                 {date}
                 <br />
@@ -405,14 +407,14 @@ export default function BookWizard({ locale }: { locale: string }) {
           {variant && (
             <>
               <div className={styles.sumRow}>
-                <span className={styles.sumLabel}>Duration</span>
+                <span className={styles.sumLabel}>{tf('summaryDuration')}</span>
                 <span className={styles.sumValue}>{formatDuration(totalMinutes)}</span>
               </div>
               <div className={styles.sumTotal}>
-                <span className={styles.sumLabel}>Total</span>
-                <span className={styles.sumTotalValue}>{totalPrice} EGP</span>
+                <span className={styles.sumLabel}>{tf('summaryTotal')}</span>
+                <span className={styles.sumTotalValue}>{money(totalPrice)}</span>
               </div>
-              <p className={styles.sumNote}>Paid in person at your appointment.</p>
+              <p className={styles.sumNote}>{tf('payInPerson')}</p>
             </>
           )}
         </aside>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 
 export interface DayAvailability {
   /** YYYY-MM-DD */
@@ -22,11 +23,6 @@ interface CalendarProps {
   ownerMode?: boolean;
 }
 
-const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
 
 function toDateStr(y: number, m: number, d: number) {
   return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
@@ -34,6 +30,17 @@ function toDateStr(y: number, m: number, d: number) {
 
 export default function Calendar({ year, month, selectedDate, onSelectDate, onMonthChange, availability, ownerMode }: CalendarProps) {
   const availByDate = Object.fromEntries(availability.map((a) => [a.date, a]));
+  const locale = useLocale();
+  const t = useTranslations('bookFlow');
+  const intlLocale = locale === 'ar' ? 'ar-EG' : 'en-GB';
+  // Month and weekday names from Intl, so Arabic gets Arabic names for free.
+  // 2023-01-01 was a Sunday; the grid starts on Sunday.
+  const monthName = new Intl.DateTimeFormat(intlLocale, { month: 'long', timeZone: 'UTC' }).format(
+    new Date(Date.UTC(2023, month, 1))
+  );
+  const dow = Array.from({ length: 7 }, (_, i) =>
+    new Intl.DateTimeFormat(intlLocale, { weekday: 'narrow', timeZone: 'UTC' }).format(new Date(Date.UTC(2023, 0, 1 + i)))
+  );
   const firstOfMonth = new Date(year, month, 1);
   const startWeekday = firstOfMonth.getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -63,25 +70,25 @@ export default function Calendar({ year, month, selectedDate, onSelectDate, onMo
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.9rem' }}>
         <button
           onClick={prevMonth}
-          aria-label="Previous month"
+          aria-label={t('prevMonth')}
           style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: 'var(--deep)' }}
         >
-          ‹
+          <span className="flip-x" style={{ display: 'inline-block' }}>‹</span>
         </button>
         <div className="sans" style={{ fontWeight: 700, fontSize: '.9rem' }}>
-          {MONTH_NAMES[month]} {year}
+          {monthName} {year}
         </div>
         <button
           onClick={nextMonth}
-          aria-label="Next month"
+          aria-label={t('nextMonth')}
           style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: 'var(--deep)' }}
         >
-          ›
+          <span className="flip-x" style={{ display: 'inline-block' }}>›</span>
         </button>
       </div>
 
       <div className="sans" style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4, fontSize: '.72rem', textAlign: 'center' }}>
-        {DOW.map((d, i) => (
+        {dow.map((d, i) => (
           <div key={i} style={{ color: 'var(--sub)', fontWeight: 700, padding: '.3rem 0' }}>
             {d}
           </div>

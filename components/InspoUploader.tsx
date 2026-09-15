@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import styles from './InspoUploader.module.css';
 
@@ -29,6 +30,7 @@ export default function InspoUploader({
   onChange: (paths: string[]) => void;
   required?: boolean;
 }) {
+  const t = useTranslations('bookFlow');
   const [items, setItems] = useState<Uploaded[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -41,7 +43,7 @@ export default function InspoUploader({
 
     const room = MAX_FILES - items.length;
     if (room <= 0) {
-      setError(`You can upload up to ${MAX_FILES} photos.`);
+      setError(t('uploadMax', { max: MAX_FILES }));
       return;
     }
 
@@ -53,18 +55,18 @@ export default function InspoUploader({
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        setError('Please sign in again to upload photos.');
+        setError(t('uploadSignIn'));
         return;
       }
 
       const added: Uploaded[] = [];
       for (const file of picked) {
         if (!file.type.startsWith('image/')) {
-          setError('Only image files can be uploaded.');
+          setError(t('uploadOnlyImages'));
           continue;
         }
         if (file.size > MAX_BYTES) {
-          setError('Each photo must be under 8 MB.');
+          setError(t('uploadTooBig'));
           continue;
         }
         const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
@@ -123,10 +125,10 @@ export default function InspoUploader({
         <span className={styles.dropIcon} aria-hidden="true">
           ✚
         </span>
-        <span className={styles.dropTitle}>{busy ? 'Uploading…' : 'Add inspiration photos'}</span>
+        <span className={styles.dropTitle}>{busy ? t('uploading') : t('uploadTitle')}</span>
         <span className={styles.dropHint}>
-          Tap to choose, or drag images here · up to {MAX_FILES} · max 8 MB each
-          {required ? ' · required for this design' : ''}
+          {t('uploadHint', { max: MAX_FILES })}
+          {required ? t('uploadHintRequired') : ''}
         </span>
       </label>
 
@@ -137,7 +139,7 @@ export default function InspoUploader({
           {items.map((item) => (
             <div key={item.path} className={styles.thumb}>
               <img src={item.previewUrl} alt={item.name} />
-              <button type="button" onClick={() => remove(item.path)} aria-label={`Remove ${item.name}`}>
+              <button type="button" onClick={() => remove(item.path)} aria-label={t('removePhoto', { name: item.name })}>
                 ×
               </button>
             </div>
