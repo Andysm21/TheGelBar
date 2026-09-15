@@ -55,7 +55,7 @@ export default function LoginPage() {
             Continue with Google
           </button>
 
-          <p className={styles.note}>Apple sign-in coming soon — Google is the primary path for now.</p>
+          <p className={styles.note}>We only use your name and email to manage your bookings.</p>
         </div>
 
         <p className={styles.owner}>
