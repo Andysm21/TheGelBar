@@ -678,3 +678,92 @@ export async function resyncGoogleCalendar() {
   for (const row of data ?? []) await syncBookingToGoogle(row.id);
   return { synced: data?.length ?? 0 };
 }
+
+/* ================= site photos ================= */
+
+const SITE_BUCKET = 'site-images';
+
+function revalidatePhotos() {
+  revalidateTag('gallery', 'max');
+  revalidateTag('catalog', 'max');
+  revalidatePath('/[locale]', 'page');
+  revalidatePath('/[locale]/work', 'page');
+  revalidatePath('/[locale]/services', 'page');
+  revalidatePath('/[locale]/admin/gallery', 'page');
+  revalidatePath('/[locale]/admin/services', 'page');
+}
+
+/** Only paths inside the site bucket's own folders — never an arbitrary key. */
+function assertSitePath(path: string, folder: 'gallery' | 'services') {
+  if (!new RegExp(`^${folder}/[A-Za-z0-9._-]+$`).test(path)) throw new Error('Invalid image path.');
+}
+
+export async function fetchGalleryForAdmin() {
+  const { supabase } = await requireOwner();
+  const { data, error } = await supabase
+    .from('gallery_images')
+    .select('id, storage_path, caption, sort_order')
+    .order('sort_order')
+    .order('created_at');
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function addGalleryImages(paths: string[]) {
+  const { supabase } = await requireOwner();
+  paths.forEach((p) => assertSitePath(p, 'gallery'));
+  const { data: last } = await supabase
+    .from('gallery_images')
+    .select('sort_order')
+    .order('sort_order', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  let next = (last?.sort_order ?? 0) + 1;
+  const { data, error } = await supabase
+    .from('gallery_images')
+    .insert(paths.map((storage_path) => ({ storage_path, sort_order: next++ })))
+    .select('id, storage_path, caption, sort_order');
+  if (error) throw error;
+  revalidatePhotos();
+  return data ?? [];
+}
+
+export async function deleteGalleryImage(id: string) {
+  const { supabase } = await requireOwner();
+  const { data: row } = await supabase.from('gallery_images').select('storage_path').eq('id', id).maybeSingle();
+  const { error } = await supabase.from('gallery_images').delete().eq('id', id);
+  if (error) throw error;
+  if (row?.storage_path) await supabase.storage.from(SITE_BUCKET).remove([row.storage_path]);
+  revalidatePhotos();
+}
+
+/** Persist a new order: ids listed first-to-last. */
+export async function reorderGallery(ids: string[]) {
+  const { supabase } = await requireOwner();
+  const results = await Promise.all(
+    ids.map((id, i) => supabase.from('gallery_images').update({ sort_order: i + 1 }).eq('id', id))
+  );
+  const failed = results.find((r) => r.error);
+  if (failed?.error) throw failed.error;
+  revalidatePhotos();
+}
+
+export async function updateGalleryCaption(id: string, caption: string) {
+  const { supabase } = await requireOwner();
+  const { error } = await supabase.from('gallery_images').update({ caption: caption.slice(0, 140) }).eq('id', id);
+  if (error) throw error;
+  revalidatePhotos();
+}
+
+export async function setServiceImage(serviceId: string, path: string | null) {
+  const { supabase } = await requireOwner();
+  if (path) assertSitePath(path, 'services');
+  const { data: current } = await supabase.from('services').select('image_path').eq('id', serviceId).maybeSingle();
+  const { error } = await supabase.from('services').update({ image_path: path }).eq('id', serviceId);
+  if (error) throw error;
+  // Remove the photo it replaced so old uploads don't pile up in storage.
+  if (current?.image_path && current.image_path !== path) {
+    await supabase.storage.from(SITE_BUCKET).remove([current.image_path]);
+  }
+  revalidatePhotos();
+}

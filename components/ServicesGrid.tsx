@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Reveal from './Reveal';
+import { serviceImageUrl } from '@/lib/site-images';
 import styles from './ServicesGrid.module.css';
 
 interface Variant {
   id: string;
-  kind: 'color' | 'simple' | 'complex';
+  kind: string;
   name_en: string;
   name_ar: string;
   price_egp: number;
@@ -20,15 +21,10 @@ interface Service {
   name_ar: string;
   description_en: string;
   description_ar: string;
+  image_path?: string | null;
   service_variants: Variant[];
 }
 
-const SERVICE_IMAGES: Record<string, string> = {
-  'gel-manicure': '/gallery/work-4.jpg',
-  'hard-gel-overlay': '/gallery/work-6.jpg',
-  'hard-gel-new-set': '/gallery/work-8.jpg',
-  'false-nails': '/gallery/work-2.jpg',
-};
 
 function formatDuration(mins: number) {
   const h = Math.floor(mins / 60);
@@ -70,7 +66,7 @@ export default function ServicesGrid({
             <Reveal key={s.id} delay={(i % 3) * 100}>
               <button className={styles.card} onClick={() => setOpenId(s.id)}>
                 <div className={styles.imgWrap}>
-                  <img src={SERVICE_IMAGES[s.id] ?? '/gallery/work-1.jpg'} alt="" loading="lazy" />
+                  <img src={serviceImageUrl(s)} alt="" loading="lazy" />
                   <span className={styles.veil}>View options</span>
                 </div>
                 <p className={`eyebrow ${styles.cardEyebrow}`}>{s.service_variants.length} options</p>
@@ -89,7 +85,7 @@ export default function ServicesGrid({
               ×
             </button>
             <div className={styles.modalImgWrap}>
-              <img src={SERVICE_IMAGES[open.id] ?? '/gallery/work-1.jpg'} alt="" />
+              <img src={serviceImageUrl(open)} alt="" />
             </div>
             <div className={styles.modalBody}>
               <p className="eyebrow" style={{ display: 'block', marginBottom: '.6rem' }}>

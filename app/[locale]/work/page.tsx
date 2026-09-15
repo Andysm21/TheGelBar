@@ -1,14 +1,21 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import Reveal from '@/components/Reveal';
+import { getGalleryImages } from '@/lib/supabase/cached-queries';
+import { BUNDLED_GALLERY, publicImageUrl } from '@/lib/site-images';
 import styles from './work.module.css';
 
-const GALLERY_IMAGES = Array.from({ length: 10 }, (_, i) => `/gallery/work-${i + 1}.jpg`);
 const INSTAGRAM_URL = 'https://www.instagram.com/thegelbar.eg';
 
 export default async function OurWorkPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations();
+  const uploaded = await getGalleryImages();
+  // Photos Mariam manages from the admin panel; the starter set until she adds any.
+  const photos =
+    uploaded.length > 0
+      ? uploaded.map((g: any) => ({ src: publicImageUrl(g.storage_path), caption: g.caption as string }))
+      : BUNDLED_GALLERY.map((src) => ({ src, caption: '' }));
 
   return (
     <div className={styles.page}>
@@ -22,11 +29,12 @@ export default async function OurWorkPage({ params }: { params: Promise<{ locale
       </header>
 
       <div className={styles.gallery}>
-        {GALLERY_IMAGES.map((src, i) => (
+        {photos.map(({ src, caption }, i) => (
           <Reveal key={src} delay={(i % 4) * 80} className={styles.galCell}>
-            <div className={`zoomable ${styles.galItem}`}>
-              <img src={src} alt="" loading="lazy" />
-            </div>
+            <figure className={`zoomable ${styles.galItem}`}>
+              <img src={src} alt={caption} loading="lazy" />
+              {caption && <figcaption className={styles.galCaption}>{caption}</figcaption>}
+            </figure>
           </Reveal>
         ))}
       </div>

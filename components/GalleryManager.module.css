@@ -1,0 +1,143 @@
+.drop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2.2rem 1.2rem;
+  border: 1.5px dashed var(--gold);
+  background: var(--surface);
+  text-align: center;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: normal;
+  margin-bottom: 1.6rem;
+  transition: background 0.2s ease;
+}
+
+.drop:hover {
+  background: var(--bg-alt);
+}
+
+.dropBusy {
+  cursor: progress;
+  opacity: 0.8;
+}
+
+/* visually hidden but still a real, tappable file input */
+.fileInput {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.dropTitle {
+  font-family: var(--font-display, Georgia), serif;
+  font-size: 1.25rem;
+  color: var(--deep);
+}
+
+.dropHint {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.76rem;
+  line-height: 1.6;
+  color: var(--sub);
+}
+
+.error {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.8rem;
+  color: var(--danger);
+  margin-bottom: 1.2rem;
+}
+
+.empty {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.85rem;
+  color: var(--sub);
+}
+
+.grid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: 1.1rem;
+}
+
+.item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.thumb {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--bg-alt);
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.position {
+  position: absolute;
+  top: 0.5rem;
+  inset-inline-start: 0.5rem;
+  min-width: 1.6rem;
+  padding: 0.15rem 0.4rem;
+  background: var(--deep);
+  color: var(--milk);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.caption {
+  border: none;
+  border-top: 1px solid var(--border);
+  min-height: 40px;
+  font-size: 0.78rem;
+  padding: 0.6rem 0.75rem;
+}
+
+.controls {
+  display: flex;
+  border-top: 1px solid var(--border);
+}
+
+.controls button {
+  flex: 1 1 0;
+  min-height: 42px;
+  background: none;
+  border: none;
+  border-inline-end: 1px solid var(--border);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.8rem;
+  color: var(--deep);
+  cursor: pointer;
+}
+
+.controls button:last-child {
+  border-inline-end: none;
+}
+
+.controls button:disabled {
+  color: var(--border);
+  cursor: default;
+}
+
+.controls .remove {
+  flex: 2 1 0;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--danger);
+}

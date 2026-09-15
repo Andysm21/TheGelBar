@@ -7,6 +7,7 @@ import SlotPicker from '@/components/SlotPicker';
 import InspoUploader from '@/components/InspoUploader';
 import { fetchCatalog, createBooking } from '@/lib/supabase/actions';
 import { formatTime12h } from '@/lib/availability';
+import { serviceImageUrl } from '@/lib/site-images';
 import styles from './BookWizard.module.css';
 
 const STEPS = [
@@ -33,16 +34,9 @@ interface Service {
   name_ar: string;
   description_en: string;
   description_ar: string;
+  image_path?: string | null;
   service_variants: Variant[];
 }
-
-const SERVICE_IMAGES: Record<string, string> = {
-  'gel-manicure': '/gallery/work-4.jpg',
-  'hard-gel-overlay': '/gallery/work-6.jpg',
-  'hard-gel-new-set': '/gallery/work-8.jpg',
-  'false-nails': '/gallery/work-2.jpg',
-  'add-ons': '/gallery/work-3.jpg',
-};
 
 function formatDuration(mins: number) {
   const h = Math.floor(mins / 60);
@@ -194,7 +188,10 @@ export default function BookWizard({ locale }: { locale: string }) {
                         aria-expanded={open}
                         onClick={() => {
                           if (open) {
+                            // Collapsing clears the choice too, so Continue can't
+                            // advance with an option whose service is closed.
                             setServiceId('');
+                            setVariantId('');
                           } else {
                             setServiceId(s.id);
                             setVariantId('');
@@ -205,7 +202,7 @@ export default function BookWizard({ locale }: { locale: string }) {
                         }}
                       >
                         <span className={styles.accThumb}>
-                          <img src={SERVICE_IMAGES[s.id] ?? '/gallery/work-1.jpg'} alt="" loading="lazy" />
+                          <img src={serviceImageUrl(s)} alt="" loading="lazy" />
                         </span>
                         <span className={styles.accInfo}>
                           <span className={styles.accName}>{isAr ? s.name_ar : s.name_en}</span>
@@ -274,7 +271,7 @@ export default function BookWizard({ locale }: { locale: string }) {
               </div>
 
               <div className={styles.actions}>
-                <button className={`btn btn-solid ${styles.grow}`} disabled={!variantId} onClick={() => setStep('slot')}>
+                <button className={`btn btn-solid ${styles.grow}`} disabled={!variant} onClick={() => setStep('slot')}>
                   Continue →
                 </button>
               </div>

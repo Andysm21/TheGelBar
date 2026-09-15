@@ -3,15 +3,14 @@ import Link from 'next/link';
 import NailProcess from '@/components/NailProcess/NailProcess';
 import HeroVideo from '@/components/HeroVideo';
 import Reveal from '@/components/Reveal';
-import { getServiceCatalog } from '@/lib/supabase/cached-queries';
+import { getServiceCatalog, getGalleryImages } from '@/lib/supabase/cached-queries';
+import { BUNDLED_GALLERY, publicImageUrl, serviceImageUrl } from '@/lib/site-images';
 import styles from './page.module.css';
 
 const ADDRESS = '7 Ahmed Oraby, Madinet Al Eelam, Agouza, Giza Governorate 3755201';
 const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ADDRESS)}`;
 const MAPS_EMBED_URL = `https://www.google.com/maps?q=${encodeURIComponent(ADDRESS)}&output=embed`;
 
-const FEATURED_IMAGES = ['/gallery/work-4.jpg', '/gallery/work-6.jpg', '/gallery/work-8.jpg'];
-const GALLERY_TEASER = ['/gallery/work-1.jpg', '/gallery/work-2.jpg', '/gallery/work-3.jpg', '/gallery/work-9.jpg'];
 
 const VALUES = [
   {
@@ -31,7 +30,10 @@ const VALUES = [
 export default async function LandingPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations();
-  const services = await getServiceCatalog();
+  const [services, gallery] = await Promise.all([getServiceCatalog(), getGalleryImages()]);
+  // Her four most recent-first gallery photos, or the starter set until she uploads some.
+  const galleryTeaser =
+    gallery.length > 0 ? gallery.slice(0, 4).map((g: any) => publicImageUrl(g.storage_path)) : BUNDLED_GALLERY.slice(0, 4);
   const featured = (services as any[]).slice(0, 3);
 
   return (
@@ -86,7 +88,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
             <Reveal key={s.id} delay={i * 110}>
               <article className={styles.featuredCard}>
                 <div className={`zoomable ${styles.featuredImg}`}>
-                  <img src={FEATURED_IMAGES[i % FEATURED_IMAGES.length]} alt="" loading="lazy" />
+                  <img src={serviceImageUrl(s)} alt="" loading="lazy" />
                 </div>
                 <p className="eyebrow">{(s.service_variants ?? []).length} options</p>
                 <h3 className={styles.featuredName}>{locale === 'ar' ? s.name_ar : s.name_en}</h3>
@@ -148,7 +150,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
           <h2 className={styles.sectionTitle}>Browse real sets</h2>
         </Reveal>
         <div className={styles.teaserGrid}>
-          {GALLERY_TEASER.map((src, i) => (
+          {galleryTeaser.map((src, i) => (
             <Reveal key={src} delay={i * 90}>
               <div className={`zoomable ${styles.teaserItem}`}>
                 <img src={src} alt="" loading="lazy" />

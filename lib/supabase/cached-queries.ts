@@ -32,7 +32,7 @@ export const getServiceCatalog = cache(
       const { data, error } = await supabase
         .from('services')
         .select(
-          `id, name_en, name_ar, description_en, description_ar, sort_order,
+          `id, name_en, name_ar, description_en, description_ar, sort_order, image_path,
            service_variants ( id, kind, name_en, name_ar, price_egp, duration_minutes, requires_inspo, sort_order, is_active, is_quantity, max_quantity )`
         )
         .eq('is_active', true)
@@ -92,7 +92,7 @@ export const getCatalogForAdmin = cache(async () => {
     supabase
       .from('services')
       .select(
-        `id, name_en, name_ar, description_en, description_ar, sort_order, is_active,
+        `id, name_en, name_ar, description_en, description_ar, sort_order, is_active, image_path,
          service_variants ( id, kind, name_en, name_ar, price_egp, duration_minutes, requires_inspo, sort_order, is_active, is_quantity, max_quantity )`
       )
       .order('sort_order'),
@@ -110,6 +110,26 @@ export const getCatalogForAdmin = cache(async () => {
     addons: addons.data ?? [],
   };
 });
+
+/* ---------------- gallery ---------------- */
+
+export const getGalleryImages = cache(
+  unstable_cache(
+    async () => {
+      const supabase = createPublicClient();
+      const { data, error } = await supabase
+        .from('gallery_images')
+        .select('id, storage_path, caption, sort_order')
+        .order('sort_order')
+        .order('created_at');
+      // Before migration 005 the table doesn't exist; show the bundled photos.
+      if (error) return [];
+      return data ?? [];
+    },
+    ['gallery-v1'],
+    { revalidate: 3600, tags: ['gallery'] }
+  )
+);
 
 /* ---------------- availability ---------------- */
 

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { updateService, updateVariant, updateAddon, updateSettings, refreshCatalogCache } from '@/lib/supabase/actions';
+import ServicePhoto from './ServicePhoto';
 import styles from './CatalogEditor.module.css';
 
 interface Variant {
@@ -22,6 +23,7 @@ interface Service {
   description_en: string;
   description_ar: string;
   is_active: boolean;
+  image_path: string | null;
   service_variants: Variant[];
 }
 interface Addon {
@@ -138,6 +140,8 @@ export default function CatalogEditor({
               Visible
             </label>
           </header>
+
+          <ServicePhoto serviceId={s.id} imagePath={s.image_path} />
 
           <textarea
             className={styles.desc}

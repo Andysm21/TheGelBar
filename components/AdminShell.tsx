@@ -12,6 +12,7 @@ const NAV = [
   { href: 'admin/calendar', label: 'Calendar', icon: '▦' },
   { href: 'admin/clients', label: 'Clients', icon: '◇' },
   { href: 'admin/services', label: 'Catalog', icon: '❋' },
+  { href: 'admin/gallery', label: 'Gallery', icon: '▣' },
   { href: 'admin/analytics', label: 'Analytics', icon: '◐' },
 ];
 
