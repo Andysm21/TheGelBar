@@ -1,5 +1,8 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 import AdminShell from '@/components/AdminShell';
+import GoogleCalendarCard from '@/components/GoogleCalendarCard';
+import { getGoogleCalendarStatus } from '@/lib/supabase/actions';
 import { getTodayBookings, getPendingBookingsForOwner, getAnalyticsSummary, getMonthAvailability } from '@/lib/supabase/cached-queries';
 import { totalRangeMinutes } from '@/lib/availability';
 import styles from './dashboard.module.css';
@@ -13,11 +16,12 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
   const { locale } = await params;
   const now = new Date();
 
-  const [today, pending, stats, month] = await Promise.all([
+  const [today, pending, stats, month, google] = await Promise.all([
     getTodayBookings(),
     getPendingBookingsForOwner(),
     getAnalyticsSummary(),
     getMonthAvailability(now.getFullYear(), now.getMonth()),
+    getGoogleCalendarStatus().catch(() => null),
   ]);
 
   const todayStr = cairoDate(now);
@@ -61,6 +65,13 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
           <span className={styles.statMeta}>EGP · {stats.bookingCount} done</span>
         </div>
       </div>
+
+      {google && (
+        // useSearchParams needs a Suspense boundary in the App Router
+        <Suspense fallback={null}>
+          <GoogleCalendarCard status={google} />
+        </Suspense>
+      )}
 
       <div className={styles.columns}>
         {/* pending queue */}

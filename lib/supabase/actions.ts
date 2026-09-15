@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath, revalidateTag } from 'next/cache';
+import { after } from 'next/server';
 import { headers } from 'next/headers';
 import { createClient } from './server';
 import { isFreeLoyaltySession, nextLoyaltyPoints } from '../services-catalog';
@@ -15,6 +16,8 @@ import {
 import { rateLimit } from '../rate-limit';
 import { computeOpenStarts, toMinutes } from '../availability';
 import { cairoToInstant, cairoDate, cairoMinutes, cairoDayBounds } from '../time';
+import { syncBookingToGoogle, googleConfigured } from '../google/calendar';
+import { createAdminClient } from './admin';
 import { sendEmail, ownerAddress } from '../email/send';
 import {
   notifyBookingRequested,
@@ -61,7 +64,13 @@ async function requireOwner() {
   return { supabase, user };
 }
 
-function revalidateBookingViews() {
+/**
+ * Refresh every page that shows bookings. Given the booking that changed,
+ * also mirror it to the owner's Google Calendar — after the response is sent,
+ * so a slow or failing Google call never delays or breaks the action.
+ */
+function revalidateBookingViews(changedBookingId?: string) {
+  if (changedBookingId) after(() => syncBookingToGoogle(changedBookingId));
   revalidatePath('/[locale]/admin/bookings', 'page');
   revalidatePath('/[locale]/admin/bookings/[id]', 'page');
   revalidatePath('/[locale]/admin/dashboard', 'page');
@@ -268,7 +277,7 @@ export async function createBooking(input: CreateBookingInput) {
   const full = await getBookingById(booking.id);
   await notifyBookingRequested(full, settings.owner_email);
 
-  revalidateBookingViews();
+  revalidateBookingViews(booking.id);
   return booking;
 }
 
@@ -285,7 +294,7 @@ export async function cancelBooking(bookingId: string) {
 
   const settings = await getAppSettings();
   await notifyBookingCancelled(booking, settings.owner_email, 'client');
-  revalidateBookingViews();
+  revalidateBookingViews(bookingId);
 }
 
 export async function requestReschedule(bookingId: string, newDate: string, newTime: string) {
@@ -310,7 +319,7 @@ export async function requestReschedule(bookingId: string, newDate: string, newT
 
   const settings = await getAppSettings();
   await notifyBookingRescheduled(await getBookingById(bookingId), settings.owner_email, 'client');
-  revalidateBookingViews();
+  revalidateBookingViews(bookingId);
 }
 
 /* ================= owner: bookings ================= */
@@ -330,7 +339,7 @@ export async function setBookingStatus(
   if (status === 'declined') await notifyBookingDeclined(booking, reason);
   if (status === 'needs_reschedule') await notifyBookingRescheduled(booking, settings.owner_email, 'owner');
 
-  revalidateBookingViews();
+  revalidateBookingViews(bookingId);
 }
 
 export async function ownerCancelBooking(bookingId: string, reason?: string) {
@@ -339,7 +348,7 @@ export async function ownerCancelBooking(bookingId: string, reason?: string) {
   if (error) throw error;
 
   await notifyBookingDeclined(await getBookingById(bookingId), reason);
-  revalidateBookingViews();
+  revalidateBookingViews(bookingId);
 }
 
 export async function ownerReschedule(bookingId: string, newDate: string, newTime: string) {
@@ -360,7 +369,7 @@ export async function ownerReschedule(bookingId: string, newDate: string, newTim
 
   const settings = await getAppSettings();
   await notifyBookingRescheduled(await getBookingById(bookingId), settings.owner_email, 'owner');
-  revalidateBookingViews();
+  revalidateBookingViews(bookingId);
 }
 
 /**
@@ -417,7 +426,7 @@ export async function changeBookingVariant(bookingId: string, newVariantId: stri
     note,
   });
 
-  revalidateBookingViews();
+  revalidateBookingViews(bookingId);
 }
 
 export interface MarkPaidInput {
@@ -632,4 +641,40 @@ export async function sendTestEmail() {
   if (res.skipped) throw new Error('GMAIL_USER / GMAIL_APP_PASSWORD are not set in the environment.');
   if (!res.ok) throw new Error('Gmail rejected the message — check the app password.');
   return { ok: true, to };
+}
+
+/* ================= Google Calendar ================= */
+
+export async function getGoogleCalendarStatus() {
+  const { supabase } = await requireOwner();
+  const { data } = await supabase.from('google_calendar').select('google_email, connected_at').eq('id', 1).maybeSingle();
+  return {
+    configured: googleConfigured(),
+    serviceRole: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+    connected: Boolean(data),
+    email: data?.google_email ?? null,
+    connectedAt: data?.connected_at ?? null,
+  };
+}
+
+export async function disconnectGoogleCalendar() {
+  const { supabase } = await requireOwner();
+  const { error } = await supabase.from('google_calendar').delete().eq('id', 1);
+  if (error) throw error;
+  revalidatePath('/[locale]/admin/dashboard', 'page');
+}
+
+/** Push every upcoming pending/confirmed booking — used right after connecting. */
+export async function resyncGoogleCalendar() {
+  await requireOwner();
+  const admin = createAdminClient();
+  if (!admin) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set on the server.');
+  const { data, error } = await admin
+    .from('bookings')
+    .select('id')
+    .in('status', ['pending', 'confirmed'])
+    .gte('scheduled_start', new Date().toISOString());
+  if (error) throw error;
+  for (const row of data ?? []) await syncBookingToGoogle(row.id);
+  return { synced: data?.length ?? 0 };
 }
