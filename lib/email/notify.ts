@@ -1,6 +1,7 @@
 import { sendEmail, siteUrl, ownerAddress } from './send';
 import * as tpl from './templates';
 import type { BookingEmailData } from './templates';
+import { buildIcs } from './ics';
 
 /** Shape returned by the booking-with-relations query in cached-queries. */
 export interface BookingRecord {
@@ -51,6 +52,24 @@ export function toEmailData(b: BookingRecord): BookingEmailData & { clientEmail:
   };
 }
 
+/**
+ * Calendar file for a booking. The UID is the booking id, so a reschedule
+ * replaces the event in the client's calendar instead of adding a second one;
+ * the sequence only has to increase, and the clock always does.
+ */
+function icsFor(b: BookingRecord, method: 'REQUEST' | 'CANCEL' = 'REQUEST') {
+  const d = toEmailData(b);
+  return buildIcs({
+    uid: b.id,
+    start: new Date(b.scheduled_start),
+    end: new Date(b.scheduled_end),
+    summary: `The Gel Bar — ${d.serviceName}${d.variantName ? ` (${d.variantName})` : ''}`,
+    description: `Booking ref ${d.bookingRef}. Manage it at ${d.siteUrl}/en/bookings`,
+    sequence: Math.floor(Date.now() / 1000),
+    method,
+  });
+}
+
 /* ---------------- dispatchers ---------------- */
 
 export async function notifyBookingRequested(b: BookingRecord, ownerEmail?: string) {
@@ -66,7 +85,7 @@ export async function notifyBookingRequested(b: BookingRecord, ownerEmail?: stri
 
 export async function notifyBookingConfirmed(b: BookingRecord) {
   const d = toEmailData(b);
-  await sendEmail({ to: d.clientEmail, ...tpl.clientBookingConfirmed(d) });
+  await sendEmail({ to: d.clientEmail, ...tpl.clientBookingConfirmed(d), ics: icsFor(b) });
 }
 
 export async function notifyBookingDeclined(b: BookingRecord, reason?: string) {
@@ -76,16 +95,26 @@ export async function notifyBookingDeclined(b: BookingRecord, reason?: string) {
 
 export async function notifyBookingCancelled(b: BookingRecord, ownerEmail: string | undefined, by: 'client' | 'owner') {
   const d = toEmailData(b);
-  const jobs = [sendEmail({ to: d.clientEmail, ...tpl.clientBookingCancelled(d) })];
+  const jobs = [sendEmail({ to: d.clientEmail, ...tpl.clientBookingCancelled(d), ics: icsFor(b, 'CANCEL') })];
   if (by === 'client') jobs.push(sendEmail({ to: ownerEmail || ownerAddress(), ...tpl.ownerBookingCancelled(d) }));
   await Promise.allSettled(jobs);
 }
 
 export async function notifyBookingRescheduled(b: BookingRecord, ownerEmail: string | undefined, by: 'client' | 'owner') {
   const d = toEmailData(b);
-  const jobs = [sendEmail({ to: d.clientEmail, ...tpl.clientBookingRescheduled(d, by) })];
+  // An owner-proposed reschedule has no new time yet, so only attach a
+  // calendar file when the booking actually moved.
+  const moved = by === 'client' || (b as { status?: string }).status !== 'needs_reschedule';
+  const jobs = [
+    sendEmail({ to: d.clientEmail, ...tpl.clientBookingRescheduled(d, by), ics: moved ? icsFor(b) : undefined }),
+  ];
   if (by === 'client') jobs.push(sendEmail({ to: ownerEmail || ownerAddress(), ...tpl.ownerBookingRescheduled(d) }));
   await Promise.allSettled(jobs);
+}
+
+export async function notifyBookingReminder(b: BookingRecord) {
+  const d = toEmailData(b);
+  return sendEmail({ to: d.clientEmail, ...tpl.clientBookingReminder(d), ics: icsFor(b) });
 }
 
 export async function notifyTierChanged(

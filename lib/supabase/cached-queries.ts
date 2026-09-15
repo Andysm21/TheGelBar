@@ -12,7 +12,7 @@ import { cairoDayBounds, cairoDate } from '../time';
 //    and changes rarely — cached with unstable_cache + a tag, and read
 //    through a cookie-free client (unstable_cache forbids cookies()).
 
-const BOOKING_SELECT = `
+export const BOOKING_SELECT = `
   id, status, scheduled_start, scheduled_end, total_price_egp, total_minutes,
   is_loyalty_free, health_notes, service_id, variant_id, client_id, variant_quantity,
   amount_paid_egp, payment_note, paid_at,

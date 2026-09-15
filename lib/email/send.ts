@@ -22,6 +22,8 @@ export interface SendArgs {
   subject: string;
   html: string;
   replyTo?: string;
+  /** Raw iCalendar text; attached as invite.ics. */
+  ics?: string;
 }
 
 type Transporter = ReturnType<typeof nodemailer.createTransport>;
@@ -45,7 +47,7 @@ export function ownerAddress() {
   return process.env.GMAIL_USER || 'thegelbar.eg@gmail.com';
 }
 
-export async function sendEmail({ to, subject, html, replyTo }: SendArgs): Promise<{ ok: boolean; skipped?: boolean }> {
+export async function sendEmail({ to, subject, html, replyTo, ics }: SendArgs): Promise<{ ok: boolean; skipped?: boolean }> {
   if (!to) {
     console.warn(`[email] no recipient for "${subject}"`);
     return { ok: false, skipped: true };
@@ -60,7 +62,19 @@ export async function sendEmail({ to, subject, html, replyTo }: SendArgs): Promi
   const from = `The Gel Bar <${ownerAddress()}>`;
 
   try {
-    await tx.sendMail({ from, to, subject, html, replyTo });
+    await tx.sendMail({
+      from,
+      to,
+      subject,
+      html,
+      replyTo,
+      // A plain attachment rather than nodemailer's icalEvent: icalEvent turns
+      // the email itself into a meeting invite, which Gmail renders with
+      // Yes/No/Maybe buttons that mean nothing for a salon appointment.
+      attachments: ics
+        ? [{ filename: 'appointment.ics', content: ics, contentType: 'text/calendar; charset=utf-8' }]
+        : undefined,
+    });
     return { ok: true };
   } catch (err) {
     console.error(`[email] send failed for "${subject}" → ${to}`, err);

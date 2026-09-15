@@ -140,6 +140,22 @@ export function clientBookingConfirmed(d: BookingEmailData) {
   };
 }
 
+export function clientBookingReminder(d: BookingEmailData) {
+  return {
+    subject: `See you tomorrow — ${d.timeLabel}`,
+    html: shell(
+      'See you tomorrow',
+      `Reminder: ${d.serviceName} tomorrow at ${d.timeLabel}`,
+      paragraph(`Hi ${escape(d.clientName)}, a quick reminder that your appointment is <strong>tomorrow</strong>.`) +
+        detailsTable(d) +
+        paragraph(
+          `The studio is at 7 Ahmed Oraby, Madinet Al Eelam, Agouza. If you can't make it, please let Mariam know as soon as possible so someone else can take the slot.`
+        ),
+      { label: 'View my booking', url: `${d.siteUrl}/en/bookings` }
+    ),
+  };
+}
+
 export function clientBookingDeclined(d: BookingEmailData, reason?: string) {
   return {
     subject: `About your ${d.dateLabel} booking`,
