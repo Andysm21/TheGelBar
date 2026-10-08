@@ -7,3 +7,6 @@ mockups.zip
 # Raw unprocessed source photos — processed versions live in public/gallery
 public/nails-gallery
 tsconfig.tsbuildinfo
+
+# Local secrets — never commit
+CREDENTIALS.local.md
