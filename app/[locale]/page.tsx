@@ -46,7 +46,9 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
         <div className={styles.heroScrim} />
         <div className={styles.heroInner}>
           <p className={`eyebrow ${styles.heroEyebrow}`}>Welcome to</p>
-          <h1 className={styles.heroTitle}>The Gel Bar</h1>
+          <h1 className={styles.heroTitle}>
+            <img src="/brand/logo-ivory.png" alt="The Gel Bar by Mariam Elgergawy" width={985} height={276} />
+          </h1>
           <p className={styles.heroSub}>A solo nail studio in Mohandeseen, Cairo — by appointment only</p>
           <div className={styles.heroCtas}>
             <Link href={`/${locale}/book`} className="btn btn-light">

@@ -47,11 +47,18 @@
 }
 
 .heroTitle {
-  font-size: clamp(3rem, 11vw, 6.5rem);
-  color: #fff;
-  letter-spacing: 0.01em;
-  text-shadow: 0 4px 40px rgba(0, 0, 0, 0.35);
+  margin: 0;
+  line-height: 0;
   animation: fadeUp 0.9s cubic-bezier(0.22, 0.8, 0.3, 1) 0.1s both;
+}
+
+.heroTitle img {
+  display: block;
+  margin: 0 auto;
+  width: clamp(280px, 62vw, 640px);
+  height: auto;
+  /* keeps the thin script strokes readable over the moving video */
+  filter: drop-shadow(0 3px 22px rgba(52, 22, 24, 0.55));
 }
 
 .heroSub {
