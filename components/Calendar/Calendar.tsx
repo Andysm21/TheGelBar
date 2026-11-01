@@ -111,16 +111,16 @@ export default function Calendar({ year, month, selectedDate, onSelectDate, onMo
           let color = 'var(--text)';
           let cursor = clickable ? 'pointer' : 'not-allowed';
           if (isSelected) {
-            bg = 'var(--pink)';
-            color = '#fff';
+            bg = 'var(--wine)';
+            color = 'var(--ivory)';
           } else if (isBlocked) {
-            bg = '#f6e2ea';
-            color = '#c294a8';
+            bg = 'var(--champagne)';
+            color = 'var(--sand)';
           } else if (isFull) {
-            bg = '#f6e2ea';
-            color = '#c294a8';
+            bg = 'var(--champagne)';
+            color = 'var(--sand)';
           } else if (info?.openCount !== undefined) {
-            bg = '#ffe5ee';
+            bg = 'var(--beige)';
           }
 
           return (

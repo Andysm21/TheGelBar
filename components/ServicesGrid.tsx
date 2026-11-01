@@ -12,6 +12,7 @@ interface Variant {
   name_ar: string;
   price_egp: number;
   is_quantity?: boolean;
+  price_is_starting?: boolean;
   duration_minutes: number;
   requires_inspo: boolean;
 }
@@ -100,15 +101,24 @@ export default function ServicesGrid({
                 {open.service_variants.map((v) => (
                   <li key={v.id} className={styles.variantRow}>
                     <span>
-                      <span className={styles.variantName}>{isAr ? v.name_ar : v.name_en}</span>
+                      <span className={styles.variantName}>
+                        {isAr ? v.name_ar : v.name_en}
+                        {v.price_is_starting && (
+                          <span className={styles.startsTag}>
+                            {isAr ? `تبدأ من ${v.price_egp} جنيه` : `Starts from ${v.price_egp} LE`}
+                          </span>
+                        )}
+                      </span>
                       <span className={styles.variantMeta}>
                         {formatDuration(v.duration_minutes)}
                         {v.requires_inspo ? ' · inspo photo required' : ''}
                       </span>
                     </span>
-                    <span className={styles.variantPrice}>
-                      {v.price_egp} EGP{v.is_quantity ? ' each' : ''}
-                    </span>
+                    {!v.price_is_starting && (
+                      <span className={styles.variantPrice}>
+                        {v.price_egp} EGP{v.is_quantity ? ' each' : ''}
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>

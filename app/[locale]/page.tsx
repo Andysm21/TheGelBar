@@ -8,6 +8,8 @@ import { BUNDLED_GALLERY, publicImageUrl, serviceImageUrl } from '@/lib/site-ima
 import styles from './page.module.css';
 
 const ADDRESS = '7 Ahmed Oraby, Madinet Al Eelam, Agouza, Giza Governorate 3755201';
+const PHONE = '+20 128 311 3335';
+const PHONE_HREF = 'tel:+201283113335';
 const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ADDRESS)}`;
 const MAPS_EMBED_URL = `https://www.google.com/maps?q=${encodeURIComponent(ADDRESS)}&output=embed`;
 
@@ -68,7 +70,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
           <p className="eyebrow">About · The Studio</p>
           <h2 className={styles.aboutTitle}>Nails worth the appointment</h2>
           <p className={`lede ${styles.aboutBody}`}>
-            The Gel Bar is run start-to-finish by Mariam Sherif El Gergawy. Every booking is one-on-one in a calm studio
+            The Gel Bar is run start-to-finish by Mariam Sherif Elgergawy. Every booking is one-on-one in a calm studio
             — no crowd, no conveyor belt. Just careful prep, precise hand-painted detail, and a finish built to last.
           </p>
           <Link href={`/${locale}/book`} className="btn">
@@ -172,6 +174,9 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
           <h2 className={styles.sectionTitle}>The studio</h2>
           <p className={`lede ${styles.locationAddr}`}>{ADDRESS}</p>
           <p className={styles.locationHours}>By appointment only · Confirmed per booking</p>
+          <p className={styles.locationPhone}>
+            <a href={PHONE_HREF}>{PHONE}</a>
+          </p>
           <a href={MAPS_URL} target="_blank" rel="noopener noreferrer" className="btn">
             Open in Google Maps
           </a>

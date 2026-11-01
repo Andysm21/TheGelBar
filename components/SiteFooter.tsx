@@ -4,6 +4,8 @@ import styles from './SiteFooter.module.css';
 
 const ADDRESS = '7 Ahmed Oraby, Madinet Al Eelam, Agouza, Giza Governorate 3755201';
 const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ADDRESS)}`;
+const PHONE = '+20 128 311 3335';
+const PHONE_HREF = 'tel:+201283113335';
 const INSTAGRAM_URL = 'https://www.instagram.com/thegelbar.eg';
 
 export default async function SiteFooter({ locale }: { locale: string }) {
@@ -13,8 +15,13 @@ export default async function SiteFooter({ locale }: { locale: string }) {
     <footer className={styles.footer}>
       <div className={styles.grid}>
         <div className={styles.brandCol}>
-          <div className={styles.brand}>The Gel Bar</div>
-          <p className={styles.brandSub}>Nails by Mariam Sherif El Gergawy</p>
+          <img
+            src="/brand/logo-ivory.png"
+            alt="The Gel Bar by Mariam Elgergawy"
+            width={985}
+            height={276}
+            className={styles.logo}
+          />
           <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className={styles.ig}>
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6">
               <rect x="2" y="2" width="20" height="20" rx="5.5" />
@@ -43,6 +50,9 @@ export default async function SiteFooter({ locale }: { locale: string }) {
           <p className={styles.text}>By appointment only</p>
           <a href={MAPS_URL} target="_blank" rel="noopener noreferrer" className={styles.text}>
             {ADDRESS}
+          </a>
+          <a href={PHONE_HREF} className={styles.text}>
+            {PHONE}
           </a>
         </div>
 

@@ -128,6 +128,7 @@
     "uploadOnlyImages": "يمكن رفع ملفات الصور فقط.",
     "uploadTooBig": "يجب أن يكون حجم كل صورة أقل من 8 ميجابايت.",
     "uploadMax": "يمكنك رفع {max} صور كحد أقصى.",
-    "removePhoto": "إزالة {name}"
+    "removePhoto": "إزالة {name}",
+    "startsFrom": "تبدأ من {amount} جنيه"
   }
 }

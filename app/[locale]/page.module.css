@@ -30,7 +30,7 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(180deg, rgba(62, 20, 39, 0.45), rgba(62, 20, 39, 0.28) 45%, rgba(241, 183, 205, 0.92));
+  background: linear-gradient(180deg, rgba(107, 48, 50, 0.45), rgba(107, 48, 50, 0.28) 45%, rgba(241, 235, 224, 0.92));
 }
 
 .heroInner {
@@ -40,7 +40,7 @@
 }
 
 .heroEyebrow {
-  color: #f7dbe6 !important;
+  color: #f1ebe0 !important;
   display: block;
   margin-bottom: 1.4rem;
   animation: fadeUp 0.8s cubic-bezier(0.22, 0.8, 0.3, 1) both;
@@ -59,7 +59,7 @@
   font-size: 0.76rem;
   letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: #f0cbdb;
+  color: #ddd2c6;
   margin-top: 1.4rem;
   animation: fadeUp 0.9s cubic-bezier(0.22, 0.8, 0.3, 1) 0.22s both;
 }
@@ -352,7 +352,24 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--gold);
+  margin-bottom: 0.9rem;
+}
+
+.locationPhone {
   margin-bottom: 2rem;
+  font-family: var(--font-display, Georgia), serif;
+  font-size: 1.25rem;
+  letter-spacing: 0.03em;
+}
+
+.locationPhone a {
+  color: var(--deep);
+  border-bottom: 1px solid var(--sand);
+}
+
+.locationPhone a:hover {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
 }
 
 .locationMap {
@@ -376,6 +393,7 @@
 .closingEyebrow {
   display: block;
   margin-bottom: 1rem;
+  color: var(--sand);
 }
 
 .closingTitle {

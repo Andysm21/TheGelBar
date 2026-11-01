@@ -67,7 +67,7 @@ export default function LoginPage() {
       </div>
 
       <div className={styles.art} aria-hidden="true">
-        <img src="/gallery/work-3.jpg" alt="" />
+        <img src="/brand/embossed.jpg" alt="" />
       </div>
     </div>
   );

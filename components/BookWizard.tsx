@@ -27,6 +27,7 @@ interface Variant {
   requires_inspo: boolean;
   is_quantity: boolean;
   max_quantity: number;
+  price_is_starting?: boolean;
 }
 interface Service {
   id: string;
@@ -232,17 +233,27 @@ export default function BookWizard({ locale }: { locale: string }) {
                                 >
                                   <span className={styles.radio} aria-hidden="true" />
                                   <span className={styles.optionMain}>
-                                    <span className={styles.optionName}>{isAr ? v.name_ar : v.name_en}</span>
+                                    <span className={styles.optionName}>
+                                      {isAr ? v.name_ar : v.name_en}
+                                      {v.price_is_starting && (
+                                        <span className={styles.startsTag}>
+                                          {tf('startsFrom', { amount: v.price_egp.toLocaleString(isAr ? 'ar-EG' : 'en-US') })}
+                                        </span>
+                                      )}
+                                    </span>
                                     <span className={styles.optionMeta}>
                                       {formatDuration(v.duration_minutes)}
                                       {v.is_quantity ? ` ${tf('each')}` : ''}
                                       {v.requires_inspo ? ` · ${tf('inspoRequiredTag')}` : ''}
                                     </span>
                                   </span>
-                                  <span className={styles.optionPrice}>
-                                    {money(v.price_egp)}
-                                    {v.is_quantity ? ` ${tf('each')}` : ''}
-                                  </span>
+                                  {/* a starting price is already spelled out in the tag beside the name */}
+                                  {!v.price_is_starting && (
+                                    <span className={styles.optionPrice}>
+                                      {money(v.price_egp)}
+                                      {v.is_quantity ? ` ${tf('each')}` : ''}
+                                    </span>
+                                  )}
                                 </button>
                               );
                             })}
@@ -412,7 +423,9 @@ export default function BookWizard({ locale }: { locale: string }) {
               </div>
               <div className={styles.sumTotal}>
                 <span className={styles.sumLabel}>{tf('summaryTotal')}</span>
-                <span className={styles.sumTotalValue}>{money(totalPrice)}</span>
+                <span className={styles.sumTotalValue}>
+                  {variant.price_is_starting ? tf('from', { price: money(totalPrice) }) : money(totalPrice)}
+                </span>
               </div>
               <p className={styles.sumNote}>{tf('payInPerson')}</p>
             </>

@@ -553,6 +553,7 @@ export async function updateVariant(
     requires_inspo?: boolean;
     is_active?: boolean;
     max_quantity?: number;
+    price_is_starting?: boolean;
   }
 ) {
   const { supabase } = await requireOwner();

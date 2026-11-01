@@ -1,7 +1,7 @@
 {
   "brand": {
     "name": "The Gel Bar",
-    "tagline": "Nails by Mariam Sherif El Gergawy",
+    "tagline": "Nails by Mariam Sherif Elgergawy",
     "location": "Mohandeseen, Cairo"
   },
   "nav": {
@@ -128,6 +128,7 @@
     "uploadOnlyImages": "Only image files can be uploaded.",
     "uploadTooBig": "Each photo must be under 8 MB.",
     "uploadMax": "You can upload up to {max} photos.",
-    "removePhoto": "Remove {name}"
+    "removePhoto": "Remove {name}",
+    "startsFrom": "Starts from {amount} LE"
   }
 }

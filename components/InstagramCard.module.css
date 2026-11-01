@@ -10,14 +10,14 @@
   border: 1px solid var(--border);
   border-radius: 18px;
   padding: 1.2rem 1.4rem;
-  box-shadow: 0 8px 22px rgba(217, 102, 150, 0.1);
+  box-shadow: 0 8px 22px rgba(241, 235, 224, 0.1);
   font-size: 0.85rem;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 30px rgba(217, 102, 150, 0.18);
+  box-shadow: 0 14px 30px rgba(241, 235, 224, 0.18);
 }
 
 .icon {

@@ -25,18 +25,39 @@ export const BOOKING_SELECT = `
 
 /* ---------------- catalog ---------------- */
 
+const VARIANT_COLUMNS =
+  'id, kind, name_en, name_ar, price_egp, duration_minutes, requires_inspo, sort_order, is_active, is_quantity, max_quantity';
+
+/**
+ * Columns added by the newest migrations are requested optimistically. If the
+ * database hasn't been migrated yet Postgres answers 42703 (undefined column);
+ * retrying without them keeps the site up instead of crashing every page that
+ * reads the catalogue, and the new bits simply stay hidden until the SQL runs.
+ */
+async function selectServices(
+  run: (variantColumns: string, serviceColumns: string) => PromiseLike<{ data: any; error: any }>
+) {
+  const full = await run(`${VARIANT_COLUMNS}, price_is_starting`, 'image_path');
+  if (!full.error) return full;
+  if (full.error.code !== '42703') return full;
+  return run(VARIANT_COLUMNS, '');
+}
+
+
 export const getServiceCatalog = cache(
   unstable_cache(
     async () => {
       const supabase = createPublicClient();
-      const { data, error } = await supabase
-        .from('services')
-        .select(
-          `id, name_en, name_ar, description_en, description_ar, sort_order, image_path,
-           service_variants ( id, kind, name_en, name_ar, price_egp, duration_minutes, requires_inspo, sort_order, is_active, is_quantity, max_quantity )`
-        )
-        .eq('is_active', true)
-        .order('sort_order');
+      const { data, error } = await selectServices((variantCols, serviceCols) =>
+        supabase
+          .from('services')
+          .select(
+            `id, name_en, name_ar, description_en, description_ar, sort_order${serviceCols ? `, ${serviceCols}` : ''},
+             service_variants ( ${variantCols} )`
+          )
+          .eq('is_active', true)
+          .order('sort_order')
+      );
       if (error) throw error;
       // keep variants ordered and drop inactive ones
       return (data ?? []).map((s: any) => ({
@@ -89,13 +110,15 @@ export const getAppSettings = cache(
 export const getCatalogForAdmin = cache(async () => {
   const supabase = await createClient();
   const [services, addons] = await Promise.all([
-    supabase
-      .from('services')
-      .select(
-        `id, name_en, name_ar, description_en, description_ar, sort_order, is_active, image_path,
-         service_variants ( id, kind, name_en, name_ar, price_egp, duration_minutes, requires_inspo, sort_order, is_active, is_quantity, max_quantity )`
-      )
-      .order('sort_order'),
+    selectServices((variantCols, serviceCols) =>
+      supabase
+        .from('services')
+        .select(
+          `id, name_en, name_ar, description_en, description_ar, sort_order, is_active${serviceCols ? `, ${serviceCols}` : ''},
+           service_variants ( ${variantCols} )`
+        )
+        .order('sort_order')
+    ),
     // Legacy extras. Retired ones stay in the DB for old bookings but are
     // not offered any more, so the editor does not list them.
     supabase.from('addons').select('*').eq('is_active', true).order('sort_order'),

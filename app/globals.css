@@ -1,28 +1,44 @@
 :root {
-  /* Powder Pink Editorial — The Gel Bar
-     Powder Pink #F1B7CD · Plum Ink #3E1427 · Milk Pink #FFF1F6
-     Rose Accent #D96696 · Mulberry #982552 */
-  --powder: #f1b7cd;
-  --milk: #fff1f6;
-  --rose: #d96696;
-  --mulberry: #982552;
+  /* The Gel Bar brand palette — Warm ivory · champagne neutrals · rich wine burgundy
+     Porcelain Ivory #F1EBE0   main background
+     Warm Cream      #EDE7DB   soft background
+     Soft Champagne  #E8E0D3   secondary background
+     Vintage Beige   #DDD2C6   borders & details
+     Muted Sand      #CEB9AC   accent details
+     Dusty Taupe Rose#B39687   secondary accents
+     Deep Burgundy   #6B3032   dark text & details
+     Rich Wine       #782830   signature brand shade */
+  --ivory: #f1ebe0;
+  --cream: #ede7db;
+  --champagne: #e8e0d3;
+  --beige: #ddd2c6;
+  --sand: #ceb9ac;
+  --taupe: #b39687;
+  --burgundy: #6b3032;
+  --wine: #782830;
 
-  --bg: #f1b7cd;
-  --bg-alt: #fff1f6;
-  --surface: #fff1f6;
-  --ink: #3e1427;
-  --deep: #3e1427;
-  /* --gold keeps its name so every existing rule follows the palette:
-     it is the accent role, now mulberry (rose is too pale on powder). */
-  --gold: #982552;
-  --gold-soft: #d96696;
-  --sub: #7b3a55;
-  --border: #dfa9c0;
-  --text: #3e1427;
-  --graybg: #fff1f6;
-  --pink: #d96696;
+  /* legacy names, so every existing rule follows the palette */
+  --powder: var(--beige);
+  --milk: var(--ivory);
+  --rose: var(--taupe);
+  --mulberry: var(--wine);
+
+  --bg: var(--ivory);
+  --bg-alt: var(--champagne);
+  --surface: var(--cream);
+  --ink: var(--burgundy);
+  --deep: var(--burgundy);
+  --gold: var(--wine);          /* accent role */
+  --gold-soft: var(--sand);
+  /* Dusty Taupe is too pale for body text on ivory (about 2.4:1); this is the
+     same hue deepened until it reads at 4.5:1. */
+  --sub: #84625e;
+  --border: var(--beige);
+  --text: var(--burgundy);
+  --graybg: var(--champagne);
+  --pink: var(--taupe);
   --success: #2f7d55;
-  --warn: #982552;
+  --warn: var(--wine);
   --danger: #a5192f;
 
   --header-h: 104px;

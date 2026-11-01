@@ -6,11 +6,15 @@
  * no CSS classes, no flex/grid, no external stylesheets.
  */
 
-const GOLD = '#982552';
-const DEEP = '#3e1427';
-const BG = '#f1b7cd';
-const SUB = '#7b3a55';
-const BORDER = '#dfa9c0';
+// Brand palette: wine accent, deep burgundy, ivory ground, beige rules.
+import { siteUrl } from './send';
+
+const GOLD = '#782830';
+const DEEP = '#6b3032';
+const BG = '#f1ebe0';
+const SUB = '#84625e';
+const BORDER = '#ddd2c6';
+const CARD = '#f7f3ea';
 
 export interface BookingEmailData {
   clientName: string;
@@ -38,11 +42,10 @@ function shell(title: string, preheader: string, body: string, cta?: { label: st
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escape(preheader)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BG};padding:32px 12px;">
   <tr><td align="center">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff1f6;border:1px solid ${BORDER};">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:${CARD};border:1px solid ${BORDER};">
 
       <tr><td style="background:${DEEP};padding:28px 32px;text-align:center;">
-        <div style="font-family:Georgia,'Times New Roman',serif;font-size:26px;letter-spacing:1px;color:#ffffff;">The Gel Bar</div>
-        <div style="font-family:Arial,sans-serif;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#c98fa8;padding-top:8px;">Nails by Mariam</div>
+        <img src="${siteUrl()}/brand/logo-ivory.png" width="230" alt="The Gel Bar by Mariam Elgergawy" style="display:block;margin:0 auto;border:0;height:auto;max-width:100%;font-family:Georgia,'Times New Roman',serif;font-size:24px;color:#f1ebe0;">
       </td></tr>
 
       <tr><td style="padding:36px 32px 8px;">
@@ -55,7 +58,7 @@ function shell(title: string, preheader: string, body: string, cta?: { label: st
       ${
         cta
           ? `<tr><td style="padding:28px 32px 8px;" align="center">
-               <a href="${cta.url}" style="display:inline-block;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:#ffffff;background:${DEEP};padding:15px 34px;text-decoration:none;">${escape(cta.label)}</a>
+               <a href="${cta.url}" style="display:inline-block;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:#f1ebe0;background:${DEEP};padding:15px 34px;text-decoration:none;">${escape(cta.label)}</a>
              </td></tr>`
           : ''
       }
@@ -63,6 +66,7 @@ function shell(title: string, preheader: string, body: string, cta?: { label: st
       <tr><td style="padding:32px;">
         <div style="border-top:1px solid ${BORDER};padding-top:20px;font-family:Arial,sans-serif;font-size:11px;line-height:1.8;color:${SUB};text-align:center;">
           7 Ahmed Oraby, Madinet Al Eelam, Agouza, Giza<br>
+          <a href="tel:+201283113335" style="color:${SUB};text-decoration:none;">+20 128 311 3335</a><br>
           By appointment only &middot; <a href="https://www.instagram.com/thegelbar.eg" style="color:${GOLD};text-decoration:none;">@thegelbar.eg</a>
         </div>
       </td></tr>

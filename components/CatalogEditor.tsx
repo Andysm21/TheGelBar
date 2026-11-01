@@ -15,6 +15,7 @@ interface Variant {
   is_active: boolean;
   is_quantity: boolean;
   max_quantity: number;
+  price_is_starting: boolean;
 }
 interface Service {
   id: string;
@@ -159,6 +160,7 @@ export default function CatalogEditor({
                 <th>Option</th>
                 <th>Price</th>
                 <th>Duration</th>
+                <th>&ldquo;Starts from&rdquo;</th>
                 <th>Inspo</th>
                 <th>Max qty</th>
                 <th>Live</th>
@@ -184,6 +186,13 @@ export default function CatalogEditor({
                       suffix="min"
                       min={5}
                       onSave={(n) => run(`${v.name_en} duration saved`, () => updateVariant(v.id, { duration_minutes: n }))}
+                    />
+                  </td>
+                  <td data-label="Show as “Starts from”">
+                    <input
+                      type="checkbox"
+                      defaultChecked={v.price_is_starting}
+                      onChange={(e) => run('Price label saved', () => updateVariant(v.id, { price_is_starting: e.target.checked }))}
                     />
                   </td>
                   <td data-label="Inspo required">

@@ -3,7 +3,7 @@
   position: sticky;
   top: 0;
   z-index: 55;
-  background: rgba(255, 241, 246, 0.92);
+  background: rgba(241, 235, 224, 0.92);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid transparent;
   transition: padding 0.3s ease, border-color 0.3s ease, background 0.3s ease;
@@ -31,46 +31,36 @@
 
 .wordmark {
   grid-column: 2;
-  text-align: center;
-  font-family: var(--font-display, Georgia), serif;
-  font-size: 1.5rem;
-  letter-spacing: 0.06em;
-  color: var(--deep);
-  line-height: 1.1;
-  white-space: nowrap;
-  transition: font-size 0.3s ease;
+  justify-self: center;
+  display: block;
+  line-height: 0;
+}
+
+.wordmark img {
+  display: block;
+  width: auto;
+  height: 58px;
+  transition: height 0.3s ease;
 }
 
 @media (max-width: 480px) {
-  .wordmark {
-    font-size: 1.15rem;
+  .wordmark img {
+    height: 42px;
   }
 }
 
 /* between the desktop switch-on and full width there is less room around
-   the centre, so the wordmark steps down rather than crowding the nav. */
+   the centre, so the logo steps down rather than crowding the nav. */
 @media (min-width: 1080px) and (max-width: 1279px) {
-  .wordmark {
-    font-size: 1.28rem;
+  .wordmark img {
+    height: 50px;
   }
 }
 
-.scrolled .wordmark {
-  font-size: 1.2rem;
-}
-
-.wordmarkSub {
-  display: block;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 0.52rem;
-  letter-spacing: 0.32em;
-  text-transform: uppercase;
-  color: var(--sub);
-  margin-top: 0.3rem;
-}
-
-.scrolled .wordmarkSub {
-  display: none;
+/* The collapse must shrink by well under the gap between the scroll
+   thresholds in SiteHeader.tsx (90px down, 20px up) or the header flickers. */
+.scrolled .wordmark img {
+  height: 38px;
 }
 
 .navSide {
@@ -234,7 +224,7 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(62, 20, 39, 0.45);
+  background: rgba(107, 48, 50, 0.45);
   z-index: 110;
 }
 

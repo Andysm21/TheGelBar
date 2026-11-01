@@ -54,13 +54,13 @@ function Defs() {
     <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
       <defs>
         <linearGradient id="nl-marble" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#f7e3ea" />
-          <stop offset="100%" stopColor="#e2b6c9" />
+          <stop offset="0%" stopColor="#ede7db" />
+          <stop offset="100%" stopColor="#ceb9ac" />
         </linearGradient>
         <linearGradient id="nl-chrome" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#f6cf8e" />
-          <stop offset="45%" stopColor="#e8a0c4" />
-          <stop offset="100%" stopColor="#982552" />
+          <stop offset="0%" stopColor="#ddd2c6" />
+          <stop offset="45%" stopColor="#b39687" />
+          <stop offset="100%" stopColor="#782830" />
         </linearGradient>
       </defs>
     </svg>
@@ -83,26 +83,26 @@ function Nail({ index, kind }: { index: number; kind: 'marble' | 'foil' | 'chrom
           <g className={styles.design} style={{ animationDelay: `${index * 0.22}s` } as React.CSSProperties}>
             {kind === 'marble' && (
               <>
-                <path d="M0 14c8-4 14 2 22-2s10 6 12 2v10c-6 4-10-3-18 1s-12-2-16 2Z" fill="#982552" opacity="0.35" />
+                <path d="M0 14c8-4 14 2 22-2s10 6 12 2v10c-6 4-10-3-18 1s-12-2-16 2Z" fill="#782830" opacity="0.35" />
                 <path d="M-2 30c10-6 16 3 24-3s10 5 12 0v8c-8 5-14-2-22 3s-12-3-14 1Z" fill="#ffffff" opacity="0.4" />
               </>
             )}
             {kind === 'foil' && (
               <>
-                <polygon points="9,10 12,13 8,15" fill="#f6cf8e" />
-                <polygon points="22,8 25,11 21,12" fill="#f6cf8e" />
-                <polygon points="14,20 17,22 13,24" fill="#e8a0c4" />
-                <polygon points="24,24 27,27 23,28" fill="#f6cf8e" />
-                <polygon points="10,33 13,36 9,37" fill="#e8a0c4" />
-                <polygon points="20,38 23,40 19,42" fill="#f6cf8e" />
+                <polygon points="9,10 12,13 8,15" fill="#ddd2c6" />
+                <polygon points="22,8 25,11 21,12" fill="#ddd2c6" />
+                <polygon points="14,20 17,22 13,24" fill="#b39687" />
+                <polygon points="24,24 27,27 23,28" fill="#ddd2c6" />
+                <polygon points="10,33 13,36 9,37" fill="#b39687" />
+                <polygon points="20,38 23,40 19,42" fill="#ddd2c6" />
               </>
             )}
             {kind === 'chrome' && (
               <>
                 <circle cx="10" cy="14" r="1.2" fill="#fff" />
-                <circle cx="22" cy="10" r="1" fill="#f6cf8e" />
+                <circle cx="22" cy="10" r="1" fill="#ddd2c6" />
                 <circle cx="24" cy="22" r="1.3" fill="#fff" />
-                <circle cx="12" cy="27" r="1" fill="#f6cf8e" />
+                <circle cx="12" cy="27" r="1" fill="#ddd2c6" />
                 <circle cx="20" cy="33" r="1.2" fill="#fff" />
               </>
             )}
@@ -117,12 +117,12 @@ function Nail({ index, kind }: { index: number; kind: 'marble' | 'foil' | 'chrom
             )}
             {kind === 'floral' && (
               <>
-                <ellipse cx="17" cy="12" rx="3.4" ry="2.3" fill="#982552" transform="rotate(0 17 12)" />
-                <ellipse cx="12" cy="16" rx="3.4" ry="2.3" fill="#982552" transform="rotate(72 12 16)" />
-                <ellipse cx="14.5" cy="22" rx="3.4" ry="2.3" fill="#982552" transform="rotate(144 14.5 22)" />
-                <ellipse cx="20" cy="21.5" rx="3.4" ry="2.3" fill="#982552" transform="rotate(-144 20 21.5)" />
-                <ellipse cx="21.5" cy="15.5" rx="3.4" ry="2.3" fill="#982552" transform="rotate(-72 21.5 15.5)" />
-                <circle cx="17" cy="17.5" r="2" fill="#f6cf8e" />
+                <ellipse cx="17" cy="12" rx="3.4" ry="2.3" fill="#782830" transform="rotate(0 17 12)" />
+                <ellipse cx="12" cy="16" rx="3.4" ry="2.3" fill="#782830" transform="rotate(72 12 16)" />
+                <ellipse cx="14.5" cy="22" rx="3.4" ry="2.3" fill="#782830" transform="rotate(144 14.5 22)" />
+                <ellipse cx="20" cy="21.5" rx="3.4" ry="2.3" fill="#782830" transform="rotate(-144 20 21.5)" />
+                <ellipse cx="21.5" cy="15.5" rx="3.4" ry="2.3" fill="#782830" transform="rotate(-72 21.5 15.5)" />
+                <circle cx="17" cy="17.5" r="2" fill="#ddd2c6" />
                 <path d="M17 24c-1 6-2 10-4 14" stroke="#5c8a5c" strokeWidth="1" fill="none" />
                 <ellipse cx="12" cy="34" rx="2.4" ry="1.3" fill="#7ba86f" transform="rotate(-30 12 34)" />
               </>
