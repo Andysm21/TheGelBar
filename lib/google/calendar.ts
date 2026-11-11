@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { siteUrl } from '@/lib/email/send';
+import { cleanEnv } from '@/lib/env';
 
 /**
  * Pushes bookings into the owner's Google Calendar.
@@ -22,7 +23,7 @@ import { siteUrl } from '@/lib/email/send';
 const SCOPES = ['openid', 'email', 'https://www.googleapis.com/auth/calendar.events'];
 
 export function googleConfigured() {
-  return Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+  return Boolean(cleanEnv('GOOGLE_CLIENT_ID') && cleanEnv('GOOGLE_CLIENT_SECRET'));
 }
 
 export function redirectUri() {
@@ -31,7 +32,7 @@ export function redirectUri() {
 
 export function authUrl(state: string) {
   const params = new URLSearchParams({
-    client_id: process.env.GOOGLE_CLIENT_ID!,
+    client_id: cleanEnv('GOOGLE_CLIENT_ID')!,
     redirect_uri: redirectUri(),
     response_type: 'code',
     scope: SCOPES.join(' '),
@@ -50,8 +51,8 @@ export async function exchangeCode(code: string) {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       code,
-      client_id: process.env.GOOGLE_CLIENT_ID!,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+      client_id: cleanEnv('GOOGLE_CLIENT_ID')!,
+      client_secret: cleanEnv('GOOGLE_CLIENT_SECRET')!,
       redirect_uri: redirectUri(),
       grant_type: 'authorization_code',
     }),
@@ -77,8 +78,8 @@ async function accessToken(refreshToken: string) {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      client_id: process.env.GOOGLE_CLIENT_ID!,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+      client_id: cleanEnv('GOOGLE_CLIENT_ID')!,
+      client_secret: cleanEnv('GOOGLE_CLIENT_SECRET')!,
       refresh_token: refreshToken,
       grant_type: 'refresh_token',
     }),

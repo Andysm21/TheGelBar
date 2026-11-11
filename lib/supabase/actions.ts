@@ -19,6 +19,7 @@ import { cairoToInstant, cairoDate, cairoMinutes, cairoDayBounds } from '../time
 import { syncBookingToGoogle, googleConfigured } from '../google/calendar';
 import { createAdminClient } from './admin';
 import { sendEmail, ownerAddress } from '../email/send';
+import { cleanEnv } from '../env';
 import {
   notifyBookingRequested,
   notifyBookingConfirmed,
@@ -651,7 +652,7 @@ export async function getGoogleCalendarStatus() {
   const { data } = await supabase.from('google_calendar').select('google_email, connected_at').eq('id', 1).maybeSingle();
   return {
     configured: googleConfigured(),
-    serviceRole: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+    serviceRole: Boolean(cleanEnv('SUPABASE_SERVICE_ROLE_KEY')),
     connected: Boolean(data),
     email: data?.google_email ?? null,
     connectedAt: data?.connected_at ?? null,

@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { cleanEnv } from '../env';
 
 /**
  * Email delivery.
@@ -32,8 +33,8 @@ let transporter: Transporter | null = null;
 
 function getTransporter() {
   if (transporter) return transporter;
-  const user = process.env.GMAIL_USER;
-  const pass = process.env.GMAIL_APP_PASSWORD;
+  const user = cleanEnv('GMAIL_USER');
+  const pass = cleanEnv('GMAIL_APP_PASSWORD');
   if (!user || !pass) return null;
 
   transporter = nodemailer.createTransport({
@@ -44,7 +45,7 @@ function getTransporter() {
 }
 
 export function ownerAddress() {
-  return process.env.GMAIL_USER || 'thegelbar.eg@gmail.com';
+  return cleanEnv('GMAIL_USER') || 'thegelbar.eg@gmail.com';
 }
 
 export async function sendEmail({ to, subject, html, replyTo, ics }: SendArgs): Promise<{ ok: boolean; skipped?: boolean }> {

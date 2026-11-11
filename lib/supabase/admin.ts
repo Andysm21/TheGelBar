@@ -1,4 +1,5 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { cleanEnv } from '@/lib/env';
 
 /**
  * Service-role client. Bypasses row-level security entirely.
@@ -21,7 +22,7 @@ export function createAdminClient() {
     throw new Error('createAdminClient() must never run in the browser');
   }
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = cleanEnv('SUPABASE_SERVICE_ROLE_KEY');
   if (!url || !key) return null;
 
   return createSupabaseClient(url, key, {
