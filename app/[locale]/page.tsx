@@ -129,10 +129,10 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
       <section className={styles.split}>
         <Reveal className={styles.splitMedia}>
           <div className={`zoomable ${styles.splitImgTall}`}>
-            <img src="/gallery/work-5.jpg" alt="" loading="lazy" />
+            <img src="/gallery/Why1.png" alt="" loading="lazy" />
           </div>
           <div className={`zoomable ${styles.splitImgSmall}`}>
-            <img src="/gallery/work-10.jpg" alt="" loading="lazy" />
+            <img src="/gallery/Why2.jpeg" alt="" loading="lazy" />
           </div>
         </Reveal>
         <Reveal delay={120} className={styles.splitText}>
