@@ -129,6 +129,7 @@
     "uploadTooBig": "يجب أن يكون حجم كل صورة أقل من 8 ميجابايت.",
     "uploadMax": "يمكنك رفع {max} صور كحد أقصى.",
     "removePhoto": "إزالة {name}",
-    "startsFrom": "تبدأ من {amount} جنيه"
+    "startsFrom": "تبدأ من {amount} جنيه",
+    "simpleNote": "<b>الفرنش</b> و<b>الكروم</b> و<b>الكات آي</b> تُحسب ضمن التصاميم البسيطة."
   }
 }

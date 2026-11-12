@@ -527,3 +527,22 @@
   vertical-align: 0.1em;
   white-space: nowrap;
 }
+
+/* a plain-language hint under an option, e.g. what counts as a "simple" design */
+.optionNote {
+  display: block;
+  margin-top: 0.55rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--sand);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.74rem;
+  line-height: 1.55;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--sub);
+}
+
+.optionNote strong {
+  font-weight: 700;
+  color: var(--wine);
+}

@@ -246,6 +246,11 @@ export default function BookWizard({ locale }: { locale: string }) {
                                       {v.is_quantity ? ` ${tf('each')}` : ''}
                                       {v.requires_inspo ? ` · ${tf('inspoRequiredTag')}` : ''}
                                     </span>
+                                    {v.kind === 'simple' && (
+                                      <span className={styles.optionNote}>
+                                        {tf.rich('simpleNote', { b: (chunks) => <strong>{chunks}</strong> })}
+                                      </span>
+                                    )}
                                   </span>
                                   {/* a starting price is already spelled out in the tag beside the name */}
                                   {!v.price_is_starting && (

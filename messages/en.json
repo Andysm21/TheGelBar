@@ -129,6 +129,7 @@
     "uploadTooBig": "Each photo must be under 8 MB.",
     "uploadMax": "You can upload up to {max} photos.",
     "removePhoto": "Remove {name}",
-    "startsFrom": "Starts from {amount} LE"
+    "startsFrom": "Starts from {amount} LE",
+    "simpleNote": "<b>French</b>, <b>chrome</b> and <b>cat-eye</b> all count as simple designs."
   }
 }
