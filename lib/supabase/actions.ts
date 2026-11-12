@@ -676,9 +676,23 @@ export async function resyncGoogleCalendar() {
     .select('id')
     .in('status', ['pending', 'confirmed'])
     .gte('scheduled_start', new Date().toISOString());
-  if (error) throw error;
-  for (const row of data ?? []) await syncBookingToGoogle(row.id);
-  return { synced: data?.length ?? 0 };
+  // A plain Error, not the raw database object: Next only passes an Error's
+  // message through to the browser, and a raw object surfaces as an opaque
+  // React error instead of text the owner can act on.
+  if (error) throw new Error(`Could not read bookings: ${error.message}`);
+
+  let synced = 0;
+  const reasons = new Set<string>();
+  for (const row of data ?? []) {
+    const result = await syncBookingToGoogle(row.id);
+    if (result.ok) synced++;
+    else reasons.add(result.reason);
+  }
+  const failed = (data?.length ?? 0) - synced;
+  if (failed > 0 && synced === 0) {
+    throw new Error(`None of ${failed} booking(s) could be synced: ${[...reasons].join('; ')}`);
+  }
+  return { synced, failed, reason: [...reasons].join('; ') };
 }
 
 /* ================= site photos ================= */

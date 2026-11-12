@@ -40,10 +40,11 @@ export default function GoogleCalendarCard({ status }: { status: Status }) {
     if (result === 'connected') {
       startTransition(async () => {
         try {
-          const { synced } = await resyncGoogleCalendar();
-          if (synced > 0) setMessage({ tone: 'ok', text: `Connected, and ${synced} upcoming booking(s) added to your calendar.` });
-        } catch {
-          /* the connection itself worked; syncing retries on the next booking change */
+          const { synced, failed, reason } = await resyncGoogleCalendar();
+          if (failed > 0) setMessage({ tone: 'bad', text: `Connected, but ${failed} booking(s) could not be added: ${reason}` });
+          else if (synced > 0) setMessage({ tone: 'ok', text: `Connected, and ${synced} upcoming booking(s) added to your calendar.` });
+        } catch (e) {
+          setMessage({ tone: 'bad', text: `Connected, but the first sync failed: ${e instanceof Error ? e.message : 'unknown error'}` });
         }
       });
     }
@@ -98,8 +99,12 @@ export default function GoogleCalendarCard({ status }: { status: Status }) {
                 onClick={() =>
                   startTransition(async () => {
                     try {
-                      const { synced } = await resyncGoogleCalendar();
-                      setMessage({ tone: 'ok', text: `${synced} upcoming booking(s) synced.` });
+                      const { synced, failed, reason } = await resyncGoogleCalendar();
+                      setMessage(
+                        failed > 0
+                          ? { tone: 'bad', text: `${synced} synced, ${failed} failed: ${reason}` }
+                          : { tone: 'ok', text: `${synced} upcoming booking(s) synced.` }
+                      );
                     } catch (e) {
                       setMessage({ tone: 'bad', text: e instanceof Error ? e.message : 'Sync failed.' });
                     }
