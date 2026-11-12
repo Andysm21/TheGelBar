@@ -206,7 +206,7 @@ export default function BookWizard({ locale }: { locale: string }) {
                         }}
                       >
                         <span className={styles.accThumb}>
-                          <img src={serviceImageUrl(s)} alt="" loading="lazy" />
+                          <img src={serviceImageUrl(s)} alt="" loading="lazy" decoding="async" />
                         </span>
                         <span className={styles.accInfo}>
                           <span className={styles.accName}>{isAr ? s.name_ar : s.name_en}</span>

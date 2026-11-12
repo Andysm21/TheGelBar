@@ -67,7 +67,7 @@ export default function ServicesGrid({
             <Reveal key={s.id} delay={(i % 3) * 100}>
               <button className={styles.card} onClick={() => setOpenId(s.id)}>
                 <div className={styles.imgWrap}>
-                  <img src={serviceImageUrl(s)} alt="" loading="lazy" />
+                  <img src={serviceImageUrl(s)} alt="" loading="lazy" decoding="async" />
                   <span className={styles.veil}>View options</span>
                 </div>
                 <p className={`eyebrow ${styles.cardEyebrow}`}>{s.service_variants.length} options</p>

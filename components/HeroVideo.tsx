@@ -90,7 +90,7 @@ export default function HeroVideo({ className }: { className: string }) {
       controls={false}
       controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
       tabIndex={-1}
-      preload="auto"
+      preload="metadata"
     >
       <source src="/GelbarBGVideo.mp4" type="video/mp4" />
     </video>

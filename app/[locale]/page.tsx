@@ -47,7 +47,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
         <div className={styles.heroInner}>
           <p className={`eyebrow ${styles.heroEyebrow}`}>Welcome to</p>
           <h1 className={styles.heroTitle}>
-            <img src="/brand/logo-ivory.png" alt="The Gel Bar by Mariam Elgergawy" width={985} height={276} />
+            <img src="/brand/logo-ivory.png" alt="The Gel Bar by Mariam Elgergawy" width={985} height={276} fetchPriority="high" decoding="async" />
           </h1>
           <p className={styles.heroSub}>A solo nail studio in Mohandeseen, Cairo — by appointment only</p>
           <div className={styles.heroCtas}>
@@ -92,7 +92,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
             <Reveal key={s.id} delay={i * 110}>
               <article className={styles.featuredCard}>
                 <div className={`zoomable ${styles.featuredImg}`}>
-                  <img src={serviceImageUrl(s)} alt="" loading="lazy" />
+                  <img src={serviceImageUrl(s)} alt="" loading="lazy" decoding="async" />
                 </div>
                 <p className="eyebrow">{(s.service_variants ?? []).length} options</p>
                 <h3 className={styles.featuredName}>{locale === 'ar' ? s.name_ar : s.name_en}</h3>
@@ -129,10 +129,10 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
       <section className={styles.split}>
         <Reveal className={styles.splitMedia}>
           <div className={`zoomable ${styles.splitImgTall}`}>
-            <img src="/gallery/Why1.png" alt="" loading="lazy" />
+            <img src="/gallery/Why1.jpg" alt="" loading="lazy" decoding="async" />
           </div>
           <div className={`zoomable ${styles.splitImgSmall}`}>
-            <img src="/gallery/Why2.jpeg" alt="" loading="lazy" />
+            <img src="/gallery/Why2.jpeg" alt="" loading="lazy" decoding="async" />
           </div>
         </Reveal>
         <Reveal delay={120} className={styles.splitText}>
@@ -157,7 +157,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
           {galleryTeaser.map((src, i) => (
             <Reveal key={src} delay={i * 90}>
               <div className={`zoomable ${styles.teaserItem}`}>
-                <img src={src} alt="" loading="lazy" />
+                <img src={src} alt="" loading="lazy" decoding="async" />
               </div>
             </Reveal>
           ))}

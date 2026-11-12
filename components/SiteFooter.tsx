@@ -20,6 +20,8 @@ export default async function SiteFooter({ locale }: { locale: string }) {
             alt="The Gel Bar by Mariam Elgergawy"
             width={985}
             height={276}
+            loading="lazy"
+            decoding="async"
             className={styles.logo}
           />
           <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className={styles.ig}>

@@ -32,7 +32,7 @@ export default async function OurWorkPage({ params }: { params: Promise<{ locale
         {photos.map(({ src, caption }, i) => (
           <Reveal key={src} delay={(i % 4) * 80} className={styles.galCell}>
             <figure className={`zoomable ${styles.galItem}`}>
-              <img src={src} alt={caption} loading="lazy" />
+              <img src={src} alt={caption} loading="lazy" decoding="async" />
               {caption && <figcaption className={styles.galCaption}>{caption}</figcaption>}
             </figure>
           </Reveal>
