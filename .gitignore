@@ -10,3 +10,6 @@ tsconfig.tsbuildinfo
 
 # Local secrets — never commit
 CREDENTIALS.local.md
+
+# Plain-text export for a password manager — delete after importing
+credentials-import.csv
