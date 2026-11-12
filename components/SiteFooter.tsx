@@ -16,7 +16,7 @@ export default async function SiteFooter({ locale }: { locale: string }) {
       <div className={styles.grid}>
         <div className={styles.brandCol}>
           <img
-            src="/brand/logo-ivory.png"
+            src="/_next/image?url=%2Fbrand%2Flogo-ivory.png&w=640&q=75"
             alt="The Gel Bar by Mariam Elgergawy"
             width={985}
             height={276}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 /**
  * Getting true autoplay on every phone/browser needs more than the
@@ -18,6 +18,31 @@ import { useLayoutEffect, useRef } from 'react';
  */
 export default function HeroVideo({ className }: { className: string }) {
   const ref = useRef<HTMLVideoElement>(null);
+  // Fetch the 2 MB file only after the page has loaded, so it never competes
+  // with the logo and text that make up the first paint.
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const go = () => setReady(true);
+    if (document.readyState === 'complete') {
+      const t = window.setTimeout(go, 300);
+      return () => window.clearTimeout(t);
+    }
+    window.addEventListener('load', go, { once: true });
+    const t = window.setTimeout(go, 4000);
+    return () => {
+      window.removeEventListener('load', go);
+      window.clearTimeout(t);
+    };
+  }, []);
+
+  useEffect(() => {
+    const video = ref.current;
+    if (ready && video) {
+      video.load();
+      video.play().catch(() => {});
+    }
+  }, [ready]);
 
   useLayoutEffect(() => {
     const video = ref.current;
@@ -92,7 +117,8 @@ export default function HeroVideo({ className }: { className: string }) {
       tabIndex={-1}
       preload="metadata"
     >
-      <source src="/GelbarBGVideo.mp4" type="video/mp4" />
+      {ready && <source src="/GelbarBGVideo.mp4" type="video/mp4" />}
+      <track kind="captions" src="/captions.vtt" srcLang="en" label="No dialogue" />
     </video>
   );
 }

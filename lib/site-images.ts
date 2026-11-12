@@ -8,6 +8,11 @@
 
 export const SITE_IMAGES_BUCKET = 'site-images';
 
+/** Route an image through Next's optimizer (resized, WebP/AVIF, long-cached). */
+export function optimized(src: string, w = 828) {
+  return `/_next/image?url=${encodeURIComponent(src)}&w=${w}&q=75`;
+}
+
 export function publicImageUrl(path: string) {
   return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${SITE_IMAGES_BUCKET}/${path
     .split('/')
@@ -24,8 +29,8 @@ const BUNDLED_SERVICE_PHOTOS: Record<string, string> = {
 };
 
 export function serviceImageUrl(service: { id: string; image_path?: string | null }) {
-  if (service.image_path) return publicImageUrl(service.image_path);
-  return BUNDLED_SERVICE_PHOTOS[service.id] ?? '/gallery/work-1.jpg';
+  if (service.image_path) return optimized(publicImageUrl(service.image_path));
+  return optimized(BUNDLED_SERVICE_PHOTOS[service.id] ?? '/gallery/work-1.jpg');
 }
 
 export const BUNDLED_GALLERY = Array.from({ length: 10 }, (_, i) => `/gallery/work-${i + 1}.jpg`);

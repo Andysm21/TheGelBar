@@ -1,10 +1,11 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import NailProcess from '@/components/NailProcess/NailProcess';
+import LazyMap from '@/components/LazyMap';
 import HeroVideo from '@/components/HeroVideo';
 import Reveal from '@/components/Reveal';
 import { getServiceCatalog, getGalleryImages } from '@/lib/supabase/cached-queries';
-import { BUNDLED_GALLERY, publicImageUrl, serviceImageUrl } from '@/lib/site-images';
+import { BUNDLED_GALLERY, publicImageUrl, serviceImageUrl, optimized } from '@/lib/site-images';
 import styles from './page.module.css';
 
 const ADDRESS = '7 Ahmed Oraby, Madinet Al Eelam, Agouza, Giza Governorate 3755201';
@@ -47,7 +48,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
         <div className={styles.heroInner}>
           <p className={`eyebrow ${styles.heroEyebrow}`}>Welcome to</p>
           <h1 className={styles.heroTitle}>
-            <img src="/brand/logo-ivory.png" alt="The Gel Bar by Mariam Elgergawy" width={985} height={276} fetchPriority="high" decoding="async" />
+            <img src="/_next/image?url=%2Fbrand%2Flogo-ivory.png&w=1080&q=75" alt="The Gel Bar by Mariam Elgergawy" width={985} height={276} fetchPriority="high" decoding="async" />
           </h1>
           <p className={styles.heroSub}>A solo nail studio in Mohandeseen, Cairo — by appointment only</p>
           <div className={styles.heroCtas}>
@@ -129,10 +130,10 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
       <section className={styles.split}>
         <Reveal className={styles.splitMedia}>
           <div className={`zoomable ${styles.splitImgTall}`}>
-            <img src="/gallery/Why1.jpg" alt="" loading="lazy" decoding="async" />
+            <img src="/_next/image?url=%2Fgallery%2FWhy1.jpg&w=828&q=75" alt="" loading="lazy" decoding="async" />
           </div>
           <div className={`zoomable ${styles.splitImgSmall}`}>
-            <img src="/gallery/Why2.jpeg" alt="" loading="lazy" decoding="async" />
+            <img src="/_next/image?url=%2Fgallery%2FWhy2.jpeg&w=828&q=75" alt="" loading="lazy" decoding="async" />
           </div>
         </Reveal>
         <Reveal delay={120} className={styles.splitText}>
@@ -157,7 +158,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
           {galleryTeaser.map((src, i) => (
             <Reveal key={src} delay={i * 90}>
               <div className={`zoomable ${styles.teaserItem}`}>
-                <img src={src} alt="" loading="lazy" decoding="async" />
+                <img src={optimized(src, 640)} alt="" loading="lazy" decoding="async" />
               </div>
             </Reveal>
           ))}
@@ -184,15 +185,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
           </a>
         </Reveal>
         <Reveal delay={120} className={styles.locationMap}>
-          <iframe
-            src={MAPS_EMBED_URL}
-            width="100%"
-            height="100%"
-            style={{ border: 0 }}
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            title="The Gel Bar location"
-          />
+          <LazyMap src={MAPS_EMBED_URL} title="The Gel Bar location" />
         </Reveal>
       </section>
 

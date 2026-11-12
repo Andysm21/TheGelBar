@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import Reveal from '@/components/Reveal';
 import { getGalleryImages } from '@/lib/supabase/cached-queries';
-import { BUNDLED_GALLERY, publicImageUrl } from '@/lib/site-images';
+import { BUNDLED_GALLERY, publicImageUrl, optimized } from '@/lib/site-images';
 import styles from './work.module.css';
 
 const INSTAGRAM_URL = 'https://www.instagram.com/thegelbar.eg';
@@ -32,7 +32,7 @@ export default async function OurWorkPage({ params }: { params: Promise<{ locale
         {photos.map(({ src, caption }, i) => (
           <Reveal key={src} delay={(i % 4) * 80} className={styles.galCell}>
             <figure className={`zoomable ${styles.galItem}`}>
-              <img src={src} alt={caption} loading="lazy" decoding="async" />
+              <img src={optimized(src, 640)} alt={caption} loading="lazy" decoding="async" />
               {caption && <figcaption className={styles.galCaption}>{caption}</figcaption>}
             </figure>
           </Reveal>

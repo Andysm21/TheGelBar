@@ -68,7 +68,7 @@ export default function SiteHeader() {
           <nav className={`${styles.navSide} ${styles.navLeft}`}>{LEFT.map(navLink)}</nav>
 
           <Link href={base} className={styles.wordmark} aria-label="The Gel Bar by Mariam Elgergawy">
-            <img src="/brand/logo-wine-sm.png" alt="The Gel Bar by Mariam Elgergawy" width={985} height={276} />
+            <img src="/_next/image?url=%2Fbrand%2Flogo-wine.png&w=640&q=75" alt="The Gel Bar by Mariam Elgergawy" width={985} height={276} />
           </Link>
 
           <div className={styles.right}>

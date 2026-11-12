@@ -25,12 +25,13 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'The Gel Bar',
+  description:
+    'The Gel Bar — a solo nail studio in Mohandeseen, Cairo by Mariam Sherif Elgergawy. Gel manicures, hard gel and false nails, by appointment. Book online.',
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
 };
 
 export default async function LocaleLayout({

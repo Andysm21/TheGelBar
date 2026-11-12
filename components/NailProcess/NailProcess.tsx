@@ -6,11 +6,11 @@ import styles from './NailProcess.module.css';
 import { useNailProcessAnimation, Step } from './useNailProcessAnimation';
 
 const ASSETS = {
-  base: '/nails/nail-base.png',
-  baseCoat: '/nails/base-coat.png',
-  color: '/nails/nail-color.png',
-  design: '/nails/nail-design.png',
-  topCoat: '/nails/top-coat.png',
+  base: '/_next/image?url=%2Fnails%2Fnail-base.png&w=1080&q=80',
+  baseCoat: '/_next/image?url=%2Fnails%2Fbase-coat.png&w=1080&q=80',
+  color: '/_next/image?url=%2Fnails%2Fnail-color.png&w=1080&q=80',
+  design: '/_next/image?url=%2Fnails%2Fnail-design.png&w=1080&q=80',
+  topCoat: '/_next/image?url=%2Fnails%2Ftop-coat.png&w=1080&q=80',
 };
 
 function preloadImages(srcs: string[]) {
